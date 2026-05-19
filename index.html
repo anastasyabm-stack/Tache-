@@ -168,7 +168,8 @@
 </div>
 
 <script>
-const TOTAL=300,CIRCUM=276.46;
+let TOTAL=300;
+const CIRCUM=276.46;
 let timerRemaining=TOTAL,timerRunning=false,timerInterval=null;
 let selectedFeels=[],currentTask='',selectedMethod='';
 
@@ -268,12 +269,56 @@ async function chooseMethod(methodId){
   document.getElementById('resp-task').textContent=currentTask;
   document.getElementById('loading-wrap').style.display='flex';
   document.getElementById('response-content').style.display='none';
+
   showScreen('screen-response');
   resetTimer();
 
-  const prompt=(PROMPTS[methodId]||PROMPTS.regle2).replace('{task}',currentTask);
+  const responses = {
+    regle2: `⚡ Ouvre juste le document ou l'application nécessaire.\nC'est tout. Pas besoin d'aller plus loin maintenant.`,
 
-  try{
+    timer_course: `🏁 Top chrono.\nPendant 5 minutes, avance le plus possible sur :\n"${currentTask}"\nPas besoin de finir.`,
+
+    reverse_pomodoro: `🍅 Tu fais juste 5 minutes.\nAprès, tu as totalement le droit d'arrêter.\nCommence uniquement par la première mini-action.`,
+
+    micro_etape: `🐜 Micro-étape ridicule :\nPrends juste ce qu'il faut pour commencer "${currentTask}".\nRien d'autre.`,
+
+    mini_quete: `⚔️ QUÊTE ACTIVÉE\nMission : ${currentTask}\n🎯 Niveau 1 : commencer\n⚡ Niveau 2 : 5 minutes focus\n🏆 Récompense : pause dopamine autorisée`,
+
+    task_racing: `🏎️ Challenge lancé.\nCombien peux-tu avancer sur "${currentTask}" en 5 minutes ?\nGO.`,
+
+    une_chose: `🎯 Une seule chose compte maintenant :\n${currentTask}\nIgnore absolument le reste.`,
+
+    brain_dump: `🧠 Vide tout ce qui tourne dans ta tête.\nPuis classe :\n• Maintenant\n• Plus tard\n• Poubelle`,
+
+    estimation: `⏱️ Estimation TDAH :\nAjoute le temps d'installation, distractions et pauses.\nPuis multiplie par 1.5.`,
+
+    decoupage: `📊 Découpage :\n1️⃣ Ouvrir\n2️⃣ Commencer\n3️⃣ Avancer un peu\n4️⃣ Finir le minimum\n5️⃣ Vérifier rapidement`
+  };
+
+  const timerDurations = {
+    timer_course: 300,
+    reverse_pomodoro: 300,
+    mini_quete: 300,
+    task_racing: 300
+  };
+
+  if(timerDurations[methodId]){
+    TOTAL = timerDurations[methodId];
+    timerRemaining = TOTAL;
+  }
+
+  setTimeout(()=>{
+    document.getElementById('response-text').textContent =
+      responses[methodId] || "Commence par une toute petite action.";
+
+    document.getElementById('loading-wrap').style.display='none';
+    document.getElementById('response-content').style.display='block';
+
+    document.getElementById('timer-section').style.display =
+      needsTimer.includes(methodId) ? 'block' : 'none';
+
+  }, 700);
+}
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':getKey(),'anthropic-version':'2023-06-01'},

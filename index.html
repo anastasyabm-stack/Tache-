@@ -228,6 +228,9 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .plan-step-count { font-size: 11px; color: var(--muted); }
 .pp-total { text-align: center; color: var(--muted); font-size: 13px; margin: 16px 0 24px; padding: 14px; border-radius: 14px; background: var(--soft); }
 .pp-total strong { color: var(--text); font-family: 'Syne', sans-serif; font-size: 15px; }
+.file-add-btn { display: block; text-align: center; border: 1.5px dashed var(--border); border-radius: 14px; color: var(--muted); font-size: 13px; padding: 12px; cursor: pointer; margin-bottom: 18px; transition: border-color .2s, color .2s; }
+.file-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+.pp-update-msg { text-align: center; color: var(--green); font-size: 13px; font-weight: 700; margin-bottom: 10px; transition: opacity .3s; }
 
 .block-timer { background: var(--soft); border: 1.5px solid var(--border) !important; color: var(--text); }
 .block-timer .b-sub { color: var(--muted); }
@@ -388,6 +391,9 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <div id="pp-files-wrap" style="display:none">
     <div class="file-chips" id="pp-files-chips"></div>
   </div>
+  <div id="pp-update-msg" class="pp-update-msg" style="display:none">✓ Plan mis à jour</div>
+  <label class="file-add-btn" for="pp-files-input">+ Ajouter des documents</label>
+  <input id="pp-files-input" type="file" multiple style="display:none">
   <div class="section-label" style="margin-bottom:10px">Plan généré automatiquement</div>
   <div id="pp-plan"></div>
   <div class="pp-total" id="pp-total"></div>
@@ -627,15 +633,23 @@ btnCreate.onclick = () => {
 
 // ─── AUTO-STEP GENERATION ───
 function buildProject(name, goal, files) {
-  return { id: String(Date.now()), name, goal, files: files || [], steps: generateSteps(name, goal), created: new Date().toISOString() };
+  const hints = (files || []).map(f => f.toLowerCase().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ')).join(' ');
+  return { id: String(Date.now()), name, goal, files: files || [], steps: generateSteps(name, goal, hints), created: new Date().toISOString() };
 }
 
 function s(name, micros, priority, duration) {
   return { name, micros, done: 0, priority: priority || 'moyenne', duration: duration || 25 };
 }
 
-function generateSteps(name, goal) {
-  const t = (name + ' ' + goal).toLowerCase();
+function mergeProgress(oldSteps, newSteps) {
+  return newSteps.map(function(ns) {
+    const old = oldSteps.find(function(os) { return os.name === ns.name; });
+    return old ? Object.assign({}, ns, { done: Math.min(old.done || 0, ns.micros.length) }) : ns;
+  });
+}
+
+function generateSteps(name, goal, fileHints) {
+  const t = (name + ' ' + goal + ' ' + (fileHints || '')).toLowerCase();
   if (/révis|cours|exam|étudi|bac|chapitre/.test(t)) return [
     s('Ouvrir le cours', ['Trouve le cours ou le livre', 'Ouvre à la bonne page', 'Lis juste le titre'], 'haute', 10),
     s('Lire une première fois', ['Lis le premier paragraphe', 'Continue lentement, sans te presser', 'Marque ce que tu ne comprends pas'], 'haute', 25),
@@ -741,6 +755,36 @@ document.getElementById('btn-build-plan').onclick = () => {
 // ─── PLAN PREVIEW ───
 document.getElementById('back-plan-preview').onclick = () => {
   if (pendingProject) { show('create-files'); } else { renderHome(); show('home'); }
+};
+
+document.getElementById('pp-files-input').onchange = function() {
+  const newNames = [...this.files].map(f => f.name);
+  if (!newNames.length) return;
+  const proj = pendingProject || currentProject;
+  if (!proj) return;
+
+  const existing = proj.files || [];
+  proj.files = [...existing, ...newNames.filter(n => !existing.includes(n))];
+
+  const hints = proj.files.map(f => f.toLowerCase().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ')).join(' ');
+  const newSteps = generateSteps(proj.name, proj.goal, hints);
+  proj.steps = mergeProgress(proj.steps, newSteps);
+
+  if (!pendingProject && currentProject) {
+    const list = getProjects();
+    const idx = list.findIndex(p => p.id === proj.id);
+    if (idx !== -1) { list[idx] = proj; saveProjects(list); currentProject = proj; }
+  }
+
+  const msg = document.getElementById('pp-update-msg');
+  msg.style.display = 'block'; msg.style.opacity = '1';
+  setTimeout(function() {
+    msg.style.opacity = '0';
+    setTimeout(function() { msg.style.display = 'none'; }, 300);
+  }, 2000);
+
+  renderPlanPreview(proj);
+  this.value = '';
 };
 document.getElementById('btn-start-project').onclick = () => {
   if (pendingProject) {

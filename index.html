@@ -750,7 +750,7 @@ btnCreate.onclick = () => {
 // ─── AUTO-STEP GENERATION ───
 function buildProject(name, goal, files) {
   const hints = (files || []).map(f => f.toLowerCase().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ')).join(' ');
-  return { id: String(Date.now()), name, goal, files: files || [], fileCategories: {}, steps: generateSteps(name, goal, hints), categories: [], created: new Date().toISOString() };
+  return { id: String(Date.now()), name, goal, files: files || [], fileCategories: {}, fileMode: null, steps: generateSteps(name, goal, hints), categories: [], created: new Date().toISOString() };
 }
 
 function s(name, micros, priority, duration) {
@@ -992,15 +992,30 @@ async function applyFileOptions() {
     }).catch(function() {});
   });
   if (foScope === 'global') {
-    var stepsToApply = newSteps.length ? newSteps : generateSteps(proj.name, proj.goal, proj.files.map(function(f) { return f.toLowerCase().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '); }).join(' '));
-    proj.steps = mergeProgress(proj.steps || [], stepsToApply);
+    if (foMode === 'fichier') {
+      if (!proj.fileMode) {
+        // Première fois : remplace les étapes génériques par une étape par fichier
+        proj.steps = newSteps;
+        proj.fileMode = 'fichier';
+      } else {
+        // Déjà en mode fichier : ajoute seulement les nouvelles étapes
+        var existingNames = new Set((proj.steps || []).map(function(st) { return st.name; }));
+        var addedSteps = newSteps.filter(function(st) { return !existingNames.has(st.name); });
+        proj.steps = (proj.steps || []).concat(addedSteps);
+      }
+    } else {
+      var stepsToApply = newSteps.length ? newSteps : generateSteps(proj.name, proj.goal, proj.files.map(function(f) { return f.toLowerCase().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '); }).join(' '));
+      proj.steps = mergeProgress(proj.steps || [], stepsToApply);
+    }
   } else {
     // Apply to a category — add derived steps + record file→category mapping
     if (!proj.fileCategories) proj.fileCategories = {};
     foPendingFiles.forEach(function(name) { proj.fileCategories[name] = foApplyCategory; });
     var targetCat = (proj.categories || []).find(function(c) { return c.id === foApplyCategory; });
     if (targetCat && newSteps.length) {
-      targetCat.steps = mergeProgress(targetCat.steps, newSteps);
+      var existingCatNames = new Set(targetCat.steps.map(function(st) { return st.name; }));
+      var newCatSteps = newSteps.filter(function(st) { return !existingCatNames.has(st.name); });
+      targetCat.steps = targetCat.steps.concat(newCatSteps);
       proj.categories = [targetCat].concat(proj.categories.filter(function(c) { return c.id !== foApplyCategory; }));
     }
   }

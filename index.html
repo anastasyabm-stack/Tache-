@@ -523,6 +523,63 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .ritalin-yes:active { transform:scale(.97); }
 .ritalin-no { border:1.5px solid var(--border); border-radius:16px; background:none; color:var(--muted); font:600 14px 'DM Sans',sans-serif; padding:15px; cursor:pointer; }
 
+/* ── SETTINGS FAB ── */
+.settings-fab {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 14px);
+  right: 14px;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 19px;
+  z-index: 450;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 14px rgba(0,0,0,.4);
+  transition: color .2s, border-color .2s, transform .35s;
+  padding: 0;
+}
+.settings-fab:active { transform: rotate(60deg) scale(.9); border-color: var(--accent); color: var(--accent); }
+
+/* ── SETTINGS MODAL ── */
+.settings-tabs { display: flex; gap: 6px; margin-bottom: 20px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+.settings-tab { flex: 1; min-width: 68px; white-space: nowrap; border: 1.5px solid var(--border); border-radius: 12px; background: var(--soft); color: var(--muted); font: 600 11px 'DM Sans', sans-serif; padding: 9px 6px; cursor: pointer; transition: all .15s; text-align: center; }
+.settings-tab.active { border-color: var(--accent); background: rgba(124,92,252,.12); color: var(--accent); }
+.settings-section-desc { color: var(--muted); font-size: 13px; line-height: 1.5; margin-bottom: 16px; }
+.settings-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--soft); border: 1px solid var(--border); margin-bottom: 8px; }
+.settings-item-emoji { font-size: 20px; flex: 0 0 auto; }
+.settings-item-label { flex: 1; font-size: 14px; line-height: 1.35; }
+.settings-item-meta { color: var(--muted); font-size: 11px; }
+.settings-item-del { background: none; border: none; color: var(--muted); font-size: 15px; padding: 4px 6px; cursor: pointer; opacity: .5; transition: opacity .15s, color .15s; }
+.settings-item-del:active { opacity: 1; color: #fc5c7d; }
+.settings-toggle { position: relative; width: 44px; height: 26px; flex: 0 0 44px; }
+.settings-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.settings-toggle-track { position: absolute; inset: 0; border-radius: 999px; background: var(--border); cursor: pointer; transition: background .2s; }
+.settings-toggle-track::after { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: left .2s; }
+.settings-toggle input:checked + .settings-toggle-track { background: var(--accent); }
+.settings-toggle input:checked + .settings-toggle-track::after { left: 21px; }
+.settings-add-row { display: flex; gap: 8px; margin-top: 12px; }
+.settings-add-inp { flex: 1; border: 1.5px solid var(--border); border-radius: 12px; background: var(--soft); color: var(--text); font: 14px 'DM Sans', sans-serif; padding: 12px 14px; outline: none; }
+.settings-add-inp:focus { border-color: var(--accent); }
+.settings-add-btn { border: none; border-radius: 12px; background: var(--accent); color: #fff; font: 700 16px 'Syne', sans-serif; padding: 12px 18px; cursor: pointer; }
+.settings-primary-badge { font-size: 10px; padding: 2px 8px; border-radius: 999px; background: rgba(124,92,252,.15); color: var(--accent); font-weight: 700; }
+
+/* ── BLOCKED: SUPPL FLOW ── */
+.suppl-q { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: #fcba5c; margin-bottom: 14px; }
+.suppl-yn { display: flex; gap: 10px; margin-bottom: 4px; }
+.suppl-yes { flex: 1; border: 1.5px solid rgba(92,252,160,.35); border-radius: 14px; background: rgba(92,252,160,.1); color: var(--green); font: 700 14px 'Syne', sans-serif; padding: 13px; cursor: pointer; transition: background .15s; }
+.suppl-yes:active { background: rgba(92,252,160,.22); }
+.suppl-no-btn { flex: 1; border: 1.5px solid rgba(252,92,125,.28); border-radius: 14px; background: rgba(252,92,125,.06); color: rgba(252,92,125,.75); font: 700 14px 'Syne', sans-serif; padding: 13px; cursor: pointer; transition: background .15s; }
+.suppl-no-btn:active { background: rgba(252,92,125,.15); color: #fc5c7d; }
+.suppl-options-list { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 0 8px; }
+.suppl-option-chip { padding: 7px 13px; border-radius: 999px; background: rgba(252,186,92,.12); border: 1px solid rgba(252,186,92,.28); color: #fcba5c; font-size: 13px; font-weight: 600; }
+.energy-boost-hint { background: rgba(252,186,92,.07); border: 1.5px solid rgba(252,186,92,.22); border-radius: 16px; padding: 14px 16px; margin-top: 16px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.energy-boost-hint strong { color: #fcba5c; display: block; margin-bottom: 8px; font-family: 'Syne', sans-serif; }
+.energy-boost-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.energy-boost-chip { padding: 5px 11px; border-radius: 999px; background: rgba(252,186,92,.12); border: 1px solid rgba(252,186,92,.25); color: #fcba5c; font-size: 12px; font-weight: 600; }
+
 .strategy-card {
   width: 100%; display: flex; align-items: flex-start; gap: 16px;
   border: 1.5px solid var(--border); border-radius: 20px;
@@ -1031,23 +1088,32 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 <!-- BLOCKED: ÉNERGIE -->
 <section class="screen" id="blocked-energy">
   <button class="back" id="back-blocked-energy">← Retour</button>
-  <div id="suppl-card" class="suppl-card" style="display:none">
-    <div class="suppl-card-title">💊 As-tu pris tes compléments ?</div>
-    <div class="suppl-drinks">
-      <span class="suppl-drink">☕ Café</span>
-      <span class="suppl-drink">🍵 Matcha</span>
-      <span class="suppl-drink">⚡ Holy Energy</span>
-      <span class="suppl-drink">🐟 Oméga-3</span>
-      <span class="suppl-drink">💊 Magnésium</span>
+
+  <!-- Étape 1 : compléments -->
+  <div id="suppl-card" class="suppl-card">
+    <div class="suppl-q">💊 As-tu pris tes compléments ?</div>
+    <div class="suppl-yn">
+      <button class="suppl-yes" id="suppl-yes">✓ Oui</button>
+      <button class="suppl-no-btn" id="suppl-no">Non</button>
     </div>
-    <p style="color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:10px">Un café, un matcha ou un Holy avant de commencer peut vraiment aider ton cerveau à se mettre en mode focus ✦</p>
-    <button class="suppl-ack" id="suppl-ack">C'est bon, j'en ai déjà pris →</button>
+    <div id="suppl-options" style="display:none">
+      <p style="color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:8px">Voici ce qui peut booster ton cerveau TDAH ✦</p>
+      <div class="suppl-options-list" id="suppl-options-list"></div>
+    </div>
   </div>
-  <h1>Comment tu <em>te sens</em> ?</h1>
-  <p class="sub">Ton niveau d'énergie en ce moment — sois honnête avec toi-même.</p>
-  <div class="energy-scale" id="energy-scale"></div>
-  <div class="energy-labels"><span>😴 Épuisé</span><span>⚡ En forme</span></div>
-  <button class="btn" id="btn-energy-next" disabled>Voir mes stratégies →</button>
+
+  <!-- Étape 2 : énergie (affiché après réponse) -->
+  <div id="energy-section" style="display:none">
+    <h1>Comment tu <em>te sens</em> ?</h1>
+    <p class="sub">Ton niveau d'énergie en ce moment — sois honnête.</p>
+    <div class="energy-scale" id="energy-scale"></div>
+    <div class="energy-labels"><span>😴 Épuisé</span><span>⚡ En forme</span></div>
+    <div id="energy-boost-hint" class="energy-boost-hint" style="display:none">
+      <strong>💡 Ton énergie est basse — un boost peut vraiment aider.</strong>
+      <div class="energy-boost-chips" id="energy-boost-chips"></div>
+    </div>
+    <button class="btn" id="btn-energy-next" style="margin-top:22px" disabled>Voir mes stratégies →</button>
+  </div>
 </section>
 
 <!-- BLOCKED: STRATÉGIES -->
@@ -1119,6 +1185,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <button class="btn" id="f-home">Retour à l'accueil</button>
 </section>
 
+<button class="settings-fab" id="settings-fab" title="Paramètres">⚙️</button>
 </main>
 <script>
 // ─── FIREBASE CONFIG ───────────────────────────────────────────────
@@ -1327,6 +1394,62 @@ function initAuth() {
     firstCall = false;
   });
 }
+
+// ─── SETTINGS ───
+const SETTINGS_KEY = 'focustdah_settings';
+const DEFAULT_DRINKS = [
+  { emoji: '☕', label: 'Café' },
+  { emoji: '🍵', label: 'Matcha' },
+  { emoji: '⚡', label: 'Holy Energy' },
+  { emoji: '🥤', label: 'Red Bull' },
+  { emoji: '💧', label: 'Eau froide' },
+];
+const DEFAULT_SUPPLEMENTS = [
+  { emoji: '🐟', label: 'Oméga-3' },
+  { emoji: '💊', label: 'Magnésium' },
+  { emoji: '🌿', label: 'Rhodiola' },
+  { emoji: '🧡', label: 'Vitamine B' },
+];
+const DEFAULT_MODES = [
+  { id: '2min',    enabled: true, label: 'Juste 2 minutes',  emoji: '⚡', duration: 2,  desc: "Commence seulement 2 minutes. Parfait quand tu es bloquée ou sans énergie." },
+  { id: 'reverse', enabled: true, label: 'Reverse Pomodoro', emoji: '🍅', duration: 25, desc: "Travaille tant que tu peux. Pause quand ton attention baisse." },
+  { id: 'micro',   enabled: true, label: 'Micro-étapes',     emoji: '🔬', duration: 10, desc: "Des actions minuscules, une à la fois. Rien d'autre visible." },
+  { id: 'one',     enabled: true, label: 'Une seule chose',  emoji: '🎯', duration: 25, desc: "Un écran, une action, un timer. Cerveau en paix." },
+];
+const DEFAULT_MICRO_PRESETS = [
+  { emoji: '🗂',  label: 'Commencer à ficher',       primary: true  },
+  { emoji: '✅',  label: 'Finir de ficher',            primary: true  },
+  { emoji: '✏️', label: 'Faire les exercices',        primary: true  },
+  { emoji: '❓',  label: 'Faire des quizzs',           primary: true  },
+  { emoji: '🖍',  label: 'Surligner les fiches',       primary: true  },
+  { emoji: '📖',  label: 'Lire le cours',              primary: false },
+  { emoji: '📹',  label: 'Regarder la vidéo / cours',  primary: false },
+  { emoji: '🧠',  label: 'Faire une carte mentale',    primary: false },
+  { emoji: '🔁',  label: 'Réviser les fiches',         primary: false },
+  { emoji: '📄',  label: 'Page vierge',                primary: false },
+];
+function getSettings() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    // Merge with defaults so new keys are always present
+    const modes = (raw.modes || DEFAULT_MODES).map(m => {
+      const def = DEFAULT_MODES.find(d => d.id === m.id);
+      return def ? Object.assign({}, def, m) : m;
+    });
+    return {
+      drinks:       raw.drinks       || DEFAULT_DRINKS,
+      supplements:  raw.supplements  || DEFAULT_SUPPLEMENTS,
+      modes:        modes.length ? modes : DEFAULT_MODES,
+      microPresets: raw.microPresets || DEFAULT_MICRO_PRESETS,
+    };
+  } catch(e) {
+    return { drinks: DEFAULT_DRINKS, supplements: DEFAULT_SUPPLEMENTS, modes: DEFAULT_MODES, microPresets: DEFAULT_MICRO_PRESETS };
+  }
+}
+function saveSettings(s) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+}
+function getSeanceMicroOptions() { return getSettings().microPresets; }
 
 // ─── STORAGE ───
 const STORE = 'tache_v3';
@@ -2542,7 +2665,7 @@ function renderStepsList(steps, container, saveFn, seanceMode, _openNames) {
       predefsRow.className = 'add-micro-predefs-row';
       predefsRow.style.display = 'none';
       const extraPredefItems = [];
-      SEANCE_MICRO_OPTIONS.forEach(function(opt) {
+      getSeanceMicroOptions().forEach(function(opt) {
         const lbl = document.createElement('label');
         lbl.className = 'predef-item';
         const ck = document.createElement('input');
@@ -3053,7 +3176,7 @@ function promptSeanceMicros(onConfirm) {
     '<button class="btn-delete-project" id="smp-skip" style="margin-top:8px;border:none;background:none;color:var(--muted);font-size:13px;padding:10px;display:block;width:100%;cursor:pointer">Aucune sous-tâche</button>';
   bd.appendChild(sheet); document.body.appendChild(bd);
   const optsEl = document.getElementById('smp-opts');
-  SEANCE_MICRO_OPTIONS.forEach(function(opt) {
+  getSeanceMicroOptions().forEach(function(opt) {
     const btn = document.createElement('button');
     btn.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;border:1.5px solid var(--border);background:var(--soft);color:var(--text);font-size:14px;text-align:left;cursor:pointer;transition:all .15s;width:100%';
     btn.dataset.label = opt.label;
@@ -3589,11 +3712,146 @@ function renderModeSelect() {
   const p = currentProject;
   document.getElementById('ms-name').textContent = p.name;
   document.getElementById('ms-goal').textContent = p.goal || 'On y va, une micro-action à la fois.';
+  // Show/hide cards based on settings
+  const enabledModes = getSettings().modes.filter(m => m.enabled).map(m => m.id);
+  document.querySelectorAll('.mode-card').forEach(card => {
+    card.style.display = enabledModes.includes(card.dataset.mode) ? '' : 'none';
+  });
 }
 
 document.querySelectorAll('.mode-card').forEach(card => {
   card.onclick = () => { currentMode = card.dataset.mode; startSession(); };
 });
+
+// ─── SETTINGS MODAL ───
+function openSettings() {
+  const existing = document.getElementById('settings-modal-bd');
+  if (existing) { existing.remove(); return; }
+  const bd = document.createElement('div');
+  bd.id = 'settings-modal-bd';
+  bd.className = 'cat-modal-backdrop';
+  const sheet = document.createElement('div');
+  sheet.className = 'cat-modal-sheet';
+  sheet.innerHTML = `
+    <div class="cat-modal-handle"></div>
+    <h2 style="margin-bottom:16px">Paramètres ⚙️</h2>
+    <div class="settings-tabs" id="st-tabs">
+      <button class="settings-tab active" data-tab="micros">🔬 Micros</button>
+      <button class="settings-tab" data-tab="modes">⏱ Modes</button>
+      <button class="settings-tab" data-tab="drinks">☕ Boissons</button>
+      <button class="settings-tab" data-tab="suppl">💊 Compléments</button>
+    </div>
+    <div id="st-content"></div>`;
+  bd.appendChild(sheet);
+  document.body.appendChild(bd);
+  bd.addEventListener('click', e => { if (e.target === bd) bd.remove(); });
+
+  function switchTab(tab) {
+    bd.querySelectorAll('.settings-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    const c = document.getElementById('st-content');
+    const s = getSettings();
+    if (tab === 'micros')  renderSettingsMicros(c, s);
+    else if (tab === 'modes')  renderSettingsModes(c, s);
+    else if (tab === 'drinks') renderSettingsList(c, s, 'drinks', 'Boissons énergisantes', '☕');
+    else if (tab === 'suppl')  renderSettingsList(c, s, 'supplements', 'Compléments alimentaires', '💊');
+  }
+  bd.querySelectorAll('.settings-tab').forEach(t => { t.onclick = () => switchTab(t.dataset.tab); });
+  switchTab('micros');
+}
+
+function renderSettingsMicros(container, s) {
+  container.innerHTML = '<p class="settings-section-desc">Ces actions apparaissent dans le sélecteur de micro-tâches. Le toggle ☀ les marque comme principales (affichées en premier).</p>';
+  s.microPresets.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'settings-item';
+    row.innerHTML = `
+      <span class="settings-item-emoji">${item.emoji}</span>
+      <div class="settings-item-label">${item.label}${item.primary ? ' <span class="settings-primary-badge">Principal</span>' : ''}</div>
+      <label class="settings-toggle" title="Principal">
+        <input type="checkbox" ${item.primary ? 'checked' : ''}>
+        <span class="settings-toggle-track"></span>
+      </label>
+      <button class="settings-item-del" title="Supprimer">✕</button>`;
+    row.querySelector('input').onchange = e => {
+      const ns = getSettings(); ns.microPresets[i].primary = e.target.checked; saveSettings(ns);
+      renderSettingsMicros(container, getSettings());
+    };
+    row.querySelector('.settings-item-del').onclick = () => {
+      const ns = getSettings(); ns.microPresets.splice(i, 1); saveSettings(ns);
+      renderSettingsMicros(container, getSettings());
+    };
+    container.appendChild(row);
+  });
+  const addRow = document.createElement('div');
+  addRow.className = 'settings-add-row';
+  addRow.innerHTML = `<input class="settings-add-inp" id="mi-inp" placeholder="Ex: 🎯 Relire mes notes…"><button class="settings-add-btn">+</button>`;
+  addRow.querySelector('.settings-add-btn').onclick = () => {
+    const val = addRow.querySelector('#mi-inp').value.trim();
+    if (!val) return;
+    const m = val.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\s*/u);
+    const emoji = m ? m[0].trim() : '✏️';
+    const label = m ? val.slice(m[0].length).trim() : val;
+    if (!label) return;
+    const ns = getSettings(); ns.microPresets.push({ emoji, label, primary: true }); saveSettings(ns);
+    renderSettingsMicros(container, getSettings());
+  };
+  container.appendChild(addRow);
+}
+
+function renderSettingsModes(container, s) {
+  container.innerHTML = '<p class="settings-section-desc">Active ou désactive les modes de travail proposés lors d\'une session.</p>';
+  s.modes.forEach((mode, i) => {
+    const row = document.createElement('div');
+    row.className = 'settings-item';
+    row.innerHTML = `
+      <span class="settings-item-emoji">${mode.emoji}</span>
+      <div class="settings-item-label">
+        <div>${mode.label}</div>
+        <div class="settings-item-meta">${mode.duration} min · ${mode.desc}</div>
+      </div>
+      <label class="settings-toggle">
+        <input type="checkbox" ${mode.enabled ? 'checked' : ''}>
+        <span class="settings-toggle-track"></span>
+      </label>`;
+    row.querySelector('input').onchange = e => {
+      const ns = getSettings(); ns.modes[i].enabled = e.target.checked; saveSettings(ns);
+    };
+    container.appendChild(row);
+  });
+}
+
+function renderSettingsList(container, s, key, title, defaultEmoji) {
+  container.innerHTML = `<p class="settings-section-desc">Personnalise ta liste de ${title.toLowerCase()}.</p>`;
+  (s[key] || []).forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'settings-item';
+    row.innerHTML = `
+      <span class="settings-item-emoji">${item.emoji}</span>
+      <span class="settings-item-label">${item.label}</span>
+      <button class="settings-item-del">✕</button>`;
+    row.querySelector('.settings-item-del').onclick = () => {
+      const ns = getSettings(); ns[key].splice(i, 1); saveSettings(ns);
+      renderSettingsList(container, getSettings(), key, title, defaultEmoji);
+    };
+    container.appendChild(row);
+  });
+  const addRow = document.createElement('div');
+  addRow.className = 'settings-add-row';
+  addRow.innerHTML = `<input class="settings-add-inp" id="${key}-inp" placeholder="Ex: ${defaultEmoji} Mon option…"><button class="settings-add-btn">+</button>`;
+  addRow.querySelector('.settings-add-btn').onclick = () => {
+    const val = addRow.querySelector(`#${key}-inp`).value.trim();
+    if (!val) return;
+    const m = val.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\s*/u);
+    const emoji = m ? m[0].trim() : defaultEmoji;
+    const label = m ? val.slice(m[0].length).trim() : val;
+    if (!label) return;
+    const ns = getSettings(); ns[key].push({ emoji, label }); saveSettings(ns);
+    renderSettingsList(container, getSettings(), key, title, defaultEmoji);
+  };
+  container.appendChild(addRow);
+}
+
+document.getElementById('settings-fab').onclick = openSettings;
 
 // ─── TIMER STATE ───
 const MODES = {
@@ -3966,6 +4224,42 @@ function getEnergyLabel(lvl) {
 function showBlockedEnergy(from) {
   blockedCalledFrom = from || 'session';
   blockedEnergy = 0;
+
+  // Reset sections
+  document.getElementById('suppl-card').style.display = 'block';
+  document.getElementById('suppl-options').style.display = 'none';
+  document.getElementById('energy-section').style.display = 'none';
+  document.getElementById('energy-boost-hint').style.display = 'none';
+  document.getElementById('btn-energy-next').disabled = true;
+
+  // ── Étape 1 : Compléments ? ──
+  function showEnergySection() {
+    document.getElementById('suppl-card').style.display = 'none';
+    document.getElementById('energy-section').style.display = 'block';
+  }
+
+  function showBoostOptions() {
+    const { drinks, supplements } = getSettings();
+    const all = [...drinks, ...supplements];
+    const listEl = document.getElementById('suppl-options-list');
+    listEl.innerHTML = '';
+    all.forEach(item => {
+      const chip = document.createElement('span');
+      chip.className = 'suppl-option-chip';
+      chip.textContent = item.emoji + ' ' + item.label;
+      listEl.appendChild(chip);
+    });
+    document.getElementById('suppl-options').style.display = 'block';
+  }
+
+  document.getElementById('suppl-yes').onclick = () => showEnergySection();
+  document.getElementById('suppl-no').onclick = () => {
+    showBoostOptions();
+    // After a short pause, reveal energy section below
+    setTimeout(() => showEnergySection(), 1400);
+  };
+
+  // ── Étape 2 : Énergie ──
   const colors = ['#fc5c7d','#fc6e5c','#fc875c','#fc9f5c','#fcba5c','#f0d060','#c8e04a','#9edd4a','#6ed85a','#5cfca0'];
   const scale = document.getElementById('energy-scale');
   scale.innerHTML = '';
@@ -3979,22 +4273,25 @@ function showBlockedEnergy(from) {
       btn.classList.add('selected');
       blockedEnergy = i;
       document.getElementById('btn-energy-next').disabled = false;
+      // Si énergie < 5 → afficher hint avec boissons + compléments
+      const hint = document.getElementById('energy-boost-hint');
+      if (i < 5) {
+        const { drinks, supplements } = getSettings();
+        const all = [...drinks, ...supplements];
+        const chipsEl = document.getElementById('energy-boost-chips');
+        chipsEl.innerHTML = '';
+        all.slice(0, 6).forEach(item => {
+          const ch = document.createElement('span');
+          ch.className = 'energy-boost-chip';
+          ch.textContent = item.emoji + ' ' + item.label;
+          chipsEl.appendChild(ch);
+        });
+        hint.style.display = 'block';
+      } else {
+        hint.style.display = 'none';
+      }
     };
     scale.appendChild(btn);
-  }
-  document.getElementById('btn-energy-next').disabled = true;
-
-  // Carte compléments — affichée si pas encore acquittée aujourd'hui
-  const today = new Date().toDateString();
-  const card = document.getElementById('suppl-card');
-  if (localStorage.getItem('focustdah_suppl_ack') !== today) {
-    card.style.display = 'block';
-    document.getElementById('suppl-ack').onclick = () => {
-      localStorage.setItem('focustdah_suppl_ack', today);
-      card.style.display = 'none';
-    };
-  } else {
-    card.style.display = 'none';
   }
 
   show('blocked-energy');

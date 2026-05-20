@@ -340,6 +340,66 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .cat-add-btn { width: 100%; border: 1.5px dashed var(--border); border-radius: 16px; background: none; color: var(--muted); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; padding: 14px; cursor: pointer; margin-bottom: 16px; transition: border-color .2s, color .2s; }
 .cat-add-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+/* ── JE SUIS BLOQUÉ ── */
+.btn-blocked {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; border: 1.5px solid rgba(252,92,125,.28); border-radius: 18px;
+  background: rgba(252,92,125,.06); color: rgba(252,92,125,.75);
+  font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+  padding: 15px; cursor: pointer; margin-top: 10px;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.btn-blocked:active { border-color: #fc5c7d; background: rgba(252,92,125,.13); color: #fc5c7d; }
+
+.energy-scale { display: flex; gap: 7px; margin: 18px 0 10px; justify-content: center; flex-wrap: nowrap; }
+.energy-btn {
+  flex: 1; max-width: 46px; height: 52px; border-radius: 13px;
+  border: 2px solid transparent; font-family: 'Syne', sans-serif;
+  font-size: 15px; font-weight: 800; cursor: pointer;
+  transition: transform .15s, border-color .15s;
+}
+.energy-btn.selected { border-color: rgba(255,255,255,.8); transform: scale(1.14); }
+.energy-labels { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+
+.strategy-card {
+  width: 100%; display: flex; align-items: flex-start; gap: 16px;
+  border: 1.5px solid var(--border); border-radius: 20px;
+  background: var(--card); padding: 20px 18px;
+  text-align: left; margin-bottom: 12px; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.strategy-card:active { border-color: var(--accent); background: rgba(124,92,252,.06); }
+.strategy-emoji { font-size: 34px; flex: 0 0 auto; line-height: 1; padding-top: 2px; }
+.strategy-info { flex: 1; }
+.strategy-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.strategy-desc { color: var(--muted); font-size: 13px; line-height: 1.45; }
+.strategy-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-top: 8px; }
+.badge-recommended { background: rgba(92,252,160,.14); color: var(--green); }
+.badge-secondary { background: rgba(124,92,252,.12); color: var(--accent); }
+
+.breath-wrap { display: flex; flex-direction: column; align-items: center; padding: 8px 0 4px; }
+.breath-circle-outer {
+  width: 150px; height: 150px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(124,92,252,.1); border: 2.5px solid rgba(124,92,252,.22);
+  margin-bottom: 20px;
+  transition: transform 1.2s ease-in-out, background 1.2s, border-color 1.2s;
+}
+.breath-circle-outer.expand  { transform: scale(1.35); background: rgba(124,92,252,.2); border-color: rgba(124,92,252,.5); }
+.breath-circle-outer.hold    { transform: scale(1.35); background: rgba(92,252,160,.14); border-color: rgba(92,252,160,.45); }
+.breath-circle-outer.exhale  { transform: scale(1);    background: rgba(124,92,252,.05); border-color: rgba(124,92,252,.12); }
+.breath-count { font-family: 'Syne', sans-serif; font-size: 46px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; text-align: center; }
+.breath-phase { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+.breath-cycle-dots { display: flex; gap: 10px; }
+.breath-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: background .4s; }
+.breath-dot.done { background: var(--green); }
+
+.action-timer-num { font-family: 'Syne', sans-serif; font-size: 62px; font-weight: 800; text-align: center; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; margin: 14px 0; }
+.action-timer-track { height: 10px; border-radius: 10px; background: var(--soft); overflow: hidden; margin-bottom: 22px; }
+.action-timer-bar { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 1s linear; }
+.twominrule-task { width: 100%; border: 2px solid var(--accent); border-radius: 16px; background: var(--soft); color: var(--text); font: 15px 'DM Sans', sans-serif; padding: 15px 17px; outline: none; resize: none; margin: 14px 0; }
+.twominrule-task::placeholder { color: var(--muted); }
+
 /* ── SPLASH ── */
 #splash {
   display: none;
@@ -768,6 +828,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   </div>
   <button class="btn-green" id="btn-done">✓ C'est fait</button>
   <button class="btn-ghost" id="btn-skip">Passer cette micro-action →</button>
+  <button class="btn-blocked" id="btn-blocked">🆘 Je suis bloqué</button>
   <div class="progress-wrap" style="margin-top:22px">
     <div class="prog-row">
       <span id="s-step-prog-label">Étape en cours</span>
@@ -790,6 +851,29 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <p class="celeb-sub" id="c-sub">Tu avances vraiment bien.</p>
   <button class="btn" id="c-next">Étape suivante →</button>
   <button class="btn-outline" id="c-home">Retour à l'accueil</button>
+</section>
+
+<!-- BLOCKED: ÉNERGIE -->
+<section class="screen" id="blocked-energy">
+  <button class="back" id="back-blocked-energy">← Retour</button>
+  <h1>Comment tu <em>te sens</em> ?</h1>
+  <p class="sub">Ton niveau d'énergie en ce moment — sois honnête avec toi-même.</p>
+  <div class="energy-scale" id="energy-scale"></div>
+  <div class="energy-labels"><span>😴 Épuisé</span><span>⚡ En forme</span></div>
+  <button class="btn" id="btn-energy-next" disabled>Voir mes stratégies →</button>
+</section>
+
+<!-- BLOCKED: STRATÉGIES -->
+<section class="screen" id="blocked-strategies">
+  <button class="back" id="back-blocked-strategies">← Retour</button>
+  <div id="strategies-header"></div>
+  <div id="strategies-list"></div>
+</section>
+
+<!-- BLOCKED: ACTION -->
+<section class="screen" id="blocked-action">
+  <button class="back" id="back-blocked-action">← Changer de stratégie</button>
+  <div id="blocked-action-content"></div>
 </section>
 
 <!-- TIMER SETUP -->
@@ -2259,6 +2343,328 @@ document.getElementById('ft-opt-home').onclick = () => {
   ftRunning = false;
   renderHome();
   show('home');
+};
+
+// ════════════════════════════════════════════════
+// ─── JE SUIS BLOQUÉ ───
+// ════════════════════════════════════════════════
+let blockedEnergy = 0;
+let blockedCalledFrom = 'session';
+let breathInterval = null, pauseInterval = null, stretchInterval = null, twoMinInterval = null;
+
+const STRATEGIES_DATA = [
+  { id:'breathing', emoji:'🌬️', title:'Respiration 4-7-8',    desc:'Calme le système nerveux en moins de 2 min',          badge:'Très efficace',        badgeClass:'badge-recommended' },
+  { id:'pause',     emoji:'☕',  title:'Micro-pause totale',    desc:'Déconnecte-toi complètement pendant 5 min',           badge:'Pour récupérer',       badgeClass:'badge-secondary'   },
+  { id:'stretch',   emoji:'🧘', title:'Étirements rapides',    desc:'Bouge ton corps pour relancer l\'énergie — 2 min',    badge:'Booster d\'énergie',   badgeClass:'badge-recommended' },
+  { id:'2min',      emoji:'✏️', title:'Règle des 2 minutes',   desc:'Une micro-tâche ultra-simple pour te remettre en mouvement', badge:'Se relancer',   badgeClass:'badge-recommended' },
+  { id:'switch',    emoji:'🔄', title:'Changer de tâche',      desc:'Passe à une étape plus facile du projet',             badge:'Débloquer',            badgeClass:'badge-secondary'   }
+];
+
+function getStrategiesForEnergy(lvl) {
+  if (lvl <= 3) return ['breathing','pause','stretch'];
+  if (lvl <= 6) return ['2min','stretch','breathing'];
+  return ['2min','switch','breathing'];
+}
+function getEnergyLabel(lvl) {
+  if (lvl <= 2) return '😴 Vraiment épuisé';
+  if (lvl <= 4) return '😔 Fatigué';
+  if (lvl <= 6) return '😐 Moyen';
+  if (lvl <= 8) return '🙂 Correct';
+  return '⚡ Bien chargé';
+}
+
+// ── Écran énergie ──
+function showBlockedEnergy(from) {
+  blockedCalledFrom = from || 'session';
+  blockedEnergy = 0;
+  const colors = ['#fc5c7d','#fc6e5c','#fc875c','#fc9f5c','#fcba5c','#f0d060','#c8e04a','#9edd4a','#6ed85a','#5cfca0'];
+  const scale = document.getElementById('energy-scale');
+  scale.innerHTML = '';
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'energy-btn';
+    btn.textContent = i;
+    btn.style.cssText = `background:${colors[i-1]}22;color:${colors[i-1]}`;
+    btn.onclick = () => {
+      document.querySelectorAll('.energy-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      blockedEnergy = i;
+      document.getElementById('btn-energy-next').disabled = false;
+    };
+    scale.appendChild(btn);
+  }
+  document.getElementById('btn-energy-next').disabled = true;
+  show('blocked-energy');
+}
+
+// ── Écran stratégies ──
+function showBlockedStrategies() {
+  const ids = getStrategiesForEnergy(blockedEnergy);
+  const label = getEnergyLabel(blockedEnergy);
+  document.getElementById('strategies-header').innerHTML = `
+    <p style="color:var(--muted);font-size:13px;margin-bottom:6px">Énergie ${blockedEnergy}/10 · ${label}</p>
+    <h1 style="font-family:Syne,sans-serif;font-size:26px;font-weight:800;margin-bottom:4px">Par <em style="font-style:normal;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">ici</em> pour débloquer ✦</h1>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:24px">Choisis la stratégie qui te parle le plus.</p>`;
+  const list = document.getElementById('strategies-list');
+  list.innerHTML = '';
+  ids.forEach((id, i) => {
+    const s = STRATEGIES_DATA.find(x => x.id === id);
+    const card = document.createElement('button');
+    card.className = 'strategy-card';
+    card.innerHTML = `
+      <div class="strategy-emoji">${s.emoji}</div>
+      <div class="strategy-info">
+        <div class="strategy-title">${s.title}</div>
+        <div class="strategy-desc">${s.desc}</div>
+        <span class="strategy-badge ${i === 0 ? 'badge-recommended' : s.badgeClass}">${i === 0 ? '★ Recommandé pour toi' : s.badge}</span>
+      </div>`;
+    card.onclick = () => startStrategy(id);
+    list.appendChild(card);
+  });
+  show('blocked-strategies');
+}
+
+// ── Lancer une stratégie ──
+function startStrategy(id) {
+  clearInterval(breathInterval); clearInterval(pauseInterval);
+  clearInterval(stretchInterval); clearInterval(twoMinInterval);
+  show('blocked-action');
+  if      (id === 'breathing') startBreathing();
+  else if (id === 'pause')     startPause(300);
+  else if (id === 'stretch')   startStretch();
+  else if (id === '2min')      start2MinRule();
+  else if (id === 'switch')    showSwitchTask();
+}
+
+// ── RESPIRATION 4-7-8 ──
+let breathPhase = 'inhale', breathCount = 4, breathCycles = 0;
+const BREATH_PHASES = { inhale:{label:'Inspire…',dur:4,next:'hold'}, hold:{label:'Retiens…',dur:7,next:'exhale'}, exhale:{label:'Expire…',dur:8,next:'inhale'} };
+const BREATH_TOTAL = 3;
+
+function startBreathing() {
+  breathPhase = 'inhale'; breathCount = 4; breathCycles = 0;
+  renderBreath();
+  breathInterval = setInterval(() => {
+    breathCount--;
+    const countEl = document.getElementById('breath-count');
+    const phaseEl = document.getElementById('breath-phase');
+    const circleEl = document.getElementById('breath-circle');
+    if (countEl) countEl.textContent = breathCount;
+    if (phaseEl) phaseEl.textContent = BREATH_PHASES[breathPhase].label;
+    if (breathCount <= 0) {
+      const nxt = BREATH_PHASES[breathPhase].next;
+      breathPhase = nxt;
+      if (nxt === 'inhale') breathCycles++;
+      if (breathCycles >= BREATH_TOTAL) { clearInterval(breathInterval); showDone('breathing'); return; }
+      breathCount = BREATH_PHASES[breathPhase].dur;
+      renderBreath();
+    }
+    const cls = breathPhase === 'inhale' ? 'expand' : breathPhase === 'hold' ? 'hold' : 'exhale';
+    if (circleEl) circleEl.className = 'breath-circle-outer ' + cls;
+  }, 1000);
+}
+
+function renderBreath() {
+  const cls = breathPhase === 'inhale' ? 'expand' : breathPhase === 'hold' ? 'hold' : 'exhale';
+  const dots = Array.from({length:BREATH_TOTAL}, (_,i) =>
+    `<div class="breath-dot${i < breathCycles ? ' done' : ''}"></div>`).join('');
+  document.getElementById('blocked-action-content').innerHTML = `
+    <h1 style="font-family:Syne,sans-serif;font-size:24px;font-weight:800;margin-bottom:4px">Respiration <em style="font-style:normal;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">4-7-8</em></h1>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:20px">Inspire 4s · Retiens 7s · Expire 8s · × 3 cycles</p>
+    <div class="breath-wrap">
+      <div class="breath-circle-outer ${cls}" id="breath-circle">
+        <div class="breath-count" id="breath-count">${breathCount}</div>
+      </div>
+      <div class="breath-phase" id="breath-phase">${BREATH_PHASES[breathPhase].label}</div>
+      <div class="breath-cycle-dots">${dots}</div>
+    </div>`;
+}
+
+// ── MICRO-PAUSE ──
+let pauseRemain = 300;
+function startPause(sec) {
+  pauseRemain = sec;
+  renderPause();
+  pauseInterval = setInterval(() => {
+    pauseRemain--;
+    const n = document.getElementById('pause-num'), b = document.getElementById('pause-bar');
+    if (n) n.textContent = fmt(pauseRemain);
+    if (b) b.style.width = (pauseRemain / sec * 100) + '%';
+    if (pauseRemain <= 0) { clearInterval(pauseInterval); showDone('pause'); }
+  }, 1000);
+}
+function renderPause() {
+  document.getElementById('blocked-action-content').innerHTML = `
+    <h1 style="font-family:Syne,sans-serif;font-size:24px;font-weight:800;margin-bottom:4px">Micro-<em style="font-style:normal;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">pause</em></h1>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:24px">Déconnecte-toi complètement. Sans culpabilité.</p>
+    <div class="action-timer-num" id="pause-num">${fmt(pauseRemain)}</div>
+    <div class="action-timer-track"><div class="action-timer-bar" id="pause-bar" style="width:100%"></div></div>
+    <div style="background:var(--soft);border-radius:16px;padding:16px 18px;margin-bottom:20px;display:grid;gap:10px">
+      <div style="font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px">Pendant ces 5 minutes</div>
+      <div style="font-size:14px">📱 Pose ton téléphone face vers le bas</div>
+      <div style="font-size:14px">🪟 Regarde au loin ou par la fenêtre</div>
+      <div style="font-size:14px">💧 Bois un verre d'eau</div>
+      <div style="font-size:14px">🌬️ Respire lentement, sans y penser</div>
+    </div>
+    <button class="btn-outline" id="pause-skip">Terminer maintenant</button>`;
+  document.getElementById('pause-skip').onclick = () => { clearInterval(pauseInterval); showDone('pause'); };
+}
+
+// ── ÉTIREMENTS ──
+const STRETCHES = [
+  { emoji:'🔄', title:'Roulez les épaules',   desc:'10 rotations en avant, puis 10 en arrière', dur:30 },
+  { emoji:'🧘', title:'Étirement du cou',     desc:'Inclinez la tête à droite 15s, puis à gauche 15s', dur:30 },
+  { emoji:'🙆', title:'Bras vers le ciel',    desc:'Levez les deux bras, étirez-vous vers le haut', dur:30 },
+  { emoji:'✊', title:'Mains et poignets',    desc:'Serrez et relâchez les poings 10 fois lentement', dur:20 }
+];
+let stretchIdx = 0, stretchRemain = 0;
+
+function startStretch() { stretchIdx = 0; nextStretch(); }
+function nextStretch() {
+  clearInterval(stretchInterval);
+  if (stretchIdx >= STRETCHES.length) { showDone('stretch'); return; }
+  const s = STRETCHES[stretchIdx]; stretchRemain = s.dur;
+  const dots = STRETCHES.map((_,i) =>
+    `<div style="width:9px;height:9px;border-radius:50%;background:${i < stretchIdx ? 'var(--green)' : i === stretchIdx ? 'var(--accent)' : 'var(--border)'}"></div>`).join('');
+  document.getElementById('blocked-action-content').innerHTML = `
+    <h1 style="font-family:Syne,sans-serif;font-size:24px;font-weight:800;margin-bottom:4px">Étirements <em style="font-style:normal;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">rapides</em></h1>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:20px">${stretchIdx+1} / ${STRETCHES.length}</p>
+    <div style="text-align:center;margin:16px 0 24px">
+      <div style="font-size:72px;margin-bottom:10px">${s.emoji}</div>
+      <div style="font-family:Syne,sans-serif;font-size:20px;font-weight:800;margin-bottom:6px">${s.title}</div>
+      <div style="color:var(--muted);font-size:14px;line-height:1.5">${s.desc}</div>
+    </div>
+    <div class="action-timer-num" id="stretch-num">${stretchRemain}s</div>
+    <div class="action-timer-track"><div class="action-timer-bar" id="stretch-bar" style="width:100%"></div></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px">${dots}</div>
+    <button class="btn" id="stretch-next">Suivant →</button>`;
+  document.getElementById('stretch-next').onclick = () => { clearInterval(stretchInterval); stretchIdx++; nextStretch(); };
+  stretchInterval = setInterval(() => {
+    stretchRemain--;
+    const n = document.getElementById('stretch-num'), b = document.getElementById('stretch-bar');
+    if (n) n.textContent = stretchRemain + 's';
+    if (b) b.style.width = (stretchRemain / s.dur * 100) + '%';
+    if (stretchRemain <= 0) { clearInterval(stretchInterval); stretchIdx++; nextStretch(); }
+  }, 1000);
+}
+
+// ── RÈGLE DES 2 MINUTES ──
+let twoMinTask = '', twoMinRound = 1, twoMinRemain = 0, twoMinTotal = 120;
+function start2MinRule() {
+  document.getElementById('blocked-action-content').innerHTML = `
+    <h1 style="font-family:Syne,sans-serif;font-size:24px;font-weight:800;margin-bottom:6px">Règle des <em style="font-style:normal;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">2 minutes</em></h1>
+    <p style="color:var(--muted);font-size:14px;line-height:1.55;margin-bottom:6px">Quelle est la chose <strong>la plus simple et concrète</strong> que tu peux faire maintenant ?</p>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:16px">Pas parfaite — juste possible.</p>
+    <textarea class="twominrule-task" id="twomin-input" placeholder="Ex : ouvrir mon cours, écrire la première phrase, chercher un exemple…" rows="3" maxlength="140"></textarea>
+    <button class="btn" id="twomin-start" disabled>C'est parti — 2 min ⏱</button>
+    <p style="color:var(--muted);font-size:12px;text-align:center;margin-top:14px;line-height:1.5">Quand le timer sonne, tu peux continuer ou t'arrêter.<br>Chaque tour compte.</p>`;
+  const input = document.getElementById('twomin-input');
+  const btn   = document.getElementById('twomin-start');
+  input.oninput = () => { btn.disabled = input.value.trim().length < 3; };
+  btn.onclick   = () => { twoMinTask = input.value.trim(); twoMinRound = 1; run2Min(120); };
+  input.focus();
+}
+function run2Min(sec) {
+  clearInterval(twoMinInterval);
+  twoMinRemain = twoMinTotal = sec;
+  document.getElementById('blocked-action-content').innerHTML = `
+    <div style="background:rgba(124,92,252,.08);border:1.5px solid rgba(124,92,252,.2);border-radius:16px;padding:16px 18px;margin-bottom:22px">
+      <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px">Tour ${twoMinRound} · Ta tâche</div>
+      <div style="font-size:15px;font-weight:600;line-height:1.4">${twoMinTask}</div>
+    </div>
+    <div class="action-timer-num" id="twomin-num">${fmt(twoMinRemain)}</div>
+    <div class="action-timer-track"><div class="action-timer-bar" id="twomin-bar" style="width:100%"></div></div>
+    <button class="btn-outline" id="twomin-early">✓ C'est fait avant la fin !</button>`;
+  document.getElementById('twomin-early').onclick = () => { clearInterval(twoMinInterval); done2Min(); };
+  twoMinInterval = setInterval(() => {
+    twoMinRemain--;
+    const n = document.getElementById('twomin-num'), b = document.getElementById('twomin-bar');
+    if (n) n.textContent = fmt(twoMinRemain);
+    if (b) b.style.width = (twoMinRemain / twoMinTotal * 100) + '%';
+    if (twoMinRemain <= 0) { clearInterval(twoMinInterval); done2Min(); }
+  }, 1000);
+}
+function done2Min() {
+  document.getElementById('blocked-action-content').innerHTML = `
+    <div style="text-align:center;padding:28px 0 16px">
+      <div style="font-size:58px;margin-bottom:12px">🌟</div>
+      <h2 style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;margin-bottom:8px">Tour ${twoMinRound} terminé !</h2>
+      <div style="background:var(--soft);border-radius:14px;padding:14px 16px;margin-bottom:20px;font-size:14px;font-style:italic;color:var(--muted);line-height:1.4">"${twoMinTask}"<br><span style="color:var(--green);font-weight:700;font-style:normal">✓ Fait.</span></div>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:24px">Tu te sens comment ? Prêt(e) pour un autre tour ?</p>
+      <button class="btn" id="twomin-again" style="margin-bottom:12px">Encore 2 minutes 🔄</button>
+      <button class="btn-outline" id="twomin-work">Je suis lancé(e) — retour au travail 💪</button>
+    </div>`;
+  document.getElementById('twomin-again').onclick = () => { twoMinRound++; run2Min(120); };
+  document.getElementById('twomin-work').onclick  = () => show(blockedCalledFrom);
+}
+
+// ── CHANGER DE TÂCHE ──
+function showSwitchTask() {
+  const p = currentProject;
+  const allSteps = (p && p.categories && p.categories.length)
+    ? p.categories.flatMap(c => c.steps.map(s => ({...s, catName:c.name})))
+    : ((p && p.steps) || []).map(s => ({...s, catName:null}));
+  const available = allSteps.filter(s => (s.done||0) < s.micros.length);
+  if (!available.length) {
+    document.getElementById('blocked-action-content').innerHTML = `
+      <div style="text-align:center;padding:40px 0">
+        <div style="font-size:56px;margin-bottom:16px">🎉</div>
+        <h2 style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;margin-bottom:12px">Tout est fait !</h2>
+        <button class="btn" onclick="show('${blockedCalledFrom}')">Retour</button>
+      </div>`; return;
+  }
+  const list = available.slice(0,6).map(s => {
+    const pct = s.micros.length ? Math.round((s.done||0)/s.micros.length*100) : 0;
+    return `<button class="strategy-card" onclick="show('${blockedCalledFrom}')">
+      <div class="strategy-info">
+        ${s.catName ? `<div style="font-size:11px;color:var(--muted);margin-bottom:3px">${s.catName}</div>` : ''}
+        <div class="strategy-title">${s.name}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+          <div style="flex:1;height:4px;border-radius:4px;background:var(--soft);overflow:hidden">
+            <div style="height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:${pct}%"></div>
+          </div>
+          <span style="font-size:11px;color:var(--muted)">${pct}%</span>
+        </div>
+      </div></button>`;
+  }).join('');
+  document.getElementById('blocked-action-content').innerHTML = `
+    <h1 style="font-family:Syne,sans-serif;font-size:24px;font-weight:800;margin-bottom:4px">Changer <em style="font-style:normal;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">de tâche</em></h1>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Quelle étape te semble plus accessible maintenant ?</p>
+    ${list}`;
+}
+
+// ── FIN D'UNE STRATÉGIE ──
+function showDone(type) {
+  const msgs = {
+    breathing: { emoji:'✨', title:'C\'est fait !',     sub:'Ton système nerveux est plus calme.<br>Tu es prêt(e) à reprendre ?' },
+    pause:     { emoji:'🔋', title:'Rechargé(e) !',    sub:'Tu as décroché — bien joué.<br>Maintenant on reprend doucement.' },
+    stretch:   { emoji:'💪', title:'Corps réactivé !', sub:'Tu t\'es étiré(e), le sang circule.<br>Prêt(e) à reprendre ?' }
+  };
+  const m = msgs[type] || { emoji:'✅', title:'Terminé !', sub:'Prêt(e) à reprendre ?' };
+  document.getElementById('blocked-action-content').innerHTML = `
+    <div style="text-align:center;padding:36px 0 20px">
+      <div style="font-size:64px;margin-bottom:14px">${m.emoji}</div>
+      <h2 style="font-family:Syne,sans-serif;font-size:24px;font-weight:800;margin-bottom:10px">${m.title}</h2>
+      <p style="color:var(--muted);font-size:15px;line-height:1.65;margin-bottom:32px">${m.sub}</p>
+      <button class="btn" id="done-back-work" style="margin-bottom:12px">Reprendre le travail 💪</button>
+      <button class="btn-outline" id="done-other">Essayer une autre stratégie</button>
+    </div>`;
+  document.getElementById('done-back-work').onclick = () => show(blockedCalledFrom);
+  document.getElementById('done-other').onclick     = () => showBlockedStrategies();
+}
+
+// ── Helpers ──
+function fmt(s) { return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
+
+// ── Event handlers ──
+document.getElementById('btn-blocked').onclick          = () => showBlockedEnergy('session');
+document.getElementById('btn-energy-next').onclick      = () => showBlockedStrategies();
+document.getElementById('back-blocked-energy').onclick  = () => show(blockedCalledFrom);
+document.getElementById('back-blocked-strategies').onclick = () => show('blocked-energy');
+document.getElementById('back-blocked-action').onclick  = () => {
+  clearInterval(breathInterval); clearInterval(pauseInterval);
+  clearInterval(stretchInterval); clearInterval(twoMinInterval);
+  show('blocked-strategies');
 };
 
 // ─── INIT ───

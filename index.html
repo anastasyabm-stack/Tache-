@@ -356,8 +356,8 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 
 .cat-card { border: 1.5px solid var(--border); border-radius: 20px; background: var(--card); margin-bottom: 14px; overflow: hidden; }
 .cat-header { display: flex; flex-direction: column; gap: 8px; padding: 14px 14px 10px; }
-.cat-header-top { display: flex; align-items: center; gap: 10px; }
-.cat-header-actions { display: flex; align-items: center; gap: 8px; padding-left: 56px; }
+.cat-header-top { display: flex; align-items: center; gap: 8px; }
+.cat-header-actions { display: flex; align-items: center; gap: 8px; padding-left: 54px; flex-wrap: nowrap; }
 .cat-mini-circle { width: 46px; height: 46px; min-width: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px var(--soft); flex-shrink: 0; }
 .cat-mini-pct { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 .cat-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
@@ -381,7 +381,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 /* ── MODE CHIP ── */
 .cat-body { overflow:hidden;max-height:2000px;transition:max-height .3s cubic-bezier(.22,1,.36,1); }
 .cat-body.collapsed { max-height:0; }
-.cat-mode-chip { display:inline-flex;align-items:center;gap:4px;background:rgba(124,92,252,.12);border:1px solid rgba(124,92,252,.25);border-radius:10px;color:var(--accent);font-size:12px;font-weight:700;padding:6px 10px;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit;flex-shrink:0;white-space:nowrap; }
+.cat-mode-chip { display:inline-flex;align-items:center;gap:4px;background:rgba(124,92,252,.12);border:1px solid rgba(124,92,252,.25);border-radius:10px;color:var(--accent);font-size:11px;font-weight:700;padding:5px 9px;cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit;flex-shrink:1;white-space:nowrap;min-width:0; }
 .cat-mode-chip:hover { background:rgba(124,92,252,.25);border-color:var(--accent); }
 
 /* ── MODAL CATÉGORIE ── */
@@ -2260,7 +2260,7 @@ function renderStepsList(steps, container, saveFn, seanceMode) {
   const rerenderList = () => renderStepsList(steps, container, saveFn, seanceMode);
 
   function renderStep(step, idx) {
-    if (!step.micros || !step.micros.length) step.micros = ['Commencer', 'Avancer', 'Terminer'];
+    if (!step.micros) step.micros = []; // never null, but respect intentional empty
     const allDone = (step.done || 0) >= step.micros.length && step.micros.length > 0;
     const el = document.createElement('div');
     el.className = 'plan-step' + (allDone ? ' done' : '');
@@ -3097,49 +3097,18 @@ function renderCategoryCard(cat, proj, container) {
   delBtn.className = 'cat-del'; delBtn.textContent = '🗑'; delBtn.title = 'Supprimer';
   (function(cid) { delBtn.onclick = () => deleteCategory(proj, cid); })(cat.id);
 
-  topRow.appendChild(circle); topRow.appendChild(nameDiv); topRow.appendChild(colBtn); topRow.appendChild(delBtn);
-
-  // ── ACTIONS ROW: mode chip + start button ──
-  const actionsRow = document.createElement('div');
-  actionsRow.className = 'cat-header-actions';
-
-  const modeLabels = { default: '📋', seance: '📅', vierge: '🎯' };
-  const modeBtn = document.createElement('button');
-  modeBtn.className = 'cat-mode-chip';
-  modeBtn.title = 'Changer de mode';
-  modeBtn.innerHTML = (modeLabels[cat.mode] || '⚙') + ' Mode <span style="opacity:.6;font-size:10px">✎</span>';
-  (function(c, p) { modeBtn.onclick = function(e) { e.stopPropagation(); promptChangeCatMode(c, p); }; })(cat, proj);
-
-  const startBtn = document.createElement('button');
-  startBtn.className = 'cat-start-btn';
-  startBtn.textContent = cat.mode === 'seance' ? '▶ Commencer' : '▶ Démarrer';
-  startBtn.title = 'Commencer';
-  if (cat.mode === 'vierge') startBtn.style.display = 'none';
-  (function(cid) {
-    startBtn.onclick = function() {
-      currentCategoryId = cid;
-      if (pendingProject) {
-        const list = getProjects(); list.unshift(pendingProject); saveProjects(list);
-        setActiveId(pendingProject.id); currentProject = pendingProject; pendingProject = null;
-      }
-      renderModeSelect(); show('mode-select');
-    };
-  })(cat.id);
-
-  // ── Bouton 📎 Docs ──
+  // ── 📎 Docs button (top row, icon only) ──
   const docInput = document.createElement('input');
   docInput.type = 'file'; docInput.multiple = true; docInput.style.display = 'none';
-  const docBtn = document.createElement('button');
-  docBtn.className = 'cat-mode-chip';
-  docBtn.style.cssText += ';background:rgba(92,252,160,.08);border-color:rgba(92,252,160,.25);color:var(--green)';
-  docBtn.innerHTML = '📎 <span style="font-size:10px;opacity:.7">Docs</span>';
-  docBtn.title = 'Ajouter des documents à cette catégorie';
-  docBtn.onclick = function(e) { e.stopPropagation(); docInput.click(); };
+  const docIconBtn = document.createElement('button');
+  docIconBtn.className = 'cat-collapse-top';
+  docIconBtn.textContent = '📎'; docIconBtn.title = 'Ajouter des documents';
+  docIconBtn.style.cssText += ';font-size:16px;opacity:.65';
+  docIconBtn.onclick = function(e) { e.stopPropagation(); docInput.click(); };
   (function(catId) {
     docInput.onchange = function() {
       if (!this.files.length) return;
-      const files = [...this.files];
-      this.value = '';
+      const files = [...this.files]; this.value = '';
       if (!proj.fileCategories) proj.fileCategories = {};
       const existing = proj.files || [];
       files.forEach(function(file) {
@@ -3156,7 +3125,36 @@ function renderCategoryCard(cat, proj, container) {
   })(cat.id);
   card.appendChild(docInput);
 
-  actionsRow.appendChild(modeBtn); actionsRow.appendChild(docBtn); actionsRow.appendChild(startBtn);
+  topRow.appendChild(circle); topRow.appendChild(nameDiv); topRow.appendChild(docIconBtn); topRow.appendChild(colBtn); topRow.appendChild(delBtn);
+
+  // ── ACTIONS ROW: mode chip + start button (2 items only) ──
+  const actionsRow = document.createElement('div');
+  actionsRow.className = 'cat-header-actions';
+
+  const modeLabels = { default: '📋', seance: '📅', vierge: '🎯' };
+  const modeBtn = document.createElement('button');
+  modeBtn.className = 'cat-mode-chip';
+  modeBtn.title = 'Changer de mode';
+  modeBtn.innerHTML = (modeLabels[cat.mode] || '⚙') + ' Mode <span style="opacity:.6;font-size:10px">✎</span>';
+  (function(c, p) { modeBtn.onclick = function(e) { e.stopPropagation(); promptChangeCatMode(c, p); }; })(cat, proj);
+
+  const startBtn = document.createElement('button');
+  startBtn.className = 'cat-start-btn';
+  startBtn.textContent = '▶ Lancer';
+  startBtn.title = 'Commencer';
+  if (cat.mode === 'vierge') startBtn.style.display = 'none';
+  (function(cid) {
+    startBtn.onclick = function() {
+      currentCategoryId = cid;
+      if (pendingProject) {
+        const list = getProjects(); list.unshift(pendingProject); saveProjects(list);
+        setActiveId(pendingProject.id); currentProject = pendingProject; pendingProject = null;
+      }
+      renderModeSelect(); show('mode-select');
+    };
+  })(cat.id);
+
+  actionsRow.appendChild(modeBtn); actionsRow.appendChild(startBtn);
 
   header.appendChild(topRow); header.appendChild(actionsRow);
   card.appendChild(header);

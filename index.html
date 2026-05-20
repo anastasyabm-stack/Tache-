@@ -1313,6 +1313,32 @@ function renderQT() {
       undoBtn.onclick = () => qtUndo(item.id);
       row.appendChild(undoBtn);
     } else {
+      // Bouton Modifier le texte
+      const editTodoBtn = document.createElement('button');
+      editTodoBtn.className = 'edit-btn';
+      editTodoBtn.textContent = '✎';
+      editTodoBtn.title = 'Modifier';
+      (function(it, textSpan) {
+        editTodoBtn.onclick = function() {
+          const orig = it.text;
+          const inp = document.createElement('input');
+          inp.value = orig;
+          inp.style.cssText = 'flex:1;background:var(--soft);border:1px solid var(--accent);border-radius:8px;color:var(--text);padding:2px 8px;font:inherit;font-size:14px;outline:none';
+          textSpan.replaceWith(inp);
+          inp.focus(); inp.select();
+          function save() {
+            const val = inp.value.trim() || orig;
+            const items = getQT();
+            const ix = items.findIndex(x => x.id === it.id);
+            if (ix !== -1) { items[ix].text = val; saveQT(items); }
+            it.text = val; textSpan.textContent = val; inp.replaceWith(textSpan);
+          }
+          inp.onblur = save;
+          inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); save(); } if (e.key === 'Escape') inp.replaceWith(textSpan); };
+        };
+      })(item, txt);
+      row.appendChild(editTodoBtn);
+
       const del = document.createElement('button');
       del.className = 'qt-del';
       del.textContent = '✕';
@@ -2942,22 +2968,42 @@ function renderCategoryCard(cat, proj, container) {
   })(cat, nameEl, editBtn);
   nameRow.appendChild(nameEl); nameRow.appendChild(editBtn);
 
-  // Info line
+  // Info line (sera mise à jour en temps réel)
   const info = document.createElement('div');
   info.style.cssText = 'color:var(--muted);font-size:12px';
-  if (cat.mode === 'vierge') {
-    const items = (cat.priorities || []).flatMap(p => p.items || []);
-    const doneCount = items.filter(i => i.done).length;
-    info.textContent = doneCount + '/' + items.length + ' tâches';
-  } else if (cat.mode === 'seance') {
-    const totalDone = (cat.steps || []).reduce((a, st) => a + (st.done || 0), 0);
-    const totalM = (cat.steps || []).reduce((a, st) => a + st.micros.length, 0);
-    info.textContent = totalDone + '/' + totalM + ' actions · ' + cat.seanceCount + ' séances';
-  } else {
-    const totalDone = (cat.steps || []).reduce((a, st) => a + (st.done || 0), 0);
-    const totalM = (cat.steps || []).reduce((a, st) => a + st.micros.length, 0);
-    info.textContent = totalDone + '/' + totalM + ' actions · ' + (cat.steps || []).length + ' étapes';
+
+  function refreshCatInfo() {
+    if (cat.mode === 'vierge') {
+      const items = (cat.priorities || []).flatMap(p => p.items || []);
+      const doneCount = items.filter(i => i.done).length;
+      info.textContent = doneCount + '/' + items.length + ' tâches';
+    } else if (cat.mode === 'seance') {
+      const totalDone = (cat.steps || []).reduce((a, st) => a + (st.done || 0), 0);
+      const totalM = (cat.steps || []).reduce((a, st) => a + st.micros.length, 0);
+      info.textContent = totalDone + '/' + totalM + ' actions · ' + (cat.steps || []).length + ' séances';
+    } else {
+      const totalDone = (cat.steps || []).reduce((a, st) => a + (st.done || 0), 0);
+      const totalM = (cat.steps || []).reduce((a, st) => a + st.micros.length, 0);
+      info.textContent = totalDone + '/' + totalM + ' actions · ' + (cat.steps || []).length + ' étapes';
+    }
+    // Also refresh circle
+    const newPct = catPct(cat);
+    circle.style.background = 'conic-gradient(var(--accent) ' + (newPct * 3.6) + 'deg, var(--soft) 0)';
+    pctEl.textContent = newPct + '%';
   }
+  refreshCatInfo();
+
+  // saveFn standard (cocher micros) — met à jour le compteur sans déplacer la carte
+  const catSaveFn = () => { saveProjectChanges(); refreshCatInfo(); };
+
+  // saveFn "bubble" (ajout étape, renommage) — remonte la catégorie en tête + re-render
+  const catBubbleFn = () => {
+    if (proj.categories) {
+      proj.categories = [cat, ...proj.categories.filter(c => c.id !== cat.id)];
+    }
+    saveProjectChanges();
+    renderPlanPreview(proj);
+  };
 
   nameDiv.appendChild(nameRow); nameDiv.appendChild(info);
 
@@ -3008,7 +3054,27 @@ function renderCategoryCard(cat, proj, container) {
   } else {
     const stepsEl = document.createElement('div');
     stepsEl.className = 'cat-steps';
-    renderStepsList(cat.steps || [], stepsEl, saveProjectChanges, cat.mode === 'seance');
+    // ── Fichiers associés à cette catégorie ──
+    const catFiles = (proj.files || []).filter(f => (proj.fileCategories || {})[f] === cat.id);
+    if (catFiles.length) {
+      const filesWrap = document.createElement('div');
+      filesWrap.style.cssText = 'padding:8px 12px 4px;display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--border);margin-bottom:4px';
+      const filesLabel = document.createElement('div');
+      filesLabel.style.cssText = 'width:100%;font-size:11px;color:var(--muted);margin-bottom:2px';
+      filesLabel.textContent = '📎 Fichiers associés';
+      filesWrap.appendChild(filesLabel);
+      catFiles.forEach(function(fname) {
+        const chip = document.createElement('button');
+        chip.style.cssText = 'background:rgba(124,92,252,.12);border:1px solid rgba(124,92,252,.25);border-radius:8px;color:var(--accent);font-size:12px;font-weight:600;padding:4px 10px;cursor:pointer;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+        chip.title = fname;
+        chip.textContent = fname;
+        chip.onclick = function() { openStoredFile(proj.id, fname); };
+        filesWrap.appendChild(chip);
+      });
+      body.appendChild(filesWrap);
+    }
+
+    renderStepsList(cat.steps || [], stepsEl, catSaveFn, cat.mode === 'seance');
     body.appendChild(stepsEl);
 
     // ── Bouton "+ Ajouter une étape" en bas de la catégorie ──
@@ -3034,8 +3100,7 @@ function renderCategoryCard(cat, proj, container) {
       addStepInp.value = '';
       addStepRow.style.display = 'none';
       addStepBtn.style.display = 'block';
-      saveProjectChanges();
-      renderStepsList(cat.steps, stepsEl, saveProjectChanges, cat.mode === 'seance');
+      catBubbleFn();
     }
     addStepConfirm.onclick = doAddStep;
     addStepInp.onkeydown = e => { if (e.key === 'Enter') doAddStep(); if (e.key === 'Escape') { addStepRow.style.display = 'none'; addStepBtn.style.display = 'block'; } };

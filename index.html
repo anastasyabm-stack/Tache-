@@ -327,6 +327,21 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .cat-add-btn { width: 100%; border: 1.5px dashed var(--border); border-radius: 16px; background: none; color: var(--muted); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; padding: 14px; cursor: pointer; margin-bottom: 16px; transition: border-color .2s, color .2s; }
 .cat-add-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+/* ── SPLASH ── */
+#splash {
+  display: none; min-height: 100vh;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 20px;
+}
+#splash.active { display: flex; }
+.splash-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .75s linear infinite;
+}
+
 /* ── AUTH ── */
 #auth { display: none; min-height: 100vh; padding: 60px 22px 40px; }
 #auth.active { display: block; }
@@ -474,6 +489,12 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 <body>
 <main>
 
+<!-- SPLASH -->
+<section class="screen active" id="splash">
+  <span class="logo" style="font-size:24px">✦ focusTDAH</span>
+  <div class="splash-spinner"></div>
+</section>
+
 <!-- AUTH -->
 <section class="screen" id="auth">
   <div style="text-align:center; margin-bottom:48px">
@@ -498,7 +519,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 </section>
 
 <!-- LANDING -->
-<section class="screen active" id="landing">
+<section class="screen" id="landing">
   <div class="landing-logo-row" style="justify-content:space-between;align-items:center">
     <span class="logo" style="font-size:26px">✦ focusTDAH</span>
     <div id="landing-user" style="display:none"></div>
@@ -829,6 +850,8 @@ if (FB_READY) {
   firebase.initializeApp(FIREBASE_CONFIG);
   _auth = firebase.auth();
   _db   = firebase.firestore();
+  // Garder la session même après fermeture du navigateur
+  _auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
 }
 
 // Sync local data → Firestore (debounced 2 s)
@@ -892,10 +915,17 @@ function renderUserPill(user) {
   };
 }
 
+function goToApp(user) {
+  renderUserPill(user);
+  show('landing');
+  initLanding();
+  renderHome();
+}
+
 function initAuth() {
   if (!FB_READY) {
     // Firebase pas configuré — mode local uniquement
-    initLanding(); renderHome();
+    show('landing'); initLanding(); renderHome();
     return;
   }
 
@@ -918,24 +948,28 @@ function initAuth() {
   };
 
   // Continuer sans compte
-  document.getElementById('btn-anon-continue').onclick = () => {
-    show('landing'); initLanding(); renderHome();
-  };
+  document.getElementById('btn-anon-continue').onclick = () => goToApp(null);
 
-  // Écoute l'état auth
+  // Écoute l'état auth — Firebase rappelle IMMÉDIATEMENT avec la session en cache
+  let firstCall = true;
   _auth.onAuthStateChanged(async user => {
     _fbUser = user;
     if (user) {
-      loadingEl.style.display = 'flex';
-      await loadFromFirestore(user.uid);
-      loadingEl.style.display = 'none';
-      renderUserPill(user);
-      show('landing');
-      initLanding();
-      renderHome();
+      // Déjà connecté (session en cache) ou vient de se connecter
+      if (firstCall) {
+        // Premier appel : charge les données en arrière-plan, affiche l'app directement
+        goToApp(user);
+        loadFromFirestore(user.uid).then(() => { renderHome(); renderQT(); });
+      } else {
+        // Reconnexion après déconnexion
+        await loadFromFirestore(user.uid);
+        goToApp(user);
+      }
     } else {
+      // Pas de session → écran de connexion
       show('auth');
     }
+    firstCall = false;
   });
 }
 

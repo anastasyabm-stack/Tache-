@@ -264,6 +264,16 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .plan-step-add-inp:focus { border-color: var(--accent); }
 .plan-step-add-inp::placeholder { color: var(--muted); }
 .plan-step-add-ok { border: none; border-radius: 9px; background: var(--accent); color: #fff; font: 700 13px 'Syne',sans-serif; padding: 8px 13px; cursor: pointer; }
+/* Add-micro 2-option UI */
+.add-micro-toggle { width:100%; background:none; border:1.5px dashed var(--border); border-radius:10px; color:var(--muted); font:600 12px 'DM Sans',sans-serif; padding:8px; cursor:pointer; margin-top:6px; transition:border-color .2s,color .2s; }
+.add-micro-toggle:hover { border-color:var(--accent); color:var(--accent); }
+.add-micro-opts { display:flex; gap:6px; padding:4px 0; }
+.add-micro-opt-btn { flex:1; background:var(--soft); border:1.5px solid var(--border); border-radius:9px; color:var(--text); font:600 12px 'DM Sans',sans-serif; padding:8px 6px; cursor:pointer; transition:border-color .2s,background .2s; text-align:center; }
+.add-micro-opt-btn:hover { border-color:var(--accent); background:rgba(124,92,252,.12); }
+.add-micro-manual-row { display:flex; gap:6px; padding:4px 0; }
+.add-micro-predefs-row { display:flex; flex-direction:column; gap:4px; padding:4px 0; }
+.predef-item { display:flex; align-items:center; gap:8px; padding:7px 10px; background:var(--soft); border-radius:9px; cursor:pointer; font-size:13px; user-select:none; }
+.predef-item input[type=checkbox] { accent-color:var(--accent); width:15px; height:15px; flex-shrink:0; cursor:pointer; }
 /* Cat bottom add-step button */
 .cat-add-step-btn { width: 100%; border: 1.5px dashed var(--border); border-radius: 12px; background: none; color: var(--muted); font: 600 13px 'DM Sans',sans-serif; padding: 10px; cursor: pointer; margin: 4px 0 8px; transition: border-color .2s, color .2s; }
 .cat-add-step-btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -2260,8 +2270,11 @@ function renderStepsList(steps, container, saveFn, seanceMode) {
   const rerenderList = () => renderStepsList(steps, container, saveFn, seanceMode);
 
   function renderStep(step, idx) {
-    if (!step.micros) step.micros = []; // never null, but respect intentional empty
-    const allDone = (step.done || 0) >= step.micros.length && step.micros.length > 0;
+    if (!step.micros) step.micros = [];
+    // allDone: if no micros, a manual done=1 flag marks it complete
+    const allDone = step.micros.length === 0
+      ? (step.done || 0) > 0
+      : (step.done || 0) >= step.micros.length;
     const el = document.createElement('div');
     el.className = 'plan-step' + (allDone ? ' done' : '');
     el.dataset.stepIdx = String(idx);
@@ -2269,22 +2282,26 @@ function renderStepsList(steps, container, saveFn, seanceMode) {
     const hdr = document.createElement('div');
     hdr.className = 'plan-step-header';
 
-    // ── Séance: circle checkbox ──
-    if (seanceMode) {
-      const circle = document.createElement('button');
-      circle.className = 'step-complete-circle' + (allDone ? ' done' : '');
-      circle.textContent = allDone ? '✓' : '';
-      circle.title = allDone ? 'Décocher tout' : 'Tout cocher';
-      (function(st, circ) {
-        circ.onclick = function(e) {
-          e.stopPropagation();
+    // ── Complete circle (always visible) ──
+    const circle = document.createElement('button');
+    circle.className = 'step-complete-circle' + (allDone ? ' done' : '');
+    circle.textContent = allDone ? '✓' : '';
+    circle.title = allDone ? 'Décocher' : (step.micros.length > 0 ? 'Tout cocher' : 'Marquer comme fait');
+    (function(st, circ) {
+      circ.onclick = function(e) {
+        e.stopPropagation();
+        if (st.micros.length === 0) {
+          st.done = (st.done || 0) > 0 ? 0 : 1;
+          if (saveFn) saveFn();
+          rerenderList();
+        } else {
           st.done = (st.done || 0) >= st.micros.length ? 0 : st.micros.length;
           if (saveFn) saveFn();
           rerenderList();
-        };
-      })(step, circle);
-      hdr.appendChild(circle);
-    }
+        }
+      };
+    })(step, circle);
+    hdr.appendChild(circle);
 
     // Drag handle
     const handle = document.createElement('span');
@@ -2406,27 +2423,97 @@ function renderStepsList(steps, container, saveFn, seanceMode) {
     });
 
     // Add-micro input (default mode only)
-    if (!seanceMode) {
-      const addMicroRow = document.createElement('div');
-      addMicroRow.style.cssText = 'display:flex;gap:6px;padding:6px 0 2px';
-      const addMicroInp = document.createElement('input');
-      addMicroInp.className = 'plan-step-add-inp'; addMicroInp.placeholder = 'Nouvelle action…';
-      const addMicroOk = document.createElement('button');
-      addMicroOk.className = 'plan-step-add-ok'; addMicroOk.textContent = '+';
-      function doAddMicro() {
-        const t = addMicroInp.value.trim(); if (!t) return;
-        step.micros.push(t); addMicroInp.value = '';
-        if (saveFn) saveFn();
-        const wasOpen = microsPanel.classList.contains('open');
-        const parent = el.parentElement; const next = el.nextSibling;
-        const newEl = renderStep(step, idx);
-        if (wasOpen) { const np = newEl.querySelector('.plan-micros'); if (np) np.classList.add('open'); }
-        parent.insertBefore(newEl, next); el.remove();
+    // ── Add micro: 2-option UI (all modes) ──
+    {
+      const addToggle = document.createElement('button');
+      addToggle.className = 'add-micro-toggle';
+      addToggle.textContent = '+ Ajouter une action';
+
+      const optRow = document.createElement('div');
+      optRow.className = 'add-micro-opts';
+      optRow.style.display = 'none';
+      const btnManual = document.createElement('button');
+      btnManual.className = 'add-micro-opt-btn';
+      btnManual.textContent = '✏️ Manuellement';
+      const btnPredefs = document.createElement('button');
+      btnPredefs.className = 'add-micro-opt-btn';
+      btnPredefs.textContent = '⭐ Pré-définis';
+      optRow.appendChild(btnManual); optRow.appendChild(btnPredefs);
+
+      const manualRow = document.createElement('div');
+      manualRow.className = 'add-micro-manual-row';
+      manualRow.style.display = 'none';
+      const manualInp = document.createElement('input');
+      manualInp.className = 'plan-step-add-inp'; manualInp.placeholder = 'Nouvelle action…';
+      const manualOk = document.createElement('button');
+      manualOk.className = 'plan-step-add-ok'; manualOk.textContent = '+';
+      manualRow.appendChild(manualInp); manualRow.appendChild(manualOk);
+
+      const predefsRow = document.createElement('div');
+      predefsRow.className = 'add-micro-predefs-row';
+      predefsRow.style.display = 'none';
+      SEANCE_MICRO_OPTIONS.forEach(function(opt) {
+        const lbl = document.createElement('label');
+        lbl.className = 'predef-item';
+        const ck = document.createElement('input');
+        ck.type = 'checkbox'; ck.value = opt.emoji + ' ' + opt.label;
+        lbl.appendChild(ck);
+        lbl.appendChild(document.createTextNode(' ' + opt.emoji + ' ' + opt.label));
+        predefsRow.appendChild(lbl);
+      });
+      const predefsOk = document.createElement('button');
+      predefsOk.className = 'plan-step-add-ok';
+      predefsOk.textContent = 'Ajouter';
+      predefsOk.style.cssText = 'margin-top:4px;width:100%';
+      predefsRow.appendChild(predefsOk);
+
+      function resetAddMicro() {
+        optRow.style.display = 'none';
+        manualRow.style.display = 'none';
+        predefsRow.style.display = 'none';
+        addToggle.textContent = '+ Ajouter une action';
       }
-      addMicroOk.onclick = doAddMicro;
-      addMicroInp.onkeydown = e => { if (e.key === 'Enter') doAddMicro(); };
-      addMicroRow.appendChild(addMicroInp); addMicroRow.appendChild(addMicroOk);
-      microsPanel.appendChild(addMicroRow);
+      addToggle.onclick = function(e) {
+        e.stopPropagation();
+        if (optRow.style.display !== 'none' || manualRow.style.display !== 'none' || predefsRow.style.display !== 'none') {
+          resetAddMicro();
+        } else {
+          optRow.style.display = 'flex';
+          addToggle.textContent = '✕ Annuler';
+        }
+      };
+      btnManual.onclick = function(e) {
+        e.stopPropagation();
+        optRow.style.display = 'none';
+        manualRow.style.display = 'flex';
+        setTimeout(function() { manualInp.focus(); }, 50);
+      };
+      btnPredefs.onclick = function(e) {
+        e.stopPropagation();
+        optRow.style.display = 'none';
+        predefsRow.style.display = 'flex';
+      };
+      function doAddManual() {
+        const t = manualInp.value.trim(); if (!t) return;
+        step.micros.push(t); manualInp.value = '';
+        if (saveFn) saveFn();
+        rerenderList();
+      }
+      manualOk.onclick = function(e) { e.stopPropagation(); doAddManual(); };
+      manualInp.onkeydown = function(e) { if (e.key === 'Enter') { e.preventDefault(); doAddManual(); } };
+      predefsOk.onclick = function(e) {
+        e.stopPropagation();
+        const checks = predefsRow.querySelectorAll('input[type=checkbox]:checked');
+        if (!checks.length) return;
+        checks.forEach(function(ck) { step.micros.push(ck.value); });
+        if (saveFn) saveFn();
+        rerenderList();
+      };
+
+      microsPanel.appendChild(addToggle);
+      microsPanel.appendChild(optRow);
+      microsPanel.appendChild(manualRow);
+      microsPanel.appendChild(predefsRow);
     }
 
     // Expand / collapse on header click

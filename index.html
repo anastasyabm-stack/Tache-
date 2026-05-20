@@ -303,6 +303,25 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .fo-back-step { background: none; border: none; color: var(--muted); font-size: 14px; cursor: pointer; padding: 0; margin-bottom: 16px; display: block; }
 .fo-back-step:hover { color: var(--text); }
 .fo-cats { display: grid; gap: 10px; margin-top: 8px; }
+
+.file-chip-wrap { display: inline-flex; align-items: center; gap: 2px; }
+.file-chip-clickable { cursor: pointer; transition: background .15s; }
+.file-chip-clickable:hover { background: var(--soft); }
+.file-chip-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 0 4px; line-height: 1; opacity: .55; transition: opacity .15s, color .15s; }
+.file-chip-del:hover { opacity: 1; color: #fc5c7d; }
+
+.cat-card { border: 1.5px solid var(--border); border-radius: 20px; background: var(--card); margin-bottom: 14px; overflow: hidden; }
+.cat-header { display: flex; align-items: center; gap: 12px; padding: 16px 16px 10px; }
+.cat-mini-circle { width: 46px; height: 46px; min-width: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px var(--soft); }
+.cat-mini-pct { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.cat-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+.cat-del { background: none; border: none; color: var(--muted); font-size: 15px; cursor: pointer; padding: 4px 6px; border-radius: 8px; opacity: .5; transition: opacity .15s, color .15s; }
+.cat-del:hover { opacity: 1; color: #fc5c7d; }
+.cat-start-btn { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 12px; color: #fff; font: 700 13px 'Syne', sans-serif; padding: 8px 14px; cursor: pointer; transition: transform .12s; }
+.cat-start-btn:active { transform: scale(.95); }
+.cat-steps { padding: 0 12px 14px; }
+.cat-add-btn { width: 100%; border: 1.5px dashed var(--border); border-radius: 16px; background: none; color: var(--muted); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; padding: 14px; cursor: pointer; margin-bottom: 16px; transition: border-color .2s, color .2s; }
+.cat-add-btn:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -618,6 +637,47 @@ let pendingProject = null;
 let foMode = null, foScope = null, foApplyCategory = null;
 let foPendingFiles = [], foPendingFileObjects = [], foCalledFrom = 'create';
 
+// ─── CATEGORY STATE ───
+let currentCategoryId = null;
+
+// ─── FILE STORE (IndexedDB) ───
+const FileStore = {
+  _db: null,
+  open() {
+    if (this._db) return Promise.resolve(this._db);
+    return new Promise((res, rej) => {
+      const req = indexedDB.open('tache_files_v1', 1);
+      req.onupgradeneeded = e => e.target.result.createObjectStore('files');
+      req.onsuccess = e => { this._db = e.target.result; res(this._db); };
+      req.onerror = () => rej(req.error);
+    });
+  },
+  async put(key, data) {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('files', 'readwrite');
+      tx.objectStore('files').put(data, key);
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+    });
+  },
+  async get(key) {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('files', 'readonly');
+      const req = tx.objectStore('files').get(key);
+      req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+    });
+  },
+  async del(key) {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('files', 'readwrite');
+      tx.objectStore('files').delete(key);
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+    });
+  }
+};
+
 // ─── HOME ───
 function renderHome() {
   const projects = getProjects();
@@ -690,7 +750,7 @@ btnCreate.onclick = () => {
 // ─── AUTO-STEP GENERATION ───
 function buildProject(name, goal, files) {
   const hints = (files || []).map(f => f.toLowerCase().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ')).join(' ');
-  return { id: String(Date.now()), name, goal, files: files || [], steps: generateSteps(name, goal, hints), created: new Date().toISOString() };
+  return { id: String(Date.now()), name, goal, files: files || [], steps: generateSteps(name, goal, hints), categories: [], created: new Date().toISOString() };
 }
 
 function s(name, micros, priority, duration) {
@@ -782,16 +842,32 @@ function detectSections(content, fileName) {
 }
 
 // ─── PROJECT UTILS ───
+function getActiveSteps(p) {
+  if (p.categories && p.categories.length > 0) {
+    const cat = currentCategoryId ? p.categories.find(c => c.id === currentCategoryId) : null;
+    return (cat || p.categories[0] || { steps: [] }).steps;
+  }
+  return p.steps || [];
+}
 function getCurrentStep(p) {
-  return p.steps.find(st => (st.done || 0) < st.micros.length) || null;
+  return getActiveSteps(p).find(st => (st.done || 0) < st.micros.length) || null;
 }
 function getCurrentStepIdx(p) {
-  const i = p.steps.findIndex(st => (st.done || 0) < st.micros.length);
-  return i === -1 ? p.steps.length - 1 : i;
+  const steps = getActiveSteps(p);
+  const i = steps.findIndex(st => (st.done || 0) < st.micros.length);
+  return i === -1 ? steps.length - 1 : i;
 }
 function globalPct(p) {
-  const total = p.steps.reduce((a, st) => a + st.micros.length, 0);
-  const done = p.steps.reduce((a, st) => a + (st.done || 0), 0);
+  const all = (p.categories && p.categories.length > 0)
+    ? p.categories.flatMap(c => c.steps)
+    : (p.steps || []);
+  const total = all.reduce((a, st) => a + st.micros.length, 0);
+  const done  = all.reduce((a, st) => a + (st.done || 0), 0);
+  return total ? Math.round(done / total * 100) : 0;
+}
+function catPct(cat) {
+  const total = cat.steps.reduce((a, st) => a + st.micros.length, 0);
+  const done  = cat.steps.reduce((a, st) => a + (st.done || 0), 0);
   return total ? Math.round(done / total * 100) : 0;
 }
 function stepPct(step) {
@@ -907,6 +983,13 @@ async function applyFileOptions() {
   }
   var existing = proj.files || [];
   proj.files = existing.concat(foPendingFiles.filter(function(n) { return !existing.includes(n); }));
+  // Store file contents in IndexedDB so chips are clickable/openable
+  var storeId = proj.id;
+  foPendingFileObjects.forEach(function(file) {
+    file.arrayBuffer().then(function(buf) {
+      FileStore.put(storeId + ':' + file.name, { buf: buf, type: file.type || 'application/octet-stream' }).catch(function() {});
+    }).catch(function() {});
+  });
   if (foScope === 'global') {
     var stepsToApply = newSteps.length ? newSteps : generateSteps(proj.name, proj.goal, proj.files.map(function(f) { return f.toLowerCase().replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '); }).join(' '));
     proj.steps = mergeProgress(proj.steps, stepsToApply);
@@ -997,37 +1080,46 @@ document.getElementById('btn-start-project').onclick = () => {
     currentProject = pendingProject;
     pendingProject = null;
   }
+  const proj = currentProject;
+  if (proj && proj.categories && proj.categories.length > 0) {
+    const firstIncomplete = proj.categories.find(c => c.steps.some(st => (st.done || 0) < st.micros.length));
+    currentCategoryId = (firstIncomplete || proj.categories[0]).id;
+  } else {
+    currentCategoryId = null;
+  }
   renderModeSelect();
   show('mode-select');
 };
 
-function renderPlanPreview(project) {
-  const pct = globalPct(project);
-  document.getElementById('pp-circle').style.background =
-    'conic-gradient(var(--accent) ' + (pct * 3.6) + 'deg, var(--soft) 0)';
-  document.getElementById('pp-pct').textContent = pct + '%';
-  document.getElementById('pp-proj-name').textContent = project.name;
-  document.getElementById('pp-proj-goal').textContent = project.goal || '';
-
-  const fw = document.getElementById('pp-files-wrap');
-  const fc = document.getElementById('pp-files-chips');
-  if (project.files && project.files.length > 0) {
-    fw.style.display = 'block';
-    fc.innerHTML = project.files.map(function(f) { return '<span class="file-chip">📎 ' + f + '</span>'; }).join('');
-  } else {
-    fw.style.display = 'none';
+// ─── FILE HELPERS ───
+async function openStoredFile(projId, fileName) {
+  const record = await FileStore.get(projId + ':' + fileName).catch(() => null);
+  if (!record) { alert('Fichier non disponible. Ré-ajoute-le pour pouvoir l\'ouvrir.'); return; }
+  const blob = new Blob([record.buf], { type: record.type });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+function deleteFile(proj, fileName) {
+  proj.files = (proj.files || []).filter(f => f !== fileName);
+  FileStore.del(proj.id + ':' + fileName).catch(() => {});
+  if (!pendingProject && currentProject) {
+    const list = getProjects();
+    const idx = list.findIndex(p => p.id === proj.id);
+    if (idx !== -1) { list[idx] = proj; saveProjects(list); }
   }
+  renderPlanPreview(proj);
+}
 
-  const planEl = document.getElementById('pp-plan');
-  planEl.innerHTML = '';
-  const groups = { haute: [], moyenne: [], faible: [] };
-  project.steps.forEach(function(step, i) { groups[step.priority || 'moyenne'].push({ step: step, i: i }); });
-
+// ─── STEP LIST RENDERER (reusable) ───
+function renderStepsList(steps, container, saveFn) {
   const cfg = {
     haute:   { dot: '🔴', label: 'Priorité haute',  color: '#fc5c7d' },
     moyenne: { dot: '🟡', label: 'Priorité moyenne', color: '#fcd45c' },
     faible:  { dot: '🟢', label: 'Priorité faible',  color: '#5cfca0' }
   };
+  const groups = { haute: [], moyenne: [], faible: [] };
+  steps.forEach(function(step, i) { groups[step.priority || 'moyenne'].push({ step: step, i: i }); });
   ['haute', 'moyenne', 'faible'].forEach(function(prio) {
     if (!groups[prio].length) return;
     const g = document.createElement('div');
@@ -1037,37 +1129,28 @@ function renderPlanPreview(project) {
       const done = (item.step.done || 0) >= item.step.micros.length;
       const el = document.createElement('div');
       el.className = 'plan-step' + (done ? ' done' : '');
-
       const nameWrap = document.createElement('div');
       nameWrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex:1;margin-right:10px;min-width:0';
-
       const nameSpan = document.createElement('span');
       nameSpan.className = 'plan-step-name';
       nameSpan.textContent = (item.i + 1) + '. ' + item.step.name;
-
       const eb = document.createElement('button');
-      eb.className = 'edit-btn';
-      eb.textContent = '✎';
-      eb.title = 'Renommer';
+      eb.className = 'edit-btn'; eb.textContent = '✎'; eb.title = 'Renommer';
       (function(si, ns, btn) {
         btn.onclick = function(e) {
           e.stopPropagation();
-          const proj = pendingProject || currentProject;
-          if (!proj) return;
           const orig = si.step.name;
           const inp = document.createElement('input');
-          inp.value = orig;
-          inp.className = 'inline-input';
-          ns.textContent = (si.i + 1) + '. ';
-          ns.appendChild(inp);
-          btn.style.display = 'none';
-          inp.focus(); inp.select();
+          inp.value = orig; inp.className = 'inline-input';
+          inp.style.cssText += ';font-family:inherit;font-size:inherit;font-weight:inherit';
+          ns.textContent = (si.i + 1) + '. '; ns.appendChild(inp);
+          btn.style.display = 'none'; inp.focus(); inp.select();
           function save() {
             const val = inp.value.trim() || orig;
-            proj.steps[si.i].name = val;
+            steps[si.i].name = val;
             ns.textContent = (si.i + 1) + '. ' + val;
             btn.style.display = '';
-            saveProjectChanges();
+            if (saveFn) saveFn();
           }
           inp.onblur = save;
           inp.onkeydown = function(e) {
@@ -1076,24 +1159,185 @@ function renderPlanPreview(project) {
           };
         };
       })(item, nameSpan, eb);
-
-      nameWrap.appendChild(nameSpan);
-      nameWrap.appendChild(eb);
-
+      nameWrap.appendChild(nameSpan); nameWrap.appendChild(eb);
       const right = document.createElement('div');
       right.className = 'plan-step-right';
       right.innerHTML = '<span class="plan-step-time">⏱ ' + (item.step.duration || 25) + ' min</span>' +
         '<span class="plan-step-count">' + item.step.micros.length + ' actions</span>';
-
-      el.appendChild(nameWrap);
-      el.appendChild(right);
-      g.appendChild(el);
+      el.appendChild(nameWrap); el.appendChild(right); g.appendChild(el);
     });
-    planEl.appendChild(g);
+    container.appendChild(g);
   });
+}
 
-  const total = project.steps.reduce(function(a, st) { return a + (st.duration || 25); }, 0);
-  document.getElementById('pp-total').innerHTML = 'Durée estimée : <strong>' + total + ' min</strong>';
+// ─── CATEGORY HELPERS ───
+function addCategory(proj, catName) {
+  if (!proj.categories) proj.categories = [];
+  if (proj.categories.length === 0 && proj.steps && proj.steps.length > 0) {
+    proj.categories.push({ id: 'cat_gen', name: 'Général', steps: proj.steps });
+    proj.steps = [];
+  }
+  proj.categories.push({ id: 'cat_' + Date.now(), name: catName, steps: generateSteps(catName, proj.goal || '', '') });
+  saveProjectChanges();
+  renderPlanPreview(proj);
+}
+function deleteCategory(proj, catId) {
+  if (!confirm('Supprimer cette catégorie ?')) return;
+  proj.categories = proj.categories.filter(c => c.id !== catId);
+  saveProjectChanges();
+  renderPlanPreview(proj);
+}
+function promptAddCategory(proj) {
+  const planEl = document.getElementById('pp-plan');
+  if (document.getElementById('cat-input-wrap')) { document.getElementById('cat-input-wrap').remove(); return; }
+  const wrap = document.createElement('div');
+  wrap.id = 'cat-input-wrap';
+  wrap.style.cssText = 'display:flex;gap:8px;margin-bottom:16px';
+  const inp = document.createElement('input');
+  inp.placeholder = 'Nom de la matière (ex: Maths)';
+  inp.style.cssText = 'flex:1;background:var(--soft);border:1.5px solid var(--border);border-radius:14px;color:var(--text);font:inherit;padding:14px 16px;outline:none;transition:border-color .2s';
+  inp.onfocus = () => inp.style.borderColor = 'var(--accent)';
+  inp.onblur = () => inp.style.borderColor = 'var(--border)';
+  const btn = document.createElement('button');
+  btn.className = 'btn'; btn.style.padding = '14px 18px'; btn.textContent = 'Créer →';
+  function create() {
+    const name = inp.value.trim();
+    if (!name) { inp.focus(); return; }
+    addCategory(proj, name);
+  }
+  inp.onkeydown = e => { if (e.key === 'Enter') create(); if (e.key === 'Escape') wrap.remove(); };
+  btn.onclick = create;
+  wrap.appendChild(inp); wrap.appendChild(btn);
+  planEl.insertBefore(wrap, planEl.firstChild);
+  inp.focus();
+}
+function renderCategoryCard(cat, proj, container) {
+  const pct = catPct(cat);
+  const card = document.createElement('div');
+  card.className = 'cat-card';
+  const header = document.createElement('div');
+  header.className = 'cat-header';
+  // Mini circle
+  const circle = document.createElement('div');
+  circle.className = 'cat-mini-circle';
+  circle.style.background = 'conic-gradient(var(--accent) ' + (pct * 3.6) + 'deg, var(--soft) 0)';
+  const pctEl = document.createElement('div');
+  pctEl.className = 'cat-mini-pct';
+  pctEl.textContent = pct + '%';
+  circle.appendChild(pctEl);
+  // Name + edit
+  const nameDiv = document.createElement('div');
+  nameDiv.style.cssText = 'flex:1;min-width:0';
+  const nameRow = document.createElement('div');
+  nameRow.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:2px';
+  const nameEl = document.createElement('span');
+  nameEl.className = 'cat-name'; nameEl.textContent = cat.name;
+  const editBtn = document.createElement('button');
+  editBtn.className = 'edit-btn'; editBtn.textContent = '✎'; editBtn.title = 'Renommer';
+  (function(c, nel, btn) {
+    btn.onclick = function() {
+      const orig = c.name;
+      const inp = document.createElement('input');
+      inp.value = orig; inp.className = 'inline-input';
+      inp.style.cssText += ';font-family:inherit;font-size:inherit;font-weight:inherit';
+      nel.replaceWith(inp); inp.focus(); inp.select();
+      function save() {
+        const val = inp.value.trim() || orig;
+        c.name = val; nel.textContent = val; inp.replaceWith(nel);
+        saveProjectChanges();
+      }
+      inp.onblur = save;
+      inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); save(); } if (e.key === 'Escape') inp.replaceWith(nel); };
+    };
+  })(cat, nameEl, editBtn);
+  nameRow.appendChild(nameEl); nameRow.appendChild(editBtn);
+  const totalDone = cat.steps.reduce((a, st) => a + (st.done || 0), 0);
+  const totalM = cat.steps.reduce((a, st) => a + st.micros.length, 0);
+  const info = document.createElement('div');
+  info.style.cssText = 'color:var(--muted);font-size:12px';
+  info.textContent = totalDone + '/' + totalM + ' actions · ' + cat.steps.length + ' étapes';
+  nameDiv.appendChild(nameRow); nameDiv.appendChild(info);
+  // Start button
+  const startBtn = document.createElement('button');
+  startBtn.className = 'cat-start-btn'; startBtn.textContent = '▶'; startBtn.title = 'Commencer';
+  (function(cid) {
+    startBtn.onclick = function() {
+      currentCategoryId = cid;
+      if (pendingProject) {
+        const list = getProjects(); list.unshift(pendingProject); saveProjects(list);
+        setActiveId(pendingProject.id); currentProject = pendingProject; pendingProject = null;
+      }
+      renderModeSelect(); show('mode-select');
+    };
+  })(cat.id);
+  // Delete button
+  const delBtn = document.createElement('button');
+  delBtn.className = 'cat-del'; delBtn.textContent = '🗑'; delBtn.title = 'Supprimer';
+  (function(cid) { delBtn.onclick = () => deleteCategory(proj, cid); })(cat.id);
+  header.appendChild(circle); header.appendChild(nameDiv);
+  header.appendChild(startBtn); header.appendChild(delBtn);
+  card.appendChild(header);
+  const stepsEl = document.createElement('div');
+  stepsEl.className = 'cat-steps';
+  renderStepsList(cat.steps, stepsEl, saveProjectChanges);
+  card.appendChild(stepsEl);
+  container.appendChild(card);
+}
+
+// ─── PLAN PREVIEW RENDER ───
+function renderPlanPreview(project) {
+  const pct = globalPct(project);
+  document.getElementById('pp-circle').style.background =
+    'conic-gradient(var(--accent) ' + (pct * 3.6) + 'deg, var(--soft) 0)';
+  document.getElementById('pp-pct').textContent = pct + '%';
+  document.getElementById('pp-proj-name').textContent = project.name;
+  document.getElementById('pp-proj-goal').textContent = project.goal || '';
+
+  // File chips — clickable to open, × to delete
+  const fw = document.getElementById('pp-files-wrap');
+  const fc = document.getElementById('pp-files-chips');
+  fc.innerHTML = '';
+  if (project.files && project.files.length > 0) {
+    fw.style.display = 'block';
+    project.files.forEach(function(f) {
+      const wrap = document.createElement('span');
+      wrap.className = 'file-chip-wrap';
+      const chip = document.createElement('span');
+      chip.className = 'file-chip file-chip-clickable';
+      chip.textContent = '📎 ' + f; chip.title = 'Ouvrir';
+      (function(name) { chip.onclick = () => openStoredFile(project.id, name); })(f);
+      const del = document.createElement('button');
+      del.className = 'file-chip-del'; del.textContent = '×'; del.title = 'Supprimer';
+      (function(name) { del.onclick = e => { e.stopPropagation(); deleteFile(project, name); }; })(f);
+      wrap.appendChild(chip); wrap.appendChild(del); fc.appendChild(wrap);
+    });
+  } else { fw.style.display = 'none'; }
+
+  const planEl = document.getElementById('pp-plan');
+  planEl.innerHTML = '';
+  const hasCatsMode = project.categories && project.categories.length > 0;
+
+  if (hasCatsMode) {
+    project.categories.forEach(cat => renderCategoryCard(cat, project, planEl));
+    const addBtn = document.createElement('button');
+    addBtn.className = 'cat-add-btn';
+    addBtn.textContent = '+ Ajouter une matière / catégorie';
+    addBtn.onclick = () => promptAddCategory(project);
+    planEl.appendChild(addBtn);
+    const total = project.categories.flatMap(c => c.steps).reduce((a, st) => a + (st.duration || 25), 0);
+    document.getElementById('pp-total').innerHTML = 'Durée estimée : <strong>' + total + ' min</strong>';
+    document.getElementById('btn-start-project').textContent = 'Commencer →';
+  } else {
+    renderStepsList(project.steps || [], planEl, saveProjectChanges);
+    const addBtn = document.createElement('button');
+    addBtn.className = 'cat-add-btn';
+    addBtn.textContent = '+ Organiser par matières / catégories';
+    addBtn.onclick = () => promptAddCategory(project);
+    planEl.appendChild(addBtn);
+    const total = (project.steps || []).reduce((a, st) => a + (st.duration || 25), 0);
+    document.getElementById('pp-total').innerHTML = 'Durée estimée : <strong>' + total + ' min</strong>';
+    document.getElementById('btn-start-project').textContent = 'Commencer →';
+  }
   document.getElementById('btn-delete-project').style.display = pendingProject ? 'none' : 'block';
 }
 
@@ -1146,14 +1390,15 @@ function renderSession() {
   const idx = getCurrentStepIdx(p);
   const micro = step.micros[step.done || 0];
 
-  document.getElementById('s-step-label').textContent = 'Étape ' + (idx + 1) + ' / ' + p.steps.length;
+  const activeSteps = getActiveSteps(p);
+  document.getElementById('s-step-label').textContent = 'Étape ' + (idx + 1) + ' / ' + activeSteps.length;
   document.getElementById('s-task-name').textContent = step.name;
   document.getElementById('s-micro').textContent = micro;
   document.getElementById('s-mode-label').textContent = MODES[currentMode].label;
 
   const dotsEl = document.getElementById('s-dots');
   dotsEl.innerHTML = '';
-  p.steps.forEach(function(_, i) {
+  activeSteps.forEach(function(_, i) {
     const d = document.createElement('div');
     d.className = 'dot' + (i < idx ? ' done' : i === idx ? ' active' : '');
     dotsEl.appendChild(d);
@@ -1167,8 +1412,8 @@ function renderSession() {
   document.getElementById('s-global-pct').textContent = gp + '%';
   document.getElementById('s-global-bar').style.width = gp + '%';
 
-  const totalM = p.steps.reduce((a, st) => a + st.micros.length, 0);
-  const doneM = p.steps.reduce((a, st) => a + (st.done || 0), 0);
+  const totalM = activeSteps.reduce((a, st) => a + st.micros.length, 0);
+  const doneM = activeSteps.reduce((a, st) => a + (st.done || 0), 0);
   const si = Math.min(Math.floor(doneM / Math.max(totalM, 1) * storyLines.length), storyLines.length - 1);
   document.getElementById('s-story').textContent = storyLines[si];
 
@@ -1228,7 +1473,7 @@ function advanceMicro() {
   clearInterval(tInterval); tRunning = false;
 
   if (step.done >= step.micros.length) {
-    const allDone = p.steps.every(st => (st.done || 0) >= st.micros.length);
+    const allDone = getActiveSteps(p).every(st => (st.done || 0) >= st.micros.length);
     if (allDone) { finishProject(); return; }
     const emojis = ['🎉', '⭐', '🌟', '✨', '🎊'];
     document.getElementById('c-emoji').textContent = emojis[Math.floor(Math.random() * emojis.length)];

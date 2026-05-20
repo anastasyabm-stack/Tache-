@@ -207,6 +207,28 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .notif-yes { border: none; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; padding: 9px 16px; cursor: pointer; }
 .notif-no { border: 1px solid var(--border); border-radius: 10px; background: none; color: var(--muted); font-size: 13px; padding: 9px 14px; cursor: pointer; }
 
+.file-picker-label { display: flex; align-items: center; justify-content: center; gap: 10px; border: 2px dashed var(--border); border-radius: 16px; background: var(--card); color: var(--muted); font-size: 15px; padding: 22px; cursor: pointer; transition: border-color .2s, color .2s; margin-top: 8px; text-align: center; }
+.file-picker-label.has-files { border-color: rgba(124,92,252,.4); color: var(--accent); }
+.file-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; }
+.file-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 999px; background: var(--soft); border: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+.pp-header { display: flex; align-items: center; gap: 18px; margin-bottom: 20px; }
+.pp-circle { flex: 0 0 80px; width: 80px; height: 80px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--accent) 0deg, var(--soft) 0); }
+.pp-circle-inner { width: 60px; height: 60px; border-radius: 50%; background: var(--bg); display: grid; place-items: center; text-align: center; }
+.pp-pct { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: var(--accent); line-height: 1; }
+.pp-pct-label { font-size: 10px; color: var(--muted); }
+.pp-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 4px; line-height: 1.2; }
+.pp-goal { color: var(--muted); font-size: 14px; line-height: 1.4; }
+.prio-group { margin-bottom: 14px; }
+.prio-header { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.plan-step { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-radius: 12px; background: var(--card); border: 1px solid var(--border); margin-bottom: 6px; }
+.plan-step.done { opacity: .4; }
+.plan-step-name { font-size: 14px; font-weight: 600; line-height: 1.3; flex: 1; margin-right: 10px; }
+.plan-step-right { text-align: right; flex: 0 0 auto; }
+.plan-step-time { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--accent); display: block; }
+.plan-step-count { font-size: 11px; color: var(--muted); }
+.pp-total { text-align: center; color: var(--muted); font-size: 13px; margin: 16px 0 24px; padding: 14px; border-radius: 14px; background: var(--soft); }
+.pp-total strong { color: var(--text); font-family: 'Syne', sans-serif; font-size: 15px; }
+
 .block-timer { background: var(--soft); border: 1.5px solid var(--border) !important; color: var(--text); }
 .block-timer .b-sub { color: var(--muted); }
 
@@ -322,7 +344,54 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
     <label>Qu'est-ce que tu veux réussir aujourd'hui ?</label>
     <textarea id="c-goal" placeholder="En une phrase simple, sans pression…" rows="3"></textarea>
   </div>
-  <button class="btn" id="btn-create" disabled>Créer et commencer →</button>
+  <button class="btn" id="btn-create" disabled>Suivant →</button>
+</section>
+
+<!-- CREATE FILES -->
+<section class="screen" id="create-files">
+  <button class="back" id="back-create-files">← Retour</button>
+  <h1>Des fichiers à <em>ajouter</em> ?</h1>
+  <p class="sub">Cours, documents, images… Optionnel, tu peux continuer sans.</p>
+  <button class="block-btn block-main" id="btn-yes-files">
+    <span class="b-title">📎 Oui, j'ai des fichiers</span>
+    <span class="b-sub">Ajouter des documents utiles au projet</span>
+  </button>
+  <button class="block-btn block-secondary" id="btn-no-files">
+    <span class="b-title">Non, on continue →</span>
+    <span class="b-sub">Créer le plan sans fichiers</span>
+  </button>
+  <div id="files-area" style="display:none">
+    <label class="file-picker-label" for="files-input" id="files-label">
+      <span>📂 Choisir des fichiers</span>
+    </label>
+    <input id="files-input" type="file" multiple style="display:none">
+    <div id="files-chips" class="file-chips"></div>
+    <button class="btn" id="btn-build-plan" style="display:none">Créer le plan →</button>
+  </div>
+</section>
+
+<!-- PLAN PREVIEW -->
+<section class="screen" id="plan-preview">
+  <button class="back" id="back-plan-preview">← Retour</button>
+  <div class="pp-header">
+    <div class="pp-circle" id="pp-circle">
+      <div class="pp-circle-inner">
+        <div class="pp-pct" id="pp-pct">0%</div>
+        <div class="pp-pct-label">fait</div>
+      </div>
+    </div>
+    <div>
+      <div class="pp-title" id="pp-proj-name"></div>
+      <div class="pp-goal" id="pp-proj-goal"></div>
+    </div>
+  </div>
+  <div id="pp-files-wrap" style="display:none">
+    <div class="file-chips" id="pp-files-chips"></div>
+  </div>
+  <div class="section-label" style="margin-bottom:10px">Plan généré automatiquement</div>
+  <div id="pp-plan"></div>
+  <div class="pp-total" id="pp-total"></div>
+  <button class="btn" id="btn-start-project">Commencer →</button>
 </section>
 
 <!-- MODE SELECT -->
@@ -485,6 +554,7 @@ function show(id) {
 // ─── STATE ───
 let currentProject = null;
 let currentMode = '2min';
+let pendingProject = null;
 
 // ─── HOME ───
 function renderHome() {
@@ -543,77 +613,77 @@ const btnCreate = document.getElementById('btn-create');
 cName.oninput = cGoal.oninput = () => { btnCreate.disabled = cName.value.trim().length < 2; };
 
 btnCreate.onclick = () => {
-  const name = cName.value.trim();
-  const goal = cGoal.value.trim();
-  const proj = buildProject(name, goal);
-  const list = getProjects();
-  list.unshift(proj);
-  saveProjects(list);
-  setActiveId(proj.id);
-  currentProject = proj;
+  pendingProject = buildProject(cName.value.trim(), cGoal.value.trim(), []);
   cName.value = ''; cGoal.value = '';
   btnCreate.disabled = true;
-  renderModeSelect();
-  show('mode-select');
+  document.getElementById('files-area').style.display = 'none';
+  document.getElementById('files-chips').innerHTML = '';
+  document.getElementById('btn-build-plan').style.display = 'none';
+  const lbl = document.getElementById('files-label');
+  lbl.classList.remove('has-files');
+  lbl.querySelector('span').textContent = '📂 Choisir des fichiers';
+  show('create-files');
 };
 
 // ─── AUTO-STEP GENERATION ───
-function buildProject(name, goal) {
-  return { id: String(Date.now()), name, goal, steps: generateSteps(name, goal), created: new Date().toISOString() };
+function buildProject(name, goal, files) {
+  return { id: String(Date.now()), name, goal, files: files || [], steps: generateSteps(name, goal), created: new Date().toISOString() };
 }
 
-function s(name, micros) { return { name, micros, done: 0 }; }
+function s(name, micros, priority, duration) {
+  return { name, micros, done: 0, priority: priority || 'moyenne', duration: duration || 25 };
+}
 
 function generateSteps(name, goal) {
   const t = (name + ' ' + goal).toLowerCase();
   if (/révis|cours|exam|étudi|bac|chapitre/.test(t)) return [
-    s('Ouvrir le cours', ['Trouve le cours ou le livre', 'Ouvre à la bonne page', 'Lis juste le titre']),
-    s('Lire une première fois', ['Lis le premier paragraphe', 'Continue lentement, sans te presser', 'Marque ce que tu ne comprends pas']),
-    s('Faire des fiches', ['Écris le titre de la première notion', 'Note la définition dans tes propres mots', 'Ajoute un exemple concret si tu peux']),
-    s('Réviser', ['Lis ta première fiche', 'Cache-la et essaie de te souvenir', 'Répète pour chaque fiche']),
-    s('Tester', ['Ferme tout et écris ce dont tu te souviens', 'Compare avec tes fiches', 'Note ce qui reste flou'])
+    s('Ouvrir le cours', ['Trouve le cours ou le livre', 'Ouvre à la bonne page', 'Lis juste le titre'], 'haute', 10),
+    s('Lire une première fois', ['Lis le premier paragraphe', 'Continue lentement, sans te presser', 'Marque ce que tu ne comprends pas'], 'haute', 25),
+    s('Faire des fiches', ['Écris le titre de la première notion', 'Note la définition dans tes propres mots', 'Ajoute un exemple concret si tu peux'], 'haute', 25),
+    s('Réviser', ['Lis ta première fiche', 'Cache-la et essaie de te souvenir', 'Répète pour chaque fiche'], 'moyenne', 20),
+    s('Tester', ['Ferme tout et écris ce dont tu te souviens', 'Compare avec tes fiches', 'Note ce qui reste flou'], 'faible', 15)
   ];
   if (/exposé|présent|diapo|slide|soutenance/.test(t)) return [
-    s('Définir le sujet', ['Écris le sujet en une phrase', 'Note 3 points importants à couvrir', 'Choisis l\'ordre logique']),
-    s('Rechercher', ['Ouvre une source fiable', 'Lis l\'introduction', 'Note les informations essentielles']),
-    s('Faire le plan', ['Écris le plan sur une feuille', 'Introduction : 2 phrases', 'Conclusion : 1 phrase']),
-    s('Créer les slides', ['Ouvre ton outil de présentation', 'Fais le slide de titre', 'Fais un slide par point principal']),
-    s('Répéter', ['Lis ta présentation à voix haute', 'Chronomètre-toi', 'Ajuste ce qui est trop long'])
+    s('Définir le sujet', ['Écris le sujet en une phrase', 'Note 3 points importants à couvrir', 'Choisis l\'ordre logique'], 'haute', 15),
+    s('Rechercher', ['Ouvre une source fiable', 'Lis l\'introduction', 'Note les informations essentielles'], 'haute', 25),
+    s('Faire le plan', ['Écris le plan sur une feuille', 'Introduction : 2 phrases', 'Conclusion : 1 phrase'], 'moyenne', 15),
+    s('Créer les slides', ['Ouvre ton outil de présentation', 'Fais le slide de titre', 'Fais un slide par point principal'], 'moyenne', 25),
+    s('Répéter', ['Lis ta présentation à voix haute', 'Chronomètre-toi', 'Ajuste ce qui est trop long'], 'faible', 15)
   ];
   if (/rang|nettoy|ménage|trier|organis/.test(t)) return [
-    s('Choisir une zone', ['Regarde autour de toi', 'Choisis UNE zone précise', 'Prends 5 objets hors de leur place']),
-    s('Trier', ['Objet 1 : garder ou non ?', 'Objet 2 : garder ou non ?', 'Continue avec les autres']),
-    s('Ranger', ['Mets chaque objet à sa place', 'Si pas de place : crée une zone', 'Ne cherche pas la perfection']),
-    s('Nettoyer', ['Essuie la surface dégagée', 'Donne un coup de balai si besoin', 'Admire le résultat']),
-    s('Valider', ['Est-ce que la zone est satisfaisante ?', 'Veux-tu continuer ailleurs ?', 'Prends une photo si tu en es fière'])
+    s('Choisir une zone', ['Regarde autour de toi', 'Choisis UNE zone précise', 'Prends 5 objets hors de leur place'], 'haute', 10),
+    s('Trier', ['Objet 1 : garder ou non ?', 'Objet 2 : garder ou non ?', 'Continue avec les autres'], 'haute', 25),
+    s('Ranger', ['Mets chaque objet à sa place', 'Si pas de place : crée une zone', 'Ne cherche pas la perfection'], 'moyenne', 25),
+    s('Nettoyer', ['Essuie la surface dégagée', 'Donne un coup de balai si besoin', 'Admire le résultat'], 'faible', 15),
+    s('Valider', ['Est-ce que la zone est satisfaisante ?', 'Veux-tu continuer ailleurs ?', 'Prends une photo si tu en es fière'], 'faible', 5)
   ];
   if (/écri|rédig|lettre|mail|email|rapport|texte|essay/.test(t)) return [
-    s('Préparer', ['Ouvre un document vide', 'Écris juste le titre', 'Note 3 idées en vrac sans filtrer']),
-    s('Premier jet', ['Écris la première phrase sans te relire', 'Continue jusqu\'à couvrir l\'idée principale', 'Ne corrige rien pour l\'instant']),
-    s('Développer', ['Relis seulement la dernière phrase écrite', 'Ajoute un exemple ou un détail', 'Continue avec l\'idée suivante']),
-    s('Relire', ['Lis du début à la fin sans t\'arrêter', 'Note ce qui manque', 'Note ce qui est flou']),
-    s('Corriger', ['Corrige les grosses erreurs', 'Améliore une phrase difficile', 'Sauvegarde et envoie'])
+    s('Préparer', ['Ouvre un document vide', 'Écris juste le titre', 'Note 3 idées en vrac sans filtrer'], 'haute', 15),
+    s('Premier jet', ['Écris la première phrase sans te relire', 'Continue jusqu\'à couvrir l\'idée principale', 'Ne corrige rien pour l\'instant'], 'haute', 25),
+    s('Développer', ['Relis seulement la dernière phrase écrite', 'Ajoute un exemple ou un détail', 'Continue avec l\'idée suivante'], 'haute', 25),
+    s('Relire', ['Lis du début à la fin sans t\'arrêter', 'Note ce qui manque', 'Note ce qui est flou'], 'moyenne', 15),
+    s('Corriger', ['Corrige les grosses erreurs', 'Améliore une phrase difficile', 'Sauvegarde et envoie'], 'faible', 15)
   ];
   if (/cod|programm|développ|site|app|bug/.test(t)) return [
-    s('Comprendre', ['Relis l\'objectif en une phrase', 'Note ce que ça doit faire', 'Identifie le premier bloc à coder']),
-    s('Mettre en place', ['Ouvre ton éditeur', 'Crée ou ouvre le bon fichier', 'Lis le code existant si présent']),
-    s('Coder', ['Écris la structure de base', 'Implémente la logique principale', 'Teste rapidement en console']),
-    s('Corriger', ['Lance le projet', 'Teste le cas principal', 'Corrige les erreurs évidentes']),
-    s('Finir', ['Nettoie le code inutile', 'Sauvegarde ou commit', 'C\'est fait !'])
+    s('Comprendre', ['Relis l\'objectif en une phrase', 'Note ce que ça doit faire', 'Identifie le premier bloc à coder'], 'haute', 15),
+    s('Mettre en place', ['Ouvre ton éditeur', 'Crée ou ouvre le bon fichier', 'Lis le code existant si présent'], 'haute', 25),
+    s('Coder', ['Écris la structure de base', 'Implémente la logique principale', 'Teste rapidement en console'], 'haute', 25),
+    s('Corriger', ['Lance le projet', 'Teste le cas principal', 'Corrige les erreurs évidentes'], 'moyenne', 20),
+    s('Finir', ['Nettoie le code inutile', 'Sauvegarde ou commit', 'C\'est fait !'], 'faible', 10)
   ];
   if (/dossier|form|admin|document|demande/.test(t)) return [
-    s('Rassembler', ['Identifie les documents nécessaires', 'Trouve le premier document', 'Vérifie qu\'il est à jour']),
-    s('Lire les instructions', ['Lis les instructions une fois', 'Note les champs obligatoires', 'Prépare les informations manquantes']),
-    s('Remplir', ['Remplis ton nom et coordonnées', 'Continue avec les autres champs', 'Laisse vide si tu ne sais pas maintenant']),
-    s('Vérifier', ['Relis le formulaire une fois', 'Vérifie les dates importantes', 'Joins les pièces jointes']),
-    s('Envoyer', ['Sauvegarde une copie pour toi', 'Envoie ou dépose', 'Note la date d\'envoi'])
+    s('Rassembler', ['Identifie les documents nécessaires', 'Trouve le premier document', 'Vérifie qu\'il est à jour'], 'haute', 15),
+    s('Lire les instructions', ['Lis les instructions une fois', 'Note les champs obligatoires', 'Prépare les informations manquantes'], 'haute', 15),
+    s('Remplir', ['Remplis ton nom et coordonnées', 'Continue avec les autres champs', 'Laisse vide si tu ne sais pas maintenant'], 'haute', 25),
+    s('Vérifier', ['Relis le formulaire une fois', 'Vérifie les dates importantes', 'Joins les pièces jointes'], 'moyenne', 15),
+    s('Envoyer', ['Sauvegarde une copie pour toi', 'Envoie ou dépose', 'Note la date d\'envoi'], 'faible', 10)
   ];
   return [
-    s('Démarrer', ['Ouvre ce dont tu as besoin', 'Installe-toi confortablement', 'Fais la toute première action visible']),
-    s('Avancer', ['Continue depuis là où tu es', 'Fais une chose à la fois', 'Si tu es bloquée, note et passe']),
-    s('Creuser', ['Approfondis la partie principale', 'Prends une courte pause si besoin', 'Reviens et continue']),
-    s('Finaliser', ['Termine le minimum utile', 'Vérifie que c\'est cohérent', 'Corrige ce qui bloque vraiment']),
-    s('Terminer', ['Relis ou reregarde une dernière fois', 'Sauvegarde ou range', 'C\'est fait !'])
+    s('Démarrer', ['Ouvre ce dont tu as besoin', 'Installe-toi confortablement', 'Fais la toute première action visible'], 'haute', 15),
+    s('Avancer', ['Continue depuis là où tu es', 'Fais une chose à la fois', 'Si tu es bloquée, note et passe'], 'haute', 25),
+    s('Creuser', ['Approfondis la partie principale', 'Prends une courte pause si besoin', 'Reviens et continue'], 'moyenne', 25),
+    s('Finaliser', ['Termine le minimum utile', 'Vérifie que c\'est cohérent', 'Corrige ce qui bloque vraiment'], 'moyenne', 20),
+    s('Terminer', ['Relis ou reregarde une dernière fois', 'Sauvegarde ou range', 'C\'est fait !'], 'faible', 10)
   ];
 }
 
@@ -638,8 +708,99 @@ function stepPct(step) {
 function openProject(p) {
   currentProject = p;
   setActiveId(p.id);
+  renderPlanPreview(p);
+  show('plan-preview');
+}
+
+// ─── CREATE FILES ───
+document.getElementById('back-create-files').onclick = () => show('create');
+document.getElementById('btn-yes-files').onclick = () => {
+  document.getElementById('files-area').style.display = 'block';
+};
+document.getElementById('btn-no-files').onclick = () => {
+  pendingProject.files = [];
+  renderPlanPreview(pendingProject);
+  show('plan-preview');
+};
+document.getElementById('files-input').onchange = function() {
+  const names = [...this.files].map(f => f.name);
+  pendingProject.files = names;
+  document.getElementById('files-chips').innerHTML = names.map(n => '<span class="file-chip">📎 ' + n + '</span>').join('');
+  const lbl = document.getElementById('files-label');
+  lbl.classList.toggle('has-files', names.length > 0);
+  lbl.querySelector('span').textContent = names.length > 0
+    ? names.length + ' fichier' + (names.length > 1 ? 's' : '') + ' ajouté' + (names.length > 1 ? 's' : '')
+    : '📂 Choisir des fichiers';
+  document.getElementById('btn-build-plan').style.display = names.length > 0 ? 'block' : 'none';
+};
+document.getElementById('btn-build-plan').onclick = () => {
+  renderPlanPreview(pendingProject);
+  show('plan-preview');
+};
+
+// ─── PLAN PREVIEW ───
+document.getElementById('back-plan-preview').onclick = () => {
+  if (pendingProject) { show('create-files'); } else { renderHome(); show('home'); }
+};
+document.getElementById('btn-start-project').onclick = () => {
+  if (pendingProject) {
+    const list = getProjects();
+    list.unshift(pendingProject);
+    saveProjects(list);
+    setActiveId(pendingProject.id);
+    currentProject = pendingProject;
+    pendingProject = null;
+  }
   renderModeSelect();
   show('mode-select');
+};
+
+function renderPlanPreview(project) {
+  const pct = globalPct(project);
+  document.getElementById('pp-circle').style.background =
+    'conic-gradient(var(--accent) ' + (pct * 3.6) + 'deg, var(--soft) 0)';
+  document.getElementById('pp-pct').textContent = pct + '%';
+  document.getElementById('pp-proj-name').textContent = project.name;
+  document.getElementById('pp-proj-goal').textContent = project.goal || '';
+
+  const fw = document.getElementById('pp-files-wrap');
+  const fc = document.getElementById('pp-files-chips');
+  if (project.files && project.files.length > 0) {
+    fw.style.display = 'block';
+    fc.innerHTML = project.files.map(function(f) { return '<span class="file-chip">📎 ' + f + '</span>'; }).join('');
+  } else {
+    fw.style.display = 'none';
+  }
+
+  const planEl = document.getElementById('pp-plan');
+  planEl.innerHTML = '';
+  const groups = { haute: [], moyenne: [], faible: [] };
+  project.steps.forEach(function(step, i) { groups[step.priority || 'moyenne'].push({ step: step, i: i }); });
+
+  const cfg = {
+    haute:   { dot: '🔴', label: 'Priorité haute',  color: '#fc5c7d' },
+    moyenne: { dot: '🟡', label: 'Priorité moyenne', color: '#fcd45c' },
+    faible:  { dot: '🟢', label: 'Priorité faible',  color: '#5cfca0' }
+  };
+  ['haute', 'moyenne', 'faible'].forEach(function(prio) {
+    if (!groups[prio].length) return;
+    const g = document.createElement('div');
+    g.className = 'prio-group';
+    g.innerHTML = '<div class="prio-header" style="color:' + cfg[prio].color + '">' + cfg[prio].dot + ' ' + cfg[prio].label + '</div>';
+    groups[prio].forEach(function(item) {
+      const done = (item.step.done || 0) >= item.step.micros.length;
+      const el = document.createElement('div');
+      el.className = 'plan-step' + (done ? ' done' : '');
+      el.innerHTML = '<span class="plan-step-name">' + (item.i + 1) + '. ' + item.step.name + '</span>' +
+        '<div class="plan-step-right"><span class="plan-step-time">⏱ ' + (item.step.duration || 25) + ' min</span>' +
+        '<span class="plan-step-count">' + item.step.micros.length + ' actions</span></div>';
+      g.appendChild(el);
+    });
+    planEl.appendChild(g);
+  });
+
+  const total = project.steps.reduce(function(a, st) { return a + (st.duration || 25); }, 0);
+  document.getElementById('pp-total').innerHTML = 'Durée estimée : <strong>' + total + ' min</strong>';
 }
 
 // ─── MODE SELECT ───

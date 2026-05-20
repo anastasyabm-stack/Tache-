@@ -237,12 +237,36 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .pp-goal { color: var(--muted); font-size: 14px; line-height: 1.4; }
 .prio-group { margin-bottom: 14px; }
 .prio-header { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-.plan-step { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-radius: 12px; background: var(--card); border: 1px solid var(--border); margin-bottom: 6px; }
-.plan-step.done { opacity: .4; }
-.plan-step-name { font-size: 14px; font-weight: 600; line-height: 1.3; flex: 1; margin-right: 10px; }
-.plan-step-right { text-align: right; flex: 0 0 auto; }
-.plan-step-time { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--accent); display: block; }
-.plan-step-count { font-size: 11px; color: var(--muted); }
+.plan-step { border-radius: 12px; background: var(--card); border: 1px solid var(--border); margin-bottom: 6px; transition: box-shadow .15s; }
+.plan-step.done .plan-step-header { opacity: .45; }
+.plan-step-header { display: flex; align-items: center; padding: 11px 12px; gap: 6px; cursor: pointer; user-select: none; }
+.step-drag-handle { color: var(--muted); font-size: 16px; cursor: grab; padding: 2px 5px; flex-shrink: 0; opacity: .35; touch-action: none; transition: opacity .15s; line-height: 1; }
+.step-drag-handle:hover, .step-drag-handle.dragging { opacity: .8; cursor: grabbing; }
+.plan-step.drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124,92,252,.3); }
+.plan-step.ghost { opacity: .25; }
+.plan-step-name { font-size: 14px; font-weight: 600; line-height: 1.3; flex: 1; min-width: 0; }
+.plan-step-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.plan-step-time-btn { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--accent); background: rgba(124,92,252,.1); border: none; border-radius: 7px; padding: 3px 8px; cursor: pointer; transition: background .15s; white-space: nowrap; }
+.plan-step-time-btn:hover { background: rgba(124,92,252,.22); }
+.plan-step-count { font-size: 11px; color: var(--muted); white-space: nowrap; }
+/* Micro-actions inside each step */
+.plan-micros { padding: 0 12px 10px 38px; display: none; }
+.plan-micros.open { display: block; }
+.plan-micro-row { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.plan-micro-row:last-child { border-bottom: none; }
+.plan-micro-check { width: 18px; height: 18px; min-width: 18px; border-radius: 50%; border: 1.5px solid var(--border); background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; margin-top: 2px; flex-shrink: 0; transition: all .15s; }
+.plan-micro-check.checked { border-color: var(--green); background: var(--green); color: #0b1f0b; }
+.plan-micro-text { font-size: 13px; line-height: 1.4; color: var(--text); flex: 1; word-break: break-word; }
+.plan-micro-text.checked { text-decoration: line-through; color: var(--muted); }
+/* Add step/micro input row */
+.plan-step-add-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; }
+.plan-step-add-inp { flex: 1; background: var(--soft); border: 1.5px solid var(--border); border-radius: 10px; color: var(--text); font: 13px 'DM Sans',sans-serif; padding: 8px 12px; outline: none; transition: border-color .2s; }
+.plan-step-add-inp:focus { border-color: var(--accent); }
+.plan-step-add-inp::placeholder { color: var(--muted); }
+.plan-step-add-ok { border: none; border-radius: 9px; background: var(--accent); color: #fff; font: 700 13px 'Syne',sans-serif; padding: 8px 13px; cursor: pointer; }
+/* Cat bottom add-step button */
+.cat-add-step-btn { width: 100%; border: 1.5px dashed var(--border); border-radius: 12px; background: none; color: var(--muted); font: 600 13px 'DM Sans',sans-serif; padding: 10px; cursor: pointer; margin: 4px 0 8px; transition: border-color .2s, color .2s; }
+.cat-add-step-btn:hover { border-color: var(--accent); color: var(--accent); }
 .pp-total { text-align: center; color: var(--muted); font-size: 13px; margin: 16px 0 24px; padding: 14px; border-radius: 14px; background: var(--soft); }
 .pp-total strong { color: var(--text); font-family: 'Syne', sans-serif; font-size: 15px; }
 .file-add-btn { display: block; text-align: center; border: 1.5px dashed var(--border); border-radius: 14px; color: var(--muted); font-size: 13px; padding: 12px; cursor: pointer; margin-bottom: 18px; transition: border-color .2s, color .2s; }
@@ -2177,63 +2201,317 @@ function deleteFile(proj, fileName) {
   renderPlanPreview(proj);
 }
 
-// ─── STEP LIST RENDERER (reusable) ───
-function renderStepsList(steps, container, saveFn) {
-  const cfg = {
-    haute:   { dot: '🔴', label: 'Priorité haute',  color: '#fc5c7d' },
-    moyenne: { dot: '🟡', label: 'Priorité moyenne', color: '#fcd45c' },
-    faible:  { dot: '🟢', label: 'Priorité faible',  color: '#5cfca0' }
-  };
-  const groups = { haute: [], moyenne: [], faible: [] };
-  steps.forEach(function(step, i) { groups[step.priority || 'moyenne'].push({ step: step, i: i }); });
-  ['haute', 'moyenne', 'faible'].forEach(function(prio) {
-    if (!groups[prio].length) return;
-    const g = document.createElement('div');
-    g.className = 'prio-group';
-    g.innerHTML = '<div class="prio-header" style="color:' + cfg[prio].color + '">' + cfg[prio].dot + ' ' + cfg[prio].label + '</div>';
-    groups[prio].forEach(function(item) {
-      const done = (item.step.done || 0) >= item.step.micros.length;
-      const el = document.createElement('div');
-      el.className = 'plan-step' + (done ? ' done' : '');
-      const nameWrap = document.createElement('div');
-      nameWrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex:1;margin-right:10px;min-width:0';
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'plan-step-name';
-      nameSpan.textContent = (item.i + 1) + '. ' + item.step.name;
-      const eb = document.createElement('button');
-      eb.className = 'edit-btn'; eb.textContent = '✎'; eb.title = 'Renommer';
-      (function(si, ns, btn) {
-        btn.onclick = function(e) {
+// ─── STEP LIST RENDERER (reusable, avec micros + drag + checkbox + édition temps) ───
+let _stepDragSrc = null;  // {steps, idx}
+
+function renderStepsList(steps, container, saveFn, seanceMode) {
+  // seanceMode=true → liste séquentielle sans groupes de priorité
+  container.innerHTML = '';
+
+  function renderStep(step, idx, wrapEl) {
+    const done = (step.done || 0) >= step.micros.length && step.micros.length > 0;
+    const el = document.createElement('div');
+    el.className = 'plan-step' + (done ? ' done' : '');
+
+    /* ── Header ── */
+    const hdr = document.createElement('div');
+    hdr.className = 'plan-step-header';
+
+    // Drag handle
+    const handle = document.createElement('span');
+    handle.className = 'step-drag-handle';
+    handle.title = 'Maintenir pour déplacer';
+    handle.textContent = '⠿';
+    handle.draggable = false; // dragging managed below
+
+    // Step name + rename
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'plan-step-name';
+    nameSpan.textContent = (idx + 1) + '. ' + step.name;
+    const eb = document.createElement('button');
+    eb.className = 'edit-btn'; eb.textContent = '✎'; eb.title = 'Renommer';
+    (function(st, ns, btn, i) {
+      btn.onclick = function(e) {
+        e.stopPropagation();
+        const orig = st.name;
+        const inp = document.createElement('input');
+        inp.value = orig; inp.className = 'inline-input';
+        ns.textContent = (i + 1) + '. '; ns.appendChild(inp);
+        btn.style.display = 'none'; inp.focus(); inp.select();
+        function doSave() {
+          const val = inp.value.trim() || orig;
+          st.name = val; ns.textContent = (i + 1) + '. ' + val; btn.style.display = '';
+          if (saveFn) saveFn();
+        }
+        inp.onblur = doSave;
+        inp.onkeydown = e2 => { if (e2.key === 'Enter') { e2.preventDefault(); doSave(); } if (e2.key === 'Escape') { ns.textContent = (i+1)+'. '+orig; btn.style.display=''; } };
+      };
+    })(step, nameSpan, eb, idx);
+
+    // Right: time + count + expand arrow
+    const right = document.createElement('div');
+    right.className = 'plan-step-right';
+
+    // Time (editable)
+    const timeBtn = document.createElement('button');
+    timeBtn.className = 'plan-step-time-btn';
+    timeBtn.textContent = '⏱ ' + (step.duration || 25) + ' min';
+    timeBtn.title = 'Modifier la durée estimée';
+    (function(st, tb) {
+      tb.onclick = function(e) {
+        e.stopPropagation();
+        const orig = st.duration || 25;
+        const inp = document.createElement('input');
+        inp.type = 'number'; inp.min = 1; inp.max = 480; inp.value = orig;
+        inp.className = 'inline-input'; inp.style.cssText += ';width:52px;font-family:Syne,sans-serif;font-weight:700;font-size:12px';
+        tb.replaceWith(inp); inp.focus(); inp.select();
+        function doSave() {
+          const v = parseInt(inp.value) || orig;
+          st.duration = v; tb.textContent = '⏱ ' + v + ' min'; inp.replaceWith(tb);
+          if (saveFn) saveFn();
+        }
+        inp.onblur = doSave;
+        inp.onkeydown = e2 => { if (e2.key === 'Enter') { e2.preventDefault(); doSave(); } if (e2.key === 'Escape') inp.replaceWith(tb); };
+      };
+    })(step, timeBtn);
+
+    const countSpan = document.createElement('span');
+    countSpan.className = 'plan-step-count';
+    const doneCount = step.done || 0;
+    countSpan.textContent = doneCount + '/' + step.micros.length;
+
+    const expandArrow = document.createElement('span');
+    expandArrow.style.cssText = 'color:var(--muted);font-size:11px;margin-left:2px;transition:transform .2s';
+    expandArrow.textContent = '▶';
+
+    right.appendChild(timeBtn); right.appendChild(countSpan); right.appendChild(expandArrow);
+    hdr.appendChild(handle); hdr.appendChild(nameSpan); hdr.appendChild(eb); hdr.appendChild(right);
+
+    /* ── Micros panel (collapsible) ── */
+    const microsPanel = document.createElement('div');
+    microsPanel.className = 'plan-micros';
+    step.micros.forEach(function(micro, mi) {
+      const row = document.createElement('div');
+      row.className = 'plan-micro-row';
+      const chk = document.createElement('button');
+      const isChecked = mi < (step.done || 0);
+      chk.className = 'plan-micro-check' + (isChecked ? ' checked' : '');
+      chk.textContent = isChecked ? '✓' : '';
+      (function(st, mIdx, ckBtn, txtEl) {
+        ckBtn.onclick = function(e) {
           e.stopPropagation();
-          const orig = si.step.name;
-          const inp = document.createElement('input');
-          inp.value = orig; inp.className = 'inline-input';
-          inp.style.cssText += ';font-family:inherit;font-size:inherit;font-weight:inherit';
-          ns.textContent = (si.i + 1) + '. '; ns.appendChild(inp);
-          btn.style.display = 'none'; inp.focus(); inp.select();
-          function save() {
-            const val = inp.value.trim() || orig;
-            steps[si.i].name = val;
-            ns.textContent = (si.i + 1) + '. ' + val;
-            btn.style.display = '';
-            if (saveFn) saveFn();
+          const cur = st.done || 0;
+          // Toggle: if this micro is done, uncheck it (set done to mIdx); if not, check it
+          if (mIdx < cur) {
+            st.done = mIdx; // uncheck from this micro onward
+          } else {
+            st.done = mIdx + 1; // check up to and including this micro
           }
-          inp.onblur = save;
-          inp.onkeydown = function(e) {
-            if (e.key === 'Enter') { e.preventDefault(); save(); }
-            if (e.key === 'Escape') { ns.textContent = (si.i + 1) + '. ' + orig; btn.style.display = ''; }
-          };
+          if (saveFn) saveFn();
+          // re-render just the micros panel inline
+          ckBtn.className = 'plan-micro-check' + (mIdx < st.done ? ' checked' : '');
+          ckBtn.textContent = mIdx < st.done ? '✓' : '';
+          txtEl.className = 'plan-micro-text' + (mIdx < st.done ? ' checked' : '');
+          // Update count
+          countSpan.textContent = st.done + '/' + st.micros.length;
+          const allDone = st.done >= st.micros.length && st.micros.length > 0;
+          el.classList.toggle('done', allDone);
         };
-      })(item, nameSpan, eb);
-      nameWrap.appendChild(nameSpan); nameWrap.appendChild(eb);
-      const right = document.createElement('div');
-      right.className = 'plan-step-right';
-      right.innerHTML = '<span class="plan-step-time">⏱ ' + (item.step.duration || 25) + ' min</span>' +
-        '<span class="plan-step-count">' + item.step.micros.length + ' actions</span>';
-      el.appendChild(nameWrap); el.appendChild(right); g.appendChild(el);
+      })(step, mi, chk, null);
+      const txt = document.createElement('span');
+      txt.className = 'plan-micro-text' + (isChecked ? ' checked' : '');
+      txt.textContent = micro;
+      // Fix: wire chk to txt
+      (function(st, mIdx, ckBtn, txtEl) {
+        ckBtn.onclick = function(e) {
+          e.stopPropagation();
+          const cur = st.done || 0;
+          st.done = mIdx < cur ? mIdx : mIdx + 1;
+          if (saveFn) saveFn();
+          ckBtn.className = 'plan-micro-check' + (mIdx < st.done ? ' checked' : '');
+          ckBtn.textContent = mIdx < st.done ? '✓' : '';
+          txtEl.className = 'plan-micro-text' + (mIdx < st.done ? ' checked' : '');
+          countSpan.textContent = st.done + '/' + st.micros.length;
+          el.classList.toggle('done', st.done >= st.micros.length && st.micros.length > 0);
+        };
+      })(step, mi, chk, txt);
+      row.appendChild(chk); row.appendChild(txt);
+      microsPanel.appendChild(row);
     });
-    container.appendChild(g);
+    // Add micro input
+    const addMicroRow = document.createElement('div');
+    addMicroRow.style.cssText = 'display:flex;gap:6px;padding:6px 0 2px';
+    const addMicroInp = document.createElement('input');
+    addMicroInp.className = 'plan-step-add-inp'; addMicroInp.placeholder = 'Nouvelle action…';
+    const addMicroOk = document.createElement('button');
+    addMicroOk.className = 'plan-step-add-ok'; addMicroOk.textContent = '+';
+    function doAddMicro() {
+      const t = addMicroInp.value.trim(); if (!t) return;
+      step.micros.push(t); addMicroInp.value = '';
+      if (saveFn) saveFn();
+      // Re-render this step
+      const parent = el.parentElement;
+      const nextEl = el.nextSibling;
+      const newEl = renderStep(step, idx, wrapEl);
+      const newPanel = newEl.querySelector('.plan-micros');
+      if (newPanel) { newPanel.classList.add('open'); newEl.querySelector('[data-expand]') && (newEl.querySelector('[data-expand]').textContent = '▼'); }
+      parent.insertBefore(newEl, nextEl); el.remove();
+    }
+    addMicroOk.onclick = doAddMicro;
+    addMicroInp.onkeydown = e => { if (e.key === 'Enter') doAddMicro(); };
+    addMicroRow.appendChild(addMicroInp); addMicroRow.appendChild(addMicroOk);
+    microsPanel.appendChild(addMicroRow);
+
+    // Expand/collapse on header click
+    hdr.onclick = function(e) {
+      if (e.target.classList.contains('step-drag-handle') || e.target.classList.contains('edit-btn') || e.target.classList.contains('plan-step-time-btn') || e.target.tagName === 'INPUT') return;
+      const open = microsPanel.classList.toggle('open');
+      expandArrow.textContent = open ? '▼' : '▶';
+    };
+
+    el.appendChild(hdr); el.appendChild(microsPanel);
+
+    // ── Drag & drop (mouse + long-press touch) ──
+    setupStepDrag(el, handle, steps, idx, saveFn, wrapEl);
+
+    return el;
+  }
+
+  function buildList(stepsArr, wrapper) {
+    stepsArr.forEach(function(step, i) {
+      const el = renderStep(step, i, wrapper);
+      wrapper.appendChild(el);
+    });
+  }
+
+  if (seanceMode) {
+    // Sequential view — no priority grouping
+    buildList(steps, container);
+  } else {
+    // Grouped by priority
+    const cfg = {
+      haute:   { dot: '🔴', label: 'Priorité haute',  color: '#fc5c7d' },
+      moyenne: { dot: '🟡', label: 'Priorité moyenne', color: '#fcd45c' },
+      faible:  { dot: '🟢', label: 'Priorité faible',  color: '#5cfca0' }
+    };
+    const groups = { haute: [], moyenne: [], faible: [] };
+    steps.forEach(function(step) { groups[step.priority || 'moyenne'].push(step); });
+    ['haute', 'moyenne', 'faible'].forEach(function(prio) {
+      if (!groups[prio].length) return;
+      const g = document.createElement('div');
+      g.className = 'prio-group';
+      const hd = document.createElement('div');
+      hd.className = 'prio-header';
+      hd.style.color = cfg[prio].color;
+      hd.textContent = cfg[prio].dot + ' ' + cfg[prio].label;
+      g.appendChild(hd);
+      // use real indices in steps array
+      groups[prio].forEach(function(step) {
+        const idx = steps.indexOf(step);
+        const el = renderStep(step, idx, g);
+        g.appendChild(el);
+      });
+      container.appendChild(g);
+    });
+  }
+}
+
+function setupStepDrag(el, handle, steps, idx, saveFn, wrapEl) {
+  // ── Mouse drag ──
+  handle.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    _stepDragSrc = { el: el, idx: idx, steps: steps, saveFn: saveFn, wrapEl: wrapEl };
+    el.classList.add('ghost');
+    const onMove = function(me) {
+      const target = document.elementFromPoint(me.clientX, me.clientY);
+      const stepEl = target && target.closest('.plan-step');
+      document.querySelectorAll('.plan-step.drag-over').forEach(d => d.classList.remove('drag-over'));
+      if (stepEl && stepEl !== el) stepEl.classList.add('drag-over');
+    };
+    const onUp = function(me) {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      el.classList.remove('ghost');
+      document.querySelectorAll('.plan-step.drag-over').forEach(d => d.classList.remove('drag-over'));
+      const target = document.elementFromPoint(me.clientX, me.clientY);
+      const stepEl = target && target.closest('.plan-step');
+      if (stepEl && stepEl !== el) {
+        const parent = stepEl.parentElement;
+        const children = [...parent.querySelectorAll(':scope > .plan-step')];
+        const toIdx = children.indexOf(stepEl);
+        const fromIdx = children.indexOf(el);
+        if (toIdx !== -1 && fromIdx !== -1 && toIdx !== fromIdx) {
+          const [moved] = steps.splice(fromIdx, 1);
+          steps.splice(toIdx, 0, moved);
+          if (saveFn) saveFn();
+          // Refresh the container
+          const cont = parent; cont.querySelectorAll(':scope > .plan-step').forEach(c => c.remove());
+          steps.forEach((st, i) => { const ne = renderStep_local(steps, i, saveFn, wrapEl); cont.appendChild(ne); });
+        }
+      }
+      _stepDragSrc = null;
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
   });
+
+  // ── Touch drag (long press 400ms) ──
+  let _touchTimer = null, _touchActive = false, _ghostEl = null;
+  handle.addEventListener('touchstart', function(e) {
+    _touchTimer = setTimeout(function() {
+      _touchActive = true;
+      el.classList.add('ghost');
+      handle.classList.add('dragging');
+      // Create ghost
+      _ghostEl = el.cloneNode(true);
+      _ghostEl.style.cssText = 'position:fixed;z-index:9999;opacity:.75;pointer-events:none;width:' + el.offsetWidth + 'px;border:2px solid var(--accent)';
+      document.body.appendChild(_ghostEl);
+    }, 400);
+  }, { passive: true });
+  handle.addEventListener('touchmove', function(e) {
+    if (!_touchActive) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    if (_ghostEl) { _ghostEl.style.left = (t.clientX - el.offsetWidth/2) + 'px'; _ghostEl.style.top = (t.clientY - 30) + 'px'; }
+    document.querySelectorAll('.plan-step.drag-over').forEach(d => d.classList.remove('drag-over'));
+    const over = document.elementFromPoint(t.clientX, t.clientY);
+    const stepEl = over && over.closest('.plan-step');
+    if (stepEl && stepEl !== el) stepEl.classList.add('drag-over');
+  }, { passive: false });
+  handle.addEventListener('touchend', function(e) {
+    clearTimeout(_touchTimer);
+    if (_ghostEl) { _ghostEl.remove(); _ghostEl = null; }
+    if (!_touchActive) return;
+    _touchActive = false; el.classList.remove('ghost'); handle.classList.remove('dragging');
+    document.querySelectorAll('.plan-step.drag-over').forEach(d => d.classList.remove('drag-over'));
+    const t = e.changedTouches[0];
+    const over = document.elementFromPoint(t.clientX, t.clientY);
+    const stepEl = over && over.closest('.plan-step');
+    if (stepEl && stepEl !== el) {
+      const parent = stepEl.parentElement;
+      const children = [...parent.querySelectorAll(':scope > .plan-step')];
+      const toIdx = children.indexOf(stepEl);
+      const fromIdx = children.indexOf(el);
+      if (toIdx !== -1 && fromIdx !== -1 && toIdx !== fromIdx) {
+        const [moved] = steps.splice(fromIdx, 1);
+        steps.splice(toIdx, 0, moved);
+        if (saveFn) saveFn();
+        const cont = parent; cont.querySelectorAll(':scope > .plan-step').forEach(c => c.remove());
+        steps.forEach((st, i) => { const ne = renderStep_local(steps, i, saveFn, wrapEl); cont.appendChild(ne); });
+      }
+    }
+  }, { passive: true });
+  handle.addEventListener('touchcancel', function() {
+    clearTimeout(_touchTimer); _touchActive = false;
+    if (_ghostEl) { _ghostEl.remove(); _ghostEl = null; }
+    el.classList.remove('ghost'); handle.classList.remove('dragging');
+  }, { passive: true });
+
+  function renderStep_local(st, i, sf, w) {
+    const tmp = document.createElement('div');
+    const r = renderStep(st[i], i, w);
+    return r;
+  }
 }
 
 // ─── CATEGORY HELPERS ───
@@ -2301,16 +2579,18 @@ function migrateCatToMode(cat, newMode, seanceCount) {
       }
       cat.steps = newSteps;
     } else if (cat.mode === 'default') {
-      // Renuméroter les étapes existantes en séances
+      // Créer des séances propres (priorité moyenne, micros standard)
+      // Les tâches existantes passent en note dans les micros de la Séance 1
       const existing = cat.steps || [];
-      if (existing.length <= sc) {
-        existing.forEach((st, i) => { st.name = 'Séance ' + (i + 1); });
-        while (existing.length < sc) existing.push(s('Séance ' + (existing.length + 1), ['Préparer la séance', 'Travailler le contenu', 'Réviser et consolider'], 'moyenne', 30));
-        cat.steps = existing;
-      } else {
-        cat.steps = existing.slice(0, sc);
-        existing.slice(sc).forEach(st => cat.steps[sc-1].micros.push(...st.micros));
+      const allMicros = existing.flatMap(st => [st.name, ...st.micros.slice(0, 3)]).slice(0, sc * 2);
+      const newSteps = [];
+      for (let i = 1; i <= sc; i++) {
+        const stdMicros = ['Préparer la séance', 'Travailler le contenu', 'Réviser et consolider'];
+        newSteps.push(s('Séance ' + i, stdMicros, 'moyenne', 30));
       }
+      // Répartir les tâches existantes comme micros supplémentaires
+      if (allMicros.length) newSteps[0].micros = [...allMicros.slice(0, 5), ...newSteps[0].micros];
+      cat.steps = newSteps;
     }
     delete cat.priorities;
     cat.mode = 'seance'; cat.seanceCount = sc;
@@ -2350,7 +2630,7 @@ function promptChangeCatMode(cat, proj) {
 
   sheet.innerHTML = `
     <div class="cat-modal-handle"></div>
-    <h2 style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;margin-bottom:6px">Changer le <em style="font-style:normal;${grad}">mode</em></h2>
+    <h2 style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;margin-bottom:4px">Changer le mode de <em style="font-style:normal;${grad}">${cat.name.replace(/</g,'&lt;')}</em></h2>
     <p style="color:var(--muted);font-size:13px;margin-bottom:18px">Mode actuel : <strong style="color:var(--text)">${{ default:'📋 Défaut', seance:'📅 Séances', vierge:'🎯 Vierge' }[cat.mode] || cat.mode}</strong>. Les données seront adaptées.</p>
     <div id="ccm-s1">
       <button class="cm-mode-card ccm-card" data-mode="default" ${cat.mode==='default'?'style="opacity:.4;pointer-events:none"':''}>
@@ -2397,15 +2677,17 @@ function promptChangeCatMode(cat, proj) {
     };
   });
 
-  // Séance count
-  let sc = cat.seanceCount || 6;
+  // Séance count — use Number() to guarantee integer
+  let sc = Number(cat.seanceCount) || 6;
   const scEl = document.getElementById('ccm-sc-val');
+  scEl.textContent = sc;
   document.getElementById('ccm-minus').onclick = () => { if (sc > 1) { sc--; scEl.textContent = sc; } };
   document.getElementById('ccm-plus').onclick  = () => { if (sc < 52) { sc++; scEl.textContent = sc; } };
   document.getElementById('ccm-back').onclick  = () => { document.getElementById('ccm-s2').style.display = 'none'; document.getElementById('ccm-s1').style.display = 'block'; };
   document.getElementById('ccm-confirm-seance').onclick = () => {
+    const finalSc = Number(scEl.textContent) || sc;
     backdrop.remove();
-    migrateCatToMode(cat, 'seance', sc);
+    migrateCatToMode(cat, 'seance', finalSc);
     saveProjectChanges();
     renderPlanPreview(proj);
   };
@@ -2499,13 +2781,14 @@ function promptAddCategory(proj) {
     };
   });
 
-  // S3
+  // S3 — compteur séances
   let sc = 6;
   const valEl = document.getElementById('cm-seance-val');
+  valEl.textContent = sc; // initialise l'affichage
   document.getElementById('cm-minus').onclick = () => { if (sc > 1) { sc--; valEl.textContent = sc; } };
   document.getElementById('cm-plus').onclick  = () => { if (sc < 52) { sc++; valEl.textContent = sc; } };
   document.getElementById('cm-back2').onclick = () => { document.getElementById('cm-s3').style.display = 'none'; document.getElementById('cm-s2').style.display = 'block'; };
-  document.getElementById('cm-create').onclick = () => { backdrop.remove(); addCategory(_cmProj, _cmName, 'seance', sc); };
+  document.getElementById('cm-create').onclick = () => { const n = Number(valEl.textContent) || sc; backdrop.remove(); addCategory(_cmProj, _cmName, 'seance', n); };
 }
 
 // ─── VIERGE BOARD ───
@@ -2725,8 +3008,40 @@ function renderCategoryCard(cat, proj, container) {
   } else {
     const stepsEl = document.createElement('div');
     stepsEl.className = 'cat-steps';
-    renderStepsList(cat.steps || [], stepsEl, saveProjectChanges);
+    renderStepsList(cat.steps || [], stepsEl, saveProjectChanges, cat.mode === 'seance');
     body.appendChild(stepsEl);
+
+    // ── Bouton "+ Ajouter une étape" en bas de la catégorie ──
+    const addStepBtn = document.createElement('button');
+    addStepBtn.className = 'cat-add-step-btn';
+    addStepBtn.textContent = '+ Ajouter une étape';
+    const addStepRow = document.createElement('div');
+    addStepRow.style.cssText = 'display:none;padding:6px 12px 10px;gap:8px;flex-direction:column';
+    const addStepInp = document.createElement('input');
+    addStepInp.className = 'plan-step-add-inp';
+    addStepInp.placeholder = cat.mode === 'seance' ? 'Nom de la séance…' : 'Nom de l\'étape…';
+    const addStepConfirm = document.createElement('button');
+    addStepConfirm.className = 'plan-step-add-ok';
+    addStepConfirm.style.cssText += ';width:100%;padding:10px';
+    addStepConfirm.textContent = 'Ajouter →';
+    function doAddStep() {
+      const t = addStepInp.value.trim();
+      if (!t) return;
+      const newStep = s(t, ['Commencer', 'Avancer', 'Terminer'], cat.mode === 'seance' ? 'moyenne' : 'moyenne', 25);
+      if (!cat.steps) cat.steps = [];
+      cat.steps.push(newStep);
+      if (cat.mode === 'seance') cat.seanceCount = (cat.seanceCount || 0) + 1;
+      addStepInp.value = '';
+      addStepRow.style.display = 'none';
+      addStepBtn.style.display = 'block';
+      saveProjectChanges();
+      renderStepsList(cat.steps, stepsEl, saveProjectChanges, cat.mode === 'seance');
+    }
+    addStepConfirm.onclick = doAddStep;
+    addStepInp.onkeydown = e => { if (e.key === 'Enter') doAddStep(); if (e.key === 'Escape') { addStepRow.style.display = 'none'; addStepBtn.style.display = 'block'; } };
+    addStepRow.appendChild(addStepInp); addStepRow.appendChild(addStepConfirm);
+    addStepBtn.onclick = () => { addStepBtn.style.display = 'none'; addStepRow.style.display = 'flex'; addStepInp.focus(); };
+    body.appendChild(addStepBtn); body.appendChild(addStepRow);
   }
   card.appendChild(body);
 

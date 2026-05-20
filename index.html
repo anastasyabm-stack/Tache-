@@ -2280,10 +2280,19 @@ function deleteFile(proj, fileName) {
 // ─── STEP LIST RENDERER (reusable, avec micros + drag + checkbox + édition temps) ───
 let _stepDragSrc = null;  // {steps, idx}
 
-function renderStepsList(steps, container, saveFn, seanceMode) {
+function renderStepsList(steps, container, saveFn, seanceMode, _openNames) {
   container.innerHTML = '';
-  // Shared rerender: clears and rebuilds the whole list
-  const rerenderList = () => renderStepsList(steps, container, saveFn, seanceMode);
+  // Snapshot which step panels are currently open (by step name), then rebuild keeping them open
+  function getOpenNames() {
+    const s = new Set();
+    container.querySelectorAll('.plan-step').forEach(function(el) {
+      const mp = el.querySelector('.plan-micros');
+      const ns = el.querySelector('.plan-step-name');
+      if (mp && mp.classList.contains('open') && ns) s.add(ns.textContent);
+    });
+    return s;
+  }
+  const rerenderList = () => renderStepsList(steps, container, saveFn, seanceMode, getOpenNames());
 
   function renderStep(step, idx) {
     if (!step.micros) step.micros = [];
@@ -2375,6 +2384,11 @@ function renderStepsList(steps, container, saveFn, seanceMode) {
     /* ── Micros panel ── */
     const microsPanel = document.createElement('div');
     microsPanel.className = 'plan-micros';
+    // Restaurer l'état ouvert si ce panel était ouvert avant le rerenderList
+    if (_openNames && _openNames.has(step.name)) {
+      microsPanel.classList.add('open');
+      expandArrow.textContent = '▼';
+    }
 
     step.micros.forEach(function(micro, mi) {
       const row = document.createElement('div');
@@ -2465,15 +2479,30 @@ function renderStepsList(steps, container, saveFn, seanceMode) {
       const predefsRow = document.createElement('div');
       predefsRow.className = 'add-micro-predefs-row';
       predefsRow.style.display = 'none';
+      const extraPredefItems = [];
       SEANCE_MICRO_OPTIONS.forEach(function(opt) {
         const lbl = document.createElement('label');
         lbl.className = 'predef-item';
         const ck = document.createElement('input');
-        ck.type = 'checkbox'; ck.value = opt.emoji + ' ' + opt.label;
+        ck.type = 'checkbox';
+        ck.value = opt.label; // sans emoji dans la valeur stockée (Fix 1)
         lbl.appendChild(ck);
         lbl.appendChild(document.createTextNode(' ' + opt.emoji + ' ' + opt.label));
+        if (!opt.primary) { lbl.style.display = 'none'; extraPredefItems.push(lbl); }
         predefsRow.appendChild(lbl);
       });
+      // Bouton "Plus" pour afficher les options secondaires (Fix 2)
+      const plusBtn = document.createElement('button');
+      plusBtn.style.cssText = 'background:none;border:none;color:var(--muted);font:600 12px "DM Sans",sans-serif;padding:4px 0 2px;cursor:pointer;text-align:left';
+      plusBtn.textContent = '➕ Plus…';
+      let extrasVisible = false;
+      plusBtn.onclick = function(e) {
+        e.stopPropagation();
+        extrasVisible = !extrasVisible;
+        extraPredefItems.forEach(function(el) { el.style.display = extrasVisible ? '' : 'none'; });
+        plusBtn.textContent = extrasVisible ? '➖ Moins' : '➕ Plus…';
+      };
+      predefsRow.appendChild(plusBtn);
       const predefsOk = document.createElement('button');
       predefsOk.className = 'plan-step-add-ok';
       predefsOk.textContent = 'Ajouter';

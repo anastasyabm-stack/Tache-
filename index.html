@@ -230,6 +230,8 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .pp-total strong { color: var(--text); font-family: 'Syne', sans-serif; font-size: 15px; }
 .file-add-btn { display: block; text-align: center; border: 1.5px dashed var(--border); border-radius: 14px; color: var(--muted); font-size: 13px; padding: 12px; cursor: pointer; margin-bottom: 18px; transition: border-color .2s, color .2s; }
 .file-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn-delete-project { display: block; width: 100%; border: 1.5px solid rgba(252,92,125,.25); border-radius: 14px; background: none; color: rgba(252,92,125,.6); font-size: 13px; padding: 13px; cursor: pointer; margin-top: 10px; transition: border-color .2s, color .2s; }
+.btn-delete-project:hover { border-color: #fc5c7d; color: #fc5c7d; }
 .pp-update-msg { text-align: center; color: var(--green); font-size: 13px; font-weight: 700; margin-bottom: 10px; transition: opacity .3s; }
 
 .block-timer { background: var(--soft); border: 1.5px solid var(--border) !important; color: var(--text); }
@@ -398,6 +400,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <div id="pp-plan"></div>
   <div class="pp-total" id="pp-total"></div>
   <button class="btn" id="btn-start-project">Commencer →</button>
+  <button class="btn-delete-project" id="btn-delete-project" style="display:none">Supprimer ce projet</button>
 </section>
 
 <!-- MODE SELECT -->
@@ -786,6 +789,16 @@ document.getElementById('pp-files-input').onchange = function() {
   renderPlanPreview(proj);
   this.value = '';
 };
+document.getElementById('btn-delete-project').onclick = () => {
+  if (!currentProject) return;
+  if (!confirm('Supprimer "' + currentProject.name + '" ? Cette action est irréversible.')) return;
+  saveProjects(getProjects().filter(p => p.id !== currentProject.id));
+  if (getActiveId() === currentProject.id) setActiveId(null);
+  currentProject = null;
+  renderHome();
+  show('home');
+};
+
 document.getElementById('btn-start-project').onclick = () => {
   if (pendingProject) {
     const list = getProjects();
@@ -845,6 +858,7 @@ function renderPlanPreview(project) {
 
   const total = project.steps.reduce(function(a, st) { return a + (st.duration || 25); }, 0);
   document.getElementById('pp-total').innerHTML = 'Durée estimée : <strong>' + total + ' min</strong>';
+  document.getElementById('btn-delete-project').style.display = pendingProject ? 'none' : 'block';
 }
 
 // ─── MODE SELECT ───

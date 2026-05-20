@@ -496,6 +496,33 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .energy-btn.selected { border-color: rgba(255,255,255,.8); transform: scale(1.14); }
 .energy-labels { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; margin-bottom: 22px; }
 
+.suppl-card {
+  background: rgba(252,186,92,.08); border: 1.5px solid rgba(252,186,92,.28);
+  border-radius: 18px; padding: 16px 18px; margin-bottom: 20px;
+}
+.suppl-card-title { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; color:#fcba5c; margin-bottom:10px; }
+.suppl-drinks { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+.suppl-drink { padding:6px 12px; border-radius:999px; background:rgba(252,186,92,.12); border:1px solid rgba(252,186,92,.28); color:#fcba5c; font-size:13px; font-weight:600; }
+.suppl-ack { background:none; border:none; color:var(--muted); font-size:12px; text-decoration:underline; cursor:pointer; padding:0; }
+
+.ritalin-modal {
+  position:fixed; inset:0; background:rgba(0,0,0,.72);
+  z-index:600; display:flex; align-items:center; justify-content:center; padding:22px;
+  animation: fadeIn .2s ease;
+}
+.ritalin-sheet {
+  background:var(--card); border-radius:24px; padding:28px 22px 24px;
+  width:100%; max-width:400px; text-align:center;
+  animation: pop .3s cubic-bezier(.34,1.56,.64,1);
+}
+.ritalin-emoji { font-size:52px; display:block; margin-bottom:12px; }
+.ritalin-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; margin-bottom:8px; }
+.ritalin-sub { color:var(--muted); font-size:14px; line-height:1.55; margin-bottom:24px; }
+.ritalin-btns { display:grid; gap:10px; }
+.ritalin-yes { border:none; border-radius:16px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; font:700 16px 'Syne',sans-serif; padding:17px; cursor:pointer; transition:transform .13s; }
+.ritalin-yes:active { transform:scale(.97); }
+.ritalin-no { border:1.5px solid var(--border); border-radius:16px; background:none; color:var(--muted); font:600 14px 'DM Sans',sans-serif; padding:15px; cursor:pointer; }
+
 .strategy-card {
   width: 100%; display: flex; align-items: flex-start; gap: 16px;
   border: 1.5px solid var(--border); border-radius: 20px;
@@ -1004,6 +1031,18 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 <!-- BLOCKED: ÉNERGIE -->
 <section class="screen" id="blocked-energy">
   <button class="back" id="back-blocked-energy">← Retour</button>
+  <div id="suppl-card" class="suppl-card" style="display:none">
+    <div class="suppl-card-title">💊 As-tu pris tes compléments ?</div>
+    <div class="suppl-drinks">
+      <span class="suppl-drink">☕ Café</span>
+      <span class="suppl-drink">🍵 Matcha</span>
+      <span class="suppl-drink">⚡ Holy Energy</span>
+      <span class="suppl-drink">🐟 Oméga-3</span>
+      <span class="suppl-drink">💊 Magnésium</span>
+    </div>
+    <p style="color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:10px">Un café, un matcha ou un Holy avant de commencer peut vraiment aider ton cerveau à se mettre en mode focus ✦</p>
+    <button class="suppl-ack" id="suppl-ack">C'est bon, j'en ai déjà pris →</button>
+  </div>
   <h1>Comment tu <em>te sens</em> ?</h1>
   <p class="sub">Ton niveau d'énergie en ce moment — sois honnête avec toi-même.</p>
   <div class="energy-scale" id="energy-scale"></div>
@@ -1213,6 +1252,29 @@ function goToApp(user) {
   show('landing');
   initLanding();
   renderHome();
+  checkRitalinReminder();
+}
+
+function checkRitalinReminder() {
+  const today = new Date().toDateString();
+  if (localStorage.getItem('focustdah_ritalin_date') === today) return;
+  localStorage.setItem('focustdah_ritalin_date', today);
+
+  const modal = document.createElement('div');
+  modal.className = 'ritalin-modal';
+  modal.innerHTML = `
+    <div class="ritalin-sheet">
+      <span class="ritalin-emoji">💊</span>
+      <div class="ritalin-title">As-tu pris ta Ritaline ?</div>
+      <p class="ritalin-sub">Vérifie avant de commencer ta journée — ça fait toute la différence ✦</p>
+      <div class="ritalin-btns">
+        <button class="ritalin-yes" id="ritalin-yes">✓ Oui, c'est fait !</button>
+        <button class="ritalin-no" id="ritalin-no">Pas encore / je n'en prends pas</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('#ritalin-yes').onclick = () => modal.remove();
+  modal.querySelector('#ritalin-no').onclick = () => modal.remove();
 }
 
 function initAuth() {
@@ -3921,6 +3983,20 @@ function showBlockedEnergy(from) {
     scale.appendChild(btn);
   }
   document.getElementById('btn-energy-next').disabled = true;
+
+  // Carte compléments — affichée si pas encore acquittée aujourd'hui
+  const today = new Date().toDateString();
+  const card = document.getElementById('suppl-card');
+  if (localStorage.getItem('focustdah_suppl_ack') !== today) {
+    card.style.display = 'block';
+    document.getElementById('suppl-ack').onclick = () => {
+      localStorage.setItem('focustdah_suppl_ack', today);
+      card.style.display = 'none';
+    };
+  } else {
+    card.style.display = 'none';
+  }
+
   show('blocked-energy');
 }
 

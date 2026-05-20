@@ -348,19 +348,38 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .auth-loading { display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: 14px; padding: 16px 0; }
 .auth-spinner { width: 20px; height: 20px; border: 2.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.auth-user-pill {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: var(--soft); border: 1px solid var(--border);
-  border-radius: 999px; padding: 6px 14px 6px 8px;
-  font-size: 13px; color: var(--text); margin-bottom: 16px;
+.user-badge { position: relative; display: inline-block; }
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid rgba(124,92,252,.25);
+  cursor: pointer; overflow: hidden;
+  transition: border-color .2s, transform .15s;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--soft);
 }
-.auth-user-pill img { width: 24px; height: 24px; border-radius: 50%; }
-.auth-logout-btn {
-  background: none; border: none; color: var(--muted); font-size: 12px;
-  cursor: pointer; padding: 4px 8px; border-radius: 8px; margin-left: 4px;
-  transition: color .15s;
+.user-avatar:hover { border-color: var(--accent); transform: scale(1.08); }
+.user-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.user-avatar-initials {
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
-.auth-logout-btn:hover { color: #fc5c7d; }
+.user-popover {
+  display: none; position: absolute; top: calc(100% + 10px); right: 0;
+  background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 16px; padding: 14px 16px; min-width: 180px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.35); z-index: 200;
+  animation: up .15s ease;
+}
+.user-popover.open { display: block; }
+.user-popover-name { font-size: 12px; color: var(--muted); margin-bottom: 12px; line-height: 1.4; }
+.user-popover-name strong { display: block; color: var(--text); font-size: 14px; font-family: 'Syne', sans-serif; }
+.user-popover-logout {
+  width: 100%; background: none; border: 1px solid rgba(252,92,125,.25);
+  border-radius: 10px; color: rgba(252,92,125,.7); font-size: 12px;
+  padding: 9px; cursor: pointer; transition: border-color .15s, color .15s;
+}
+.user-popover-logout:hover { border-color: #fc5c7d; color: #fc5c7d; }
 
 /* ── LANDING ── */
 #landing {
@@ -845,13 +864,29 @@ function renderUserPill(user) {
   const el = document.getElementById('landing-user');
   if (!el) return;
   if (!user) { el.style.display = 'none'; return; }
-  el.style.display = 'inline-flex';
+  el.style.display = 'block';
+  const initial = (user.displayName || user.email || '?')[0].toUpperCase();
+  const name = user.displayName || user.email;
   el.innerHTML = `
-    <div class="auth-user-pill">
-      ${user.photoURL ? `<img src="${user.photoURL}" alt="">` : ''}
-      <span>${user.displayName ? user.displayName.split(' ')[0] : user.email}</span>
-      <button class="auth-logout-btn" id="btn-logout" title="Déconnexion">✕</button>
+    <div class="user-badge" id="user-badge">
+      <div class="user-avatar" id="user-avatar-btn">
+        ${user.photoURL
+          ? `<img src="${user.photoURL}" alt="">`
+          : `<span class="user-avatar-initials">${initial}</span>`}
+      </div>
+      <div class="user-popover" id="user-popover">
+        <div class="user-popover-name">Connecté en tant que<br><strong>${name}</strong></div>
+        <button class="user-popover-logout" id="btn-logout">Se déconnecter</button>
+      </div>
     </div>`;
+  document.getElementById('user-avatar-btn').onclick = (e) => {
+    e.stopPropagation();
+    document.getElementById('user-popover').classList.toggle('open');
+  };
+  document.addEventListener('click', () => {
+    const p = document.getElementById('user-popover');
+    if (p) p.classList.remove('open');
+  }, { once: false });
   document.getElementById('btn-logout').onclick = () => {
     _auth.signOut().then(() => { _fbUser = null; renderUserPill(null); show('auth'); });
   };

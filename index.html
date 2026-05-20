@@ -6,30 +6,925 @@
 <title>Tache</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0f0f13;--card:#1a1a22;--soft:#22222e;--border:#303041;--text:#f0eff8;--muted:#928ea8;--accent:#7c5cfc;--accent2:#fc5c7d;--green:#5cfca0;--yellow:#fcd45c;--orange:#fc8c5c}*{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;max-width:440px;margin:0 auto;padding:20px 18px 40px;background:var(--bg);color:var(--text);font-family:"DM Sans",sans-serif}.screen{display:none;animation:fade .25s ease}.screen.active{display:block}@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}.logo,.title,.btn,.home-card,.method-title,.timer-display{font-family:"Syne",sans-serif}.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:26px}.brand{display:flex;align-items:center;gap:10px}.logo{font-weight:800;font-size:22px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}.title{font-size:26px;font-weight:700;line-height:1.2;margin-bottom:18px}.title span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}.nav,.back{border:1.5px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);padding:10px 12px;cursor:pointer}.back{display:inline-flex;margin-bottom:20px;background:none;color:var(--muted)}button{font:inherit}.home-grid{display:grid;gap:12px}.home-card{width:100%;border:1.5px solid var(--border);border-radius:16px;background:var(--card);color:var(--text);padding:22px;text-align:left;cursor:pointer}.home-card strong{display:block;font-size:20px;margin-bottom:6px}.home-card span{color:var(--muted);font-family:"DM Sans",sans-serif;font-size:14px;line-height:1.45}.home-card.main{border-color:rgba(124,92,252,.6);background:linear-gradient(135deg,rgba(124,92,252,.2),rgba(252,92,125,.12))}input,textarea{width:100%;border:1.5px solid var(--border);border-radius:16px;outline:none;background:var(--card);color:var(--text);font:16px "DM Sans",sans-serif;padding:16px}textarea{min-height:108px;resize:none}input:focus,textarea:focus{border-color:var(--accent)}label,.label{display:block;margin:18px 0 8px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.btn{width:100%;border:0;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-size:17px;font-weight:700;padding:17px;cursor:pointer}.btn:disabled{opacity:.35}.btn.secondary{margin-top:10px;border:1.5px solid var(--border);background:var(--card)}.voice{display:grid;gap:8px;margin-top:12px}.voice button{border:1.5px solid var(--accent);border-radius:14px;background:rgba(124,92,252,.16);color:var(--text);font:700 15px "Syne",sans-serif;padding:15px;cursor:pointer}.voice button.listening{border-color:var(--accent2);background:rgba(252,92,125,.18)}.voice div{min-height:18px;color:var(--muted);font-size:12px;text-align:center}.feelings{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}.feel{position:relative;border:1.5px solid var(--border);border-radius:14px;background:var(--card);padding:14px 12px;text-align:left;cursor:pointer}.feel .emoji{display:block;margin-bottom:6px;font-size:22px}.feel strong{display:block;font-family:"Syne",sans-serif;font-size:13px}.feel span{display:block;margin-top:2px;color:var(--muted);font-size:11px}.feel.selected{border-color:var(--accent);background:rgba(124,92,252,.12)}.feel.selected:after{content:"✓";position:absolute;top:8px;right:10px;color:var(--accent);font-weight:700}.methods{display:grid;gap:10px;margin:18px 0 24px}.method{display:flex;gap:14px;align-items:center;width:100%;border:1.5px solid var(--border);border-radius:14px;background:var(--card);color:var(--text);padding:16px;text-align:left;cursor:pointer}.icon{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border-radius:12px;font-size:22px}.method-title{font-size:15px;font-weight:700}.method-desc{margin-top:3px;color:var(--muted);font-size:12px}.panel,.response{margin:16px 0;border:1.5px solid var(--border);border-radius:18px;background:var(--card);padding:18px;font-size:16px;line-height:1.65;white-space:pre-wrap}.recap{margin-bottom:18px;border:1px solid rgba(124,92,252,.22);border-radius:12px;background:rgba(124,92,252,.08);color:var(--muted);padding:14px}.recap strong{display:block;color:var(--text);margin-bottom:4px}.loading{display:flex;gap:10px;align-items:center;padding:18px 0;color:var(--muted)}.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:b 1.2s infinite}.dot:nth-child(2){animation-delay:.2s;background:var(--accent2)}.dot:nth-child(3){animation-delay:.4s;background:var(--yellow)}@keyframes b{0%,80%,100%{opacity:.4;transform:scale(.6)}40%{opacity:1;transform:scale(1)}}.timer{display:flex;flex-direction:column;align-items:center;gap:16px;margin:16px 0;border:1.5px solid var(--border);border-radius:18px;background:var(--card);padding:24px}.timer-display{font-size:52px;font-weight:800}.timer-row{display:flex;gap:10px}.timer button{border:0;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-weight:700;padding:12px 24px;cursor:pointer}.timer .reset{border:1.5px solid var(--border);background:var(--card);color:var(--muted);padding:12px 16px}.project-card{width:100%;border:1.5px solid var(--border);border-radius:16px;background:var(--card);color:var(--text);padding:16px;margin:10px 0;text-align:left;cursor:pointer}.project-card span{display:block;color:var(--muted);font-size:13px;margin-top:5px}.progress{display:flex;gap:18px;align-items:center;margin:16px 0}.circle{width:104px;height:104px;border-radius:50%;background:conic-gradient(var(--green) var(--p),var(--border) 0);display:grid;place-items:center;flex:0 0 104px}.circle div{width:78px;height:78px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font:800 20px "Syne",sans-serif}.steps{display:grid;gap:10px;margin:14px 0}.step{display:grid;grid-template-columns:auto 1fr;gap:10px;border:1.5px solid var(--border);border-radius:14px;background:var(--soft);padding:12px}.step input{width:20px;height:20px;margin-top:3px}.step.done .step-text{text-decoration:line-through;color:var(--muted)}.pill{display:inline-block;margin-bottom:4px;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:700;background:rgba(124,92,252,.18);color:#c8bcff}.files{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.file{border:1px solid var(--border);border-radius:999px;background:var(--soft);color:var(--muted);font-size:12px;padding:6px 9px}.empty{color:var(--muted);text-align:center;padding:30px 12px}.guide-actions{display:grid;gap:10px;margin-top:14px}.ok{color:var(--green);font-weight:700}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0d0d14;
+  --card: #16161f;
+  --soft: #1c1c27;
+  --border: #282838;
+  --text: #f0eff8;
+  --muted: #7a7690;
+  --accent: #7c5cfc;
+  --accent2: #b05cfc;
+  --green: #5cfca0;
+}
+body {
+  min-height: 100vh;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 0 0 60px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; cursor: pointer; }
+
+.screen { display: none; padding: 32px 22px 24px; animation: up .28s ease; }
+.screen.active { display: block; }
+@keyframes up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+h1 { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; line-height: 1.15; margin: 12px 0 8px; }
+h1 em { font-style: normal; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+.sub { color: var(--muted); font-size: 15px; line-height: 1.55; margin-bottom: 28px; }
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  padding: 0 0 24px;
+}
+
+.block-btn {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 22px;
+  padding: 24px 22px;
+  text-align: left;
+  transition: transform .13s;
+  margin-bottom: 12px;
+}
+.block-btn:active { transform: scale(.98); }
+.block-btn .b-title { display: block; font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 5px; }
+.block-btn .b-sub { display: block; font-size: 13px; line-height: 1.45; }
+.block-main { background: linear-gradient(135deg, rgba(124,92,252,.9), rgba(176,92,252,.8)); color: #fff; }
+.block-main .b-sub { opacity: .78; }
+.block-secondary { background: var(--card); border: 1.5px solid var(--border) !important; color: var(--text); }
+.block-secondary .b-sub { color: var(--muted); }
+
+.btn {
+  display: block; width: 100%; border: none; border-radius: 18px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff; font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700;
+  padding: 19px; transition: transform .13s; margin-top: 8px;
+}
+.btn:active { transform: scale(.97); }
+.btn:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+.btn-outline {
+  background: none; border: 1.5px solid var(--border); color: var(--muted);
+  font-family: 'Syne', sans-serif; font-size: 14px;
+  display: block; width: 100%; border-radius: 14px; padding: 14px; margin-top: 10px;
+}
+.btn-green {
+  background: linear-gradient(135deg, var(--green), #3de88a);
+  color: #0b1f0b; font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700;
+  display: block; width: 100%; border: none; border-radius: 18px;
+  padding: 20px; transition: transform .13s; margin-bottom: 10px;
+}
+.btn-green:active { transform: scale(.97); }
+.btn-ghost { background: none; border: none; color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 5px; padding: 10px 0; }
+
+.field { margin-bottom: 20px; }
+.field label { display: block; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 9px; }
+.field input, .field textarea {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 16px;
+  background: var(--card); color: var(--text);
+  font: 16px 'DM Sans', sans-serif; padding: 16px 18px; outline: none;
+  transition: border-color .2s;
+}
+.field textarea { min-height: 80px; resize: none; }
+.field input:focus, .field textarea:focus { border-color: var(--accent); }
+.field input::placeholder, .field textarea::placeholder { color: var(--muted); opacity: 1; }
+
+.proj-list { margin: 20px 0; display: grid; gap: 10px; }
+.proj-card {
+  width: 100%; display: flex; align-items: center; gap: 14px;
+  border: 1.5px solid var(--border); border-radius: 18px;
+  background: var(--card); color: var(--text); padding: 16px 18px;
+  text-align: left; transition: border-color .2s;
+}
+.proj-card:active { border-color: var(--accent); }
+.proj-info { flex: 1; }
+.proj-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.proj-meta { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+.mini-bar { height: 4px; border-radius: 4px; background: var(--soft); overflow: hidden; }
+.mini-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+.ring { width: 46px; height: 46px; flex: 0 0 46px; border-radius: 50%; display: grid; place-items: center; }
+.ring-inner { width: 34px; height: 34px; border-radius: 50%; background: var(--card); display: grid; place-items: center; font: 700 11px 'Syne', sans-serif; color: var(--accent); }
+
+.mode-cards { display: grid; gap: 10px; margin: 16px 0; }
+.mode-card {
+  width: 100%; display: flex; align-items: center; gap: 16px;
+  border: 1.5px solid var(--border); border-radius: 18px;
+  background: var(--card); color: var(--text); padding: 18px 20px;
+  text-align: left; transition: border-color .2s, background .2s;
+}
+.mode-card:active { border-color: var(--accent); background: rgba(124,92,252,.08); }
+.mode-emoji { font-size: 30px; flex: 0 0 auto; }
+.mode-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+.mode-desc { color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+#session { padding: 24px 22px 32px; }
+.step-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 999px;
+  border: 1.5px solid rgba(124,92,252,.4);
+  background: rgba(124,92,252,.1);
+  color: var(--accent); font-size: 13px; font-weight: 700; margin-bottom: 10px;
+}
+.step-dots { display: flex; gap: 6px; margin-bottom: 24px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all .3s; }
+.dot.done { background: var(--green); }
+.dot.active { background: var(--accent); transform: scale(1.5); }
+
+.task-name { font-family: 'Syne', sans-serif; font-size: 27px; font-weight: 800; line-height: 1.15; margin-bottom: 16px; }
+.micro-box {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 18px 20px; border-radius: 18px;
+  background: rgba(124,92,252,.1); border: 1.5px solid rgba(124,92,252,.25);
+  margin-bottom: 26px;
+}
+.micro-arrow { font-size: 20px; padding-top: 2px; }
+.micro-text { font-size: 17px; font-weight: 500; line-height: 1.5; }
+
+.timer-wrap { margin-bottom: 24px; }
+.timer-label { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; margin-bottom: 10px; }
+.timer-num { font-family: 'Syne', sans-serif; font-size: 42px; font-weight: 800; text-align: center; margin-bottom: 12px; line-height: 1; }
+.timer-track { height: 10px; border-radius: 10px; background: var(--soft); overflow: hidden; margin-bottom: 14px; }
+.timer-bar { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 1s linear; }
+.timer-btns { display: flex; gap: 10px; }
+.t-start { flex: 1; border: none; border-radius: 16px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font: 700 15px 'Syne', sans-serif; padding: 16px; transition: transform .13s; }
+.t-start:active { transform: scale(.97); }
+.t-reset { border: 1.5px solid var(--border); border-radius: 16px; background: var(--card); color: var(--muted); font-size: 18px; padding: 16px 18px; }
+
+.progress-wrap { padding-top: 20px; border-top: 1px solid var(--border); }
+.prog-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; font-size: 12px; }
+.prog-row span:first-child { color: var(--muted); }
+.prog-row span:last-child { font-weight: 700; color: var(--accent); }
+.prog-bar { height: 7px; border-radius: 7px; background: var(--soft); overflow: hidden; margin-bottom: 16px; }
+.prog-fill { height: 100%; border-radius: 7px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .5s ease; }
+.story {
+  padding: 14px 18px; border-radius: 14px;
+  background: var(--soft); border: 1px solid var(--border);
+  color: var(--muted); font-size: 12px; line-height: 1.65; font-style: italic;
+  margin-top: 4px;
+}
+
+#celebration, #finished { padding: 60px 22px 32px; text-align: center; animation: pop .35s cubic-bezier(.34,1.56,.64,1); }
+@keyframes pop { from { opacity: 0; transform: scale(.75); } to { opacity: 1; transform: scale(1); } }
+.big-emoji { font-size: 72px; display: block; margin-bottom: 16px; }
+#celebration h2, #finished h2 { font-size: 26px; margin-bottom: 10px; }
+.celeb-sub { color: var(--muted); font-size: 15px; line-height: 1.55; margin-bottom: 28px; }
+
+.section-label { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+
+.block-timer { background: var(--soft); border: 1.5px solid var(--border) !important; color: var(--text); }
+.block-timer .b-sub { color: var(--muted); }
+
+.preset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0 24px; }
+.preset-btn {
+  border: 1.5px solid var(--border); border-radius: 16px; background: var(--card);
+  color: var(--text); padding: 18px 10px; text-align: center; transition: all .2s;
+}
+.preset-btn .p-min { display: block; font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 2px; }
+.preset-btn .p-label { display: block; color: var(--muted); font-size: 11px; }
+.preset-btn.selected { border-color: var(--accent); background: rgba(124,92,252,.15); }
+.preset-btn.selected .p-label { color: var(--accent); }
+
+#timer-free { padding: 28px 22px 32px; }
+.session-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 14px; border-radius: 999px;
+  background: var(--soft); border: 1px solid var(--border);
+  color: var(--muted); font-size: 12px; font-weight: 700;
+  margin-bottom: 16px;
+}
+.session-badge.pause-mode { border-color: rgba(92,252,160,.3); background: rgba(92,252,160,.08); color: var(--green); }
+.ft-task { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 24px; min-height: 28px; }
+.ft-num {
+  font-family: 'Syne', sans-serif; font-size: 72px; font-weight: 800;
+  text-align: center; line-height: 1; margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.ft-num.pause-num { background: linear-gradient(135deg, var(--green), #3de88a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.ft-track { height: 14px; border-radius: 14px; background: var(--soft); overflow: hidden; margin-bottom: 28px; }
+.ft-bar { height: 100%; border-radius: 14px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 1s linear; }
+.ft-bar.pause-bar { background: linear-gradient(90deg, var(--green), #3de88a); }
+.ft-btns { display: flex; gap: 10px; margin-bottom: 14px; }
+.ft-toggle {
+  flex: 1; border: none; border-radius: 16px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff; font: 700 16px 'Syne', sans-serif; padding: 18px;
+  transition: transform .13s;
+}
+.ft-toggle:active { transform: scale(.97); }
+.ft-toggle.pause-toggle { background: linear-gradient(135deg, var(--green), #3de88a); color: #0b1f0b; }
+.ft-stop { border: 1.5px solid var(--border); border-radius: 16px; background: var(--card); color: var(--muted); font-size: 20px; padding: 18px 20px; }
+
+.end-panel {
+  border: 1.5px solid var(--border); border-radius: 20px;
+  background: var(--card); padding: 24px 20px;
+  text-align: center; animation: up .28s ease;
+}
+.end-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.end-sub { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+.end-opts { display: grid; gap: 8px; }
+.end-opt {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 14px;
+  background: var(--soft); color: var(--text);
+  font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+  padding: 15px 18px; text-align: left; transition: border-color .2s;
+}
+.end-opt:active { border-color: var(--accent); }
+.end-opt.opt-main { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; color: #fff; }
+.end-opt.opt-green { border-color: rgba(92,252,160,.3); color: var(--green); }
 </style>
 </head>
 <body>
 <main>
-<section class="screen active" id="home"><div class="top"><div class="brand"><span>⚡</span><span class="logo">Tache</span></div><button class="nav" id="to-projects">Mes projets</button></div><div class="title">Tu veux faire quoi <span>maintenant</span> ?</div><div class="home-grid"><button class="home-card main" id="to-create"><strong>Créer un nouveau projet</strong><span>Questions guidées, micro-étapes, timers et progression.</span></button><button class="home-card" id="to-work"><strong>Je veux travailler</strong><span>Mode tâche rapide avec les méthodes existantes.</span></button></div></section>
-<section class="screen" id="projects"><button class="back" data-screen="home">← Accueil</button><div class="title">Mes <span>projets</span></div><div id="project-list"></div><button class="btn" data-screen="create">Créer un nouveau projet</button></section>
-<section class="screen" id="create"><button class="back" data-screen="home">← Accueil</button><div class="title">Nouveau <span>projet</span></div><label>Nom du projet</label><input id="p-name" placeholder="Ex : exposé, dossier, chambre..."><label>Ce que tu dois faire</label><textarea id="p-desc" placeholder="Décris en quelques phrases."></textarea><label>Quel est le but principal ?</label><textarea id="p-goal"></textarea><label>Quelles sont les étapes critiques ?</label><textarea id="p-critical" placeholder="Une étape par ligne si tu veux."></textarea><label>Quels obstacles envisages-tu ?</label><textarea id="p-obstacles"></textarea><label>Fichiers utiles</label><input id="p-files" type="file" multiple><label>Durée Pomodoro</label><input id="p-duration" type="number" min="5" max="60" value="25"><button class="btn" id="build-project">Créer le plan</button></section>
-<section class="screen" id="project-detail"><button class="back" data-screen="home">← Accueil</button><div id="project-detail-box"></div></section>
-<section class="screen" id="task"><div class="top"><button class="nav" data-screen="home">Accueil</button><button class="nav" id="to-projects-2">Mes projets</button></div><div class="brand"><span>⚡</span><span class="logo">Tache</span></div><div class="title">C'est quoi ta <span>tâche</span> ?</div><textarea id="task-input" placeholder="Ex : envoyer un email, ranger ma chambre, réviser..."></textarea><div class="voice"><button id="voice-btn">Dictée</button><div id="voice-status">Dictée française uniquement.</div></div><div class="label">Comment tu te sens là ?</div><div class="feelings"><button class="feel" data-feel="rapide"><span class="emoji">⚡</span><strong>Démarrer vite</strong><span>Règle 2 min · Timer-course</span></button><button class="feel" data-feel="bloquee"><span class="emoji">🧱</span><strong>Je suis bloquée</strong><span>Reverse Pomodoro · Micro-étape</span></button><button class="feel" data-feel="motivation"><span class="emoji">🎮</span><strong>Besoin motivation</strong><span>Mini-quête · Task racing</span></button><button class="feel" data-feel="submergee"><span class="emoji">😰</span><strong>Je suis submergée</strong><span>1 seule chose · Brain dump</span></button><button class="feel" data-feel="temps" style="grid-column:span 2"><span class="emoji">⏱️</span><strong>Combien de temps ?</strong><span>Estimation x1.5 · Découpage visible</span></button></div><button class="btn" id="btn-next" disabled>Voir mes options →</button></section>
-<section class="screen" id="methods"><button class="back" data-screen="task">← Retour</button><div class="recap"><strong id="recap-task"></strong><span id="recap-feels"></span></div><div class="title">Quelle <span>méthode</span> ?</div><div class="methods" id="methods-list"></div></section>
-<section class="screen" id="response"><button class="back" data-reset-task>← Nouvelle tâche</button><div class="recap"><strong id="resp-task"></strong></div><div id="loading" class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>Préparation de ton plan...</span></div><div id="response-content" style="display:none"><div class="response" id="response-text"></div><div id="timer-section" style="display:none"><div class="timer"><div class="timer-display" id="timer-display">5:00</div><div class="timer-row"><button id="timer-btn">▶ Start</button><button class="reset" id="timer-reset">↺</button></div><div id="timer-done" style="display:none" class="ok">Pause terminée, tu peux continuer.</div></div></div><button class="btn" data-reset-task>Nouvelle tâche ⚡</button><button class="btn secondary" id="reset-all">Tout recommencer</button></div></section>
+
+<!-- HOME -->
+<section class="screen active" id="home">
+  <div style="margin-bottom:32px">
+    <span class="logo">✦ Tache</span>
+    <h1>Tu veux faire quoi <em>maintenant</em> ?</h1>
+    <p class="sub">Je m'occupe du reste.</p>
+  </div>
+  <button class="block-btn block-main" id="btn-new">
+    <span class="b-title">Nouveau projet ✦</span>
+    <span class="b-sub">Transforme une idée floue en plan prêt à démarrer</span>
+  </button>
+  <button class="block-btn block-secondary" id="btn-continue">
+    <span class="b-title">Reprendre →</span>
+    <span class="b-sub" id="continue-meta">Aucun projet en cours</span>
+  </button>
+  <button class="block-btn block-timer" id="btn-timers">
+    <span class="b-title">Timer libre ⏱</span>
+    <span class="b-sub">Travaille par intervalles, sans créer de projet</span>
+  </button>
+  <div id="home-proj-wrap" style="margin-top:28px;display:none">
+    <div class="section-label">Mes projets</div>
+    <div id="home-proj-list" class="proj-list"></div>
+  </div>
+</section>
+
+<!-- CREATE -->
+<section class="screen" id="create">
+  <button class="back" id="back-create">← Accueil</button>
+  <h1>Nouveau <em>projet</em></h1>
+  <p class="sub">Juste l'essentiel. Je génère le plan automatiquement.</p>
+  <div class="field">
+    <label>Nom du projet</label>
+    <input id="c-name" placeholder="Ex : Réviser marketing, Faire exposé…" autocomplete="off">
+  </div>
+  <div class="field">
+    <label>Qu'est-ce que tu veux réussir aujourd'hui ?</label>
+    <textarea id="c-goal" placeholder="En une phrase simple, sans pression…" rows="3"></textarea>
+  </div>
+  <button class="btn" id="btn-create" disabled>Créer et commencer →</button>
+</section>
+
+<!-- MODE SELECT -->
+<section class="screen" id="mode-select">
+  <button class="back" id="back-mode">← Accueil</button>
+  <div id="ms-name" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;line-height:1.2;margin-bottom:6px"></div>
+  <p class="sub" id="ms-goal"></p>
+  <h2 style="margin-bottom:16px">Comment tu veux travailler ?</h2>
+  <div class="mode-cards">
+    <button class="mode-card" data-mode="2min">
+      <span class="mode-emoji">⚡</span>
+      <div>
+        <div class="mode-name">Juste 2 minutes</div>
+        <div class="mode-desc">Commence seulement 2 minutes. Parfait quand tu es bloquée ou sans énergie.</div>
+      </div>
+    </button>
+    <button class="mode-card" data-mode="reverse">
+      <span class="mode-emoji">🍅</span>
+      <div>
+        <div class="mode-name">Reverse Pomodoro</div>
+        <div class="mode-desc">Travaille tant que tu peux. Pause quand ton attention baisse.</div>
+      </div>
+    </button>
+    <button class="mode-card" data-mode="micro">
+      <span class="mode-emoji">🔬</span>
+      <div>
+        <div class="mode-name">Micro-étapes</div>
+        <div class="mode-desc">Des actions minuscules, une à la fois. Rien d'autre visible.</div>
+      </div>
+    </button>
+    <button class="mode-card" data-mode="one">
+      <span class="mode-emoji">🎯</span>
+      <div>
+        <div class="mode-name">Une seule chose</div>
+        <div class="mode-desc">Un écran, une action, un timer. Cerveau en paix.</div>
+      </div>
+    </button>
+  </div>
+</section>
+
+<!-- SESSION -->
+<section class="screen" id="session">
+  <button class="back" id="back-session">← Mes projets</button>
+  <div style="margin-bottom:22px">
+    <div class="step-pill" id="s-step-label">Étape 1 / 5</div>
+    <div class="step-dots" id="s-dots"></div>
+  </div>
+  <div class="task-name" id="s-task-name"></div>
+  <div class="micro-box">
+    <span class="micro-arrow">→</span>
+    <span class="micro-text" id="s-micro"></span>
+  </div>
+  <div class="timer-wrap">
+    <div class="timer-label" id="s-mode-label">Mode 2 minutes</div>
+    <div class="timer-num" id="s-timer">2:00</div>
+    <div class="timer-track"><div class="timer-bar" id="s-timer-bar" style="width:100%"></div></div>
+    <div class="timer-btns">
+      <button class="t-start" id="t-toggle">▶ Commencer</button>
+      <button class="t-reset" id="t-reset">↺</button>
+    </div>
+  </div>
+  <button class="btn-green" id="btn-done">✓ C'est fait</button>
+  <button class="btn-ghost" id="btn-skip">Passer cette micro-action →</button>
+  <div class="progress-wrap" style="margin-top:22px">
+    <div class="prog-row">
+      <span id="s-step-prog-label">Étape en cours</span>
+      <span id="s-step-pct">0%</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="s-step-bar" style="width:0%"></div></div>
+    <div class="prog-row">
+      <span>Projet global</span>
+      <span id="s-global-pct">0%</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="s-global-bar" style="width:0%"></div></div>
+    <div class="story" id="s-story">Tu fais le premier pas...</div>
+  </div>
+</section>
+
+<!-- CELEBRATION -->
+<section class="screen" id="celebration">
+  <span class="big-emoji" id="c-emoji">🎉</span>
+  <h2 id="c-title">Étape terminée !</h2>
+  <p class="celeb-sub" id="c-sub">Tu avances vraiment bien.</p>
+  <button class="btn" id="c-next">Étape suivante →</button>
+  <button class="btn-outline" id="c-home">Retour à l'accueil</button>
+</section>
+
+<!-- TIMER SETUP -->
+<section class="screen" id="timer-setup">
+  <button class="back" id="back-timer-setup">← Accueil</button>
+  <h1>Timer <em>libre</em></h1>
+  <p class="sub">Choisis ta durée et commence. Je m'occupe du reste.</p>
+  <div class="section-label">Durée de la session</div>
+  <div class="preset-grid">
+    <button class="preset-btn" data-min="2"><span class="p-min">2</span><span class="p-label">min</span></button>
+    <button class="preset-btn" data-min="5"><span class="p-min">5</span><span class="p-label">min</span></button>
+    <button class="preset-btn" data-min="10"><span class="p-min">10</span><span class="p-label">min</span></button>
+    <button class="preset-btn" data-min="15"><span class="p-min">15</span><span class="p-label">min</span></button>
+    <button class="preset-btn" data-min="25"><span class="p-min">25</span><span class="p-label">min</span></button>
+    <button class="preset-btn" data-min="45"><span class="p-min">45</span><span class="p-label">min</span></button>
+  </div>
+  <div class="field" style="margin-bottom:24px">
+    <label>Durée personnalisée (minutes)</label>
+    <input id="ft-custom" type="number" min="1" max="120" placeholder="Ex : 12">
+  </div>
+  <div class="field">
+    <label>Sur quoi tu travailles ? (optionnel)</label>
+    <input id="ft-task-input" placeholder="Ex : Réviser, Écrire, Ranger…" autocomplete="off">
+  </div>
+  <button class="btn" id="btn-start-ft" disabled>Commencer →</button>
+</section>
+
+<!-- TIMER FREE -->
+<section class="screen" id="timer-free">
+  <button class="back" id="back-timer-free">← Changer la durée</button>
+  <div class="session-badge" id="ft-badge">Session 1</div>
+  <div class="ft-task" id="ft-task-display"></div>
+  <div class="ft-num" id="ft-num">25:00</div>
+  <div class="ft-track"><div class="ft-bar" id="ft-bar" style="width:0%"></div></div>
+  <div class="ft-btns">
+    <button class="ft-toggle" id="ft-toggle">▶ Commencer</button>
+    <button class="ft-stop" id="ft-stop">✕</button>
+  </div>
+  <div id="ft-end-panel" style="display:none" class="end-panel">
+    <div class="end-title" id="ft-end-title">Session terminée !</div>
+    <div class="end-sub" id="ft-end-sub">Bien joué. Que veux-tu faire ?</div>
+    <div class="end-opts">
+      <button class="end-opt opt-main" id="ft-opt-again">↺ Même durée</button>
+      <button class="end-opt opt-green" id="ft-opt-pause">☕ Pause 5 minutes</button>
+      <button class="end-opt" id="ft-opt-change">⏱ Changer la durée</button>
+      <button class="end-opt" id="ft-opt-home">← Retour à l'accueil</button>
+    </div>
+  </div>
+</section>
+
+<!-- FINISHED -->
+<section class="screen" id="finished">
+  <span class="big-emoji">🏆</span>
+  <h2>Projet terminé !</h2>
+  <p class="celeb-sub" id="f-sub">Tu as accompli quelque chose d'important aujourd'hui.</p>
+  <button class="btn" id="f-home">Retour à l'accueil</button>
+</section>
+
 </main>
 <script>
-const $=id=>document.getElementById(id),STORE='tache_projects_v2';let selectedFeels=[],currentTask='',recognition=null,isListening=false,voiceBaseText='',activeProjectId=null,timerRemaining=300,timerRunning=false,timerInterval=null,timerGuideInterval=null,guideSteps=[],guideIndex=0,guideDone=false;
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');scrollTo(0,0);if(id==='projects')renderProjects()}document.querySelectorAll('[data-screen]').forEach(b=>b.onclick=()=>show(b.dataset.screen));$('to-projects').onclick=()=>show('projects');$('to-projects-2').onclick=()=>show('projects');$('to-create').onclick=()=>show('create');$('to-work').onclick=()=>show('task');document.querySelectorAll('[data-reset-task]').forEach(b=>b.onclick=()=>show('task'));
-function projects(){return JSON.parse(localStorage.getItem(STORE)||'[]')}function saveProjects(list){localStorage.setItem(STORE,JSON.stringify(list))}function splitLines(t){return t.split(/\n|,|;/).map(x=>x.trim()).filter(Boolean)}function makeSteps(){const desc=$('p-desc').value.trim(),goal=$('p-goal').value.trim(),crit=splitLines($('p-critical').value),obs=splitLines($('p-obstacles').value),steps=[];steps.push({text:'Clarifier le résultat attendu : '+(goal||desc||'définir le projet'),done:false});crit.forEach(x=>steps.push({text:x,done:false}));steps.push({text:'Préparer le matériel, les fichiers et l’espace de travail',done:false});steps.push({text:'Faire une première version imparfaite mais complète',done:false});obs.forEach(x=>steps.push({text:'Prévoir une solution pour : '+x,done:false}));steps.push({text:'Vérifier le minimum utile et corriger ce qui bloque',done:false});steps.push({text:'Sauvegarder ou ranger le résultat final',done:false});return steps.slice(0,12)}$('build-project').onclick=()=>{const p={id:String(Date.now()),name:$('p-name').value.trim()||'Projet sans nom',desc:$('p-desc').value.trim(),goal:$('p-goal').value.trim(),files:[...$('p-files').files].map(f=>f.name),duration:Math.max(5,Math.min(60,Number($('p-duration').value)||25)),steps:makeSteps(),created:new Date().toISOString()};const list=projects();list.unshift(p);saveProjects(list);openProject(p.id)};
-function renderProjects(){const list=projects(),box=$('project-list');box.innerHTML=list.length?'':'<div class="empty">Aucun projet sauvegardé pour l’instant.</div>';list.forEach(p=>{const done=p.steps.filter(s=>s.done).length;const b=document.createElement('button');b.className='project-card';b.innerHTML=`<strong>${p.name}</strong><span>${done}/${p.steps.length} étapes terminées · ${p.duration} min</span>`;b.onclick=()=>openProject(p.id);box.appendChild(b)})}function pct(p){return p.steps.length?Math.round(p.steps.filter(s=>s.done).length/p.steps.length*100):0}function openProject(id){activeProjectId=id;renderProject();show('project-detail')}function renderProject(){const p=projects().find(x=>x.id===activeProjectId);if(!p)return show('projects');const n=pct(p);$('project-detail-box').innerHTML=`<div class="title">${p.name}</div><div class="progress"><div class="circle" style="--p:${n}%"><div>${n}%</div></div><div>${p.desc||'Projet sauvegardé.'}<br><span style="color:var(--muted)">${p.duration} min par Pomodoro</span></div></div><div class="panel"><strong>But principal</strong><br>${p.goal||'À préciser.'}</div><div class="files">${p.files.map(f=>`<span class="file">${f}</span>`).join('')||'<span class="file">Aucun fichier ajouté</span>'}</div><div class="steps">${p.steps.map((s,i)=>`<label class="step ${s.done?'done':''}"><input type="checkbox" data-step="${i}" ${s.done?'checked':''}><span class="step-text"><span class="pill">Priorité</span><br>${s.text}</span></label>`).join('')}</div><div class="timer"><div class="timer-display" id="p-timer">${p.duration}:00</div><div class="timer-row"><button onclick="alert('Timer Pomodoro prêt : lance une session de '+${p.duration}+' min.')">▶ Start</button><button class="reset">↺</button></div></div><button class="btn secondary" id="delete-project">Supprimer</button>`;document.querySelectorAll('[data-step]').forEach(c=>c.onchange=e=>{const list=projects(),p=list.find(x=>x.id===activeProjectId);p.steps[Number(e.target.dataset.step)].done=e.target.checked;saveProjects(list);renderProject()});$('delete-project').onclick=()=>{saveProjects(projects().filter(p=>p.id!==activeProjectId));show('projects')}}
-const methods={rapide:[['regle2','🎯','Règle des 2 min','Guidage étape par étape'],['timer_course','🏁','Timer-course','5 minutes avec consignes']],bloquee:[['reverse_pomodoro','🍅','Reverse Pomodoro','5 minutes sans pression'],['micro_etape','•','Micro-étape ridicule','Action minuscule']],motivation:[['mini_quete','⚔️','Mini-quête RPG','Niveaux courts'],['task_racing','🏎️','Task Racing','Défi de 5 minutes']],submergee:[['une_chose','🎯','1 seule chose','Ignore le reste'],['brain_dump','🧠','Brain Dump Express','Vide ta tête']],temps:[['estimation','⏱️','Estimation x1.5','Temps réaliste'],['decoupage','📊','Découpage visible','Étapes numérotées']]},feelLabel={rapide:'⚡ Démarrer vite',bloquee:'🧱 Bloquée',motivation:'🎮 Motivation',submergee:'😰 Submergée',temps:'⏱️ Temps'},timerModes=new Set(['timer_course','reverse_pomodoro','mini_quete','task_racing']);
-function updateNext(){ $('btn-next').disabled=$('task-input').value.trim().length<3||!selectedFeels.length }document.querySelectorAll('.feel').forEach(b=>b.onclick=()=>{b.classList.toggle('selected');selectedFeels=[...document.querySelectorAll('.feel.selected')].map(x=>x.dataset.feel);updateNext()});$('task-input').oninput=updateNext;$('btn-next').onclick=()=>{currentTask=$('task-input').value.trim();$('recap-task').textContent=currentTask;$('recap-feels').textContent=selectedFeels.map(f=>feelLabel[f]).join(' · ');$('methods-list').innerHTML='';selectedFeels.flatMap(f=>methods[f]).forEach(m=>{const b=document.createElement('button');b.className='method';b.innerHTML=`<div class="icon" style="background:rgba(124,92,252,.16)">${m[1]}</div><div><div class="method-title">${m[2]}</div><div class="method-desc">${m[3]}</div></div>`;b.onclick=()=>choose(m[0]);$('methods-list').appendChild(b)});show('methods')};
-function choose(id){$('resp-task').textContent=currentTask;$('loading').style.display='flex';$('response-content').style.display='none';show('response');setTimeout(()=>{if(id==='regle2')return startTwoMin();$('loading').style.display='none';$('response-content').style.display='block';if(timerModes.has(id))startTimerGuide(id);else{clearInterval(timerGuideInterval);$('timer-section').style.display='none';$('response-text').textContent=basicText(id)}},250)}function taskName(){return currentTask.replace(/[.!?]+$/,'').trim().toLowerCase()||'ta tâche'}function startTwoMin(){guideSteps=[`Fais ceci maintenant, ça prendra moins de deux minutes : ouvre ce qu’il faut pour ${taskName()}.`,`Fais ceci maintenant, ça prendra moins de deux minutes : prépare seulement le premier élément utile.`,`Fais ceci maintenant, ça prendra moins de deux minutes : fais la toute première action visible.`,`Fais ceci maintenant, ça prendra moins de deux minutes : note ce qu’il reste à faire.`];guideIndex=0;guideDone=false;$('loading').style.display='none';$('response-content').style.display='block';$('timer-section').style.display='none';renderGuide()}function renderGuide(){const done=guideIndex>=guideSteps.length;$('response-text').innerHTML=done?`<strong>Terminé.</strong><br>Bravo, tu as fait toutes les micro-étapes.`:`<strong>Étape ${guideIndex+1}/${guideSteps.length}</strong><br>${guideSteps[guideIndex]}<div class="guide-actions"><label class="step ${guideDone?'done':''}"><input id="guide-check" type="checkbox" ${guideDone?'checked':''}><span class="step-text">${guideDone?'Bravo, tu as fait l’étape.':'Coche quand c’est fait.'}</span></label><button class="btn" id="guide-next" ${guideDone?'':'disabled'}>${guideIndex===guideSteps.length-1?'Terminer':'Suivant'}</button></div>`;if(!done){$('guide-check').onchange=e=>{guideDone=e.target.checked;renderGuide()};$('guide-next').onclick=()=>{guideIndex++;guideDone=false;renderGuide()}}}
-function startTimerGuide(id){timerRemaining=300;timerRunning=false;clearInterval(timerGuideInterval);$('timer-section').style.display='block';$('timer-btn').style.display='inline-block';$('timer-done').style.display='none';setTimerText();const msg={timer_course:['Top chrono : ouvre ce qu’il faut.','Continue : une seule action utile.','Pause rapide : respire, puis reprends.','Dernière ligne droite : termine le minimum visible.'],reverse_pomodoro:['Juste 5 minutes : première action.','Tu peux ralentir, il faut seulement rester avec la tâche.','Pause courte : respire.','Encore un petit bout, puis tu peux arrêter.'],task_racing:['Défi lancé : premier geste.','Garde le rythme : une action puis une autre.','Encouragement : tu avances déjà.','Dernier sprint : plus petit morceau possible.'],mini_quete:['Quête lancée : niveau 1.','Niveau 2 : 5 minutes focus.','Bonus courage : tu as démarré.','Boss final : termine une mini-partie.']}[id];let i=0;$('response-text').textContent=msg[0];timerGuideInterval=setInterval(()=>{i=Math.min(i+1,msg.length-1);$('response-text').textContent=msg[i]},75000)}function basicText(id){return{micro_etape:`Micro-étape ridicule :\nPrends juste ce qu'il faut pour commencer "${currentTask}".`,une_chose:`Une seule chose compte maintenant :\n${currentTask}`,brain_dump:'Vide tout ce qui tourne dans ta tête.\nPuis classe : Maintenant / Plus tard / Poubelle',estimation:'Ajoute le temps d’installation, les interruptions et les mini-pauses. Puis multiplie par 1.5.',decoupage:'1/5 Ouvrir\n2/5 Commencer\n3/5 Avancer\n4/5 Finir le minimum\n5/5 Vérifier'}[id]||'Commence par une toute petite action.'}
-function setTimerText(){const m=Math.floor(timerRemaining/60),s=timerRemaining%60;$('timer-display').textContent=m+':'+String(s).padStart(2,'0')}$('timer-btn').onclick=()=>{if(timerRemaining<=0)return;timerRunning=!timerRunning;if(timerRunning){$('timer-btn').textContent='⏸ Pause';timerInterval=setInterval(()=>{timerRemaining--;setTimerText();if(timerRemaining<=0){clearInterval(timerInterval);clearInterval(timerGuideInterval);timerRunning=false;$('timer-btn').style.display='none';$('timer-done').style.display='block';alert('Pause terminée, tu peux continuer')}},1000)}else{$('timer-btn').textContent='▶ Continuer';clearInterval(timerInterval)}};$('timer-reset').onclick=()=>{clearInterval(timerInterval);clearInterval(timerGuideInterval);timerRemaining=300;timerRunning=false;setTimerText();$('timer-btn').textContent='▶ Start';$('timer-btn').style.display='inline-block';$('timer-done').style.display='none'};$('reset-all').onclick=()=>{selectedFeels=[];document.querySelectorAll('.feel').forEach(b=>b.classList.remove('selected'));$('task-input').value='';updateNext();show('task')};
-function setupVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition,b=$('voice-btn');if(!SR){b.disabled=true;$('voice-status').textContent='Dictée non disponible sur ce navigateur.';return}recognition=new SR();recognition.lang='fr-FR';recognition.interimResults=true;recognition.onstart=()=>{isListening=true;b.classList.add('listening');b.textContent='Arrêter';$('voice-status').textContent="J’écoute en français..."};recognition.onresult=e=>{let t='';for(let i=e.resultIndex;i<e.results.length;i++)t+=e.results[i][0].transcript;$('task-input').value=(voiceBaseText+(voiceBaseText&&t?' ':'')+t).trimStart();updateNext()};recognition.onend=()=>{isListening=false;b.classList.remove('listening');b.textContent='Dictée'};b.onclick=()=>{if(isListening)return recognition.stop();voiceBaseText=$('task-input').value.trim();recognition.lang='fr-FR';recognition.start()}}setupVoice();
+// ─── STORAGE ───
+const STORE = 'tache_v3';
+const getProjects = () => JSON.parse(localStorage.getItem(STORE) || '[]');
+const saveProjects = list => localStorage.setItem(STORE, JSON.stringify(list));
+const getActiveId = () => localStorage.getItem('tache_active');
+const setActiveId = id => id ? localStorage.setItem('tache_active', id) : localStorage.removeItem('tache_active');
+
+// ─── NAV ───
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ─── STATE ───
+let currentProject = null;
+let currentMode = '2min';
+
+// ─── HOME ───
+function renderHome() {
+  const projects = getProjects();
+  const activeId = getActiveId();
+  const active = projects.find(p => p.id === activeId);
+  const last = active || projects[0];
+  const metaEl = document.getElementById('continue-meta');
+  const contBtn = document.getElementById('btn-continue');
+
+  if (last) {
+    metaEl.textContent = last.name + ' — ' + globalPct(last) + '% accompli';
+    contBtn.onclick = () => openProject(last);
+  } else {
+    metaEl.textContent = 'Aucun projet en cours';
+    contBtn.onclick = () => show('create');
+  }
+
+  const wrap = document.getElementById('home-proj-wrap');
+  const listEl = document.getElementById('home-proj-list');
+  if (projects.length > 0) {
+    wrap.style.display = 'block';
+    listEl.innerHTML = '';
+    projects.slice(0, 5).forEach(p => {
+      const pct = globalPct(p);
+      const step = getCurrentStep(p);
+      const btn = document.createElement('button');
+      btn.className = 'proj-card';
+      btn.innerHTML =
+        '<div class="proj-info">' +
+          '<div class="proj-name">' + p.name + '</div>' +
+          '<div class="proj-meta">' + (step ? step.name : 'Terminé ✓') + '</div>' +
+          '<div class="mini-bar"><div class="mini-fill" style="width:' + pct + '%"></div></div>' +
+        '</div>' +
+        '<div class="ring" style="background:conic-gradient(var(--accent) ' + (pct * 3.6) + 'deg,var(--soft) 0)">' +
+          '<div class="ring-inner">' + pct + '%</div>' +
+        '</div>';
+      btn.onclick = () => openProject(p);
+      listEl.appendChild(btn);
+    });
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+document.getElementById('btn-new').onclick = () => show('create');
+document.getElementById('back-create').onclick = () => { renderHome(); show('home'); };
+document.getElementById('back-mode').onclick = () => { renderHome(); show('home'); };
+
+// ─── CREATE ───
+const cName = document.getElementById('c-name');
+const cGoal = document.getElementById('c-goal');
+const btnCreate = document.getElementById('btn-create');
+
+cName.oninput = cGoal.oninput = () => { btnCreate.disabled = cName.value.trim().length < 2; };
+
+btnCreate.onclick = () => {
+  const name = cName.value.trim();
+  const goal = cGoal.value.trim();
+  const proj = buildProject(name, goal);
+  const list = getProjects();
+  list.unshift(proj);
+  saveProjects(list);
+  setActiveId(proj.id);
+  currentProject = proj;
+  cName.value = ''; cGoal.value = '';
+  btnCreate.disabled = true;
+  renderModeSelect();
+  show('mode-select');
+};
+
+// ─── AUTO-STEP GENERATION ───
+function buildProject(name, goal) {
+  return { id: String(Date.now()), name, goal, steps: generateSteps(name, goal), created: new Date().toISOString() };
+}
+
+function s(name, micros) { return { name, micros, done: 0 }; }
+
+function generateSteps(name, goal) {
+  const t = (name + ' ' + goal).toLowerCase();
+  if (/révis|cours|exam|étudi|bac|chapitre/.test(t)) return [
+    s('Ouvrir le cours', ['Trouve le cours ou le livre', 'Ouvre à la bonne page', 'Lis juste le titre']),
+    s('Lire une première fois', ['Lis le premier paragraphe', 'Continue lentement, sans te presser', 'Marque ce que tu ne comprends pas']),
+    s('Faire des fiches', ['Écris le titre de la première notion', 'Note la définition dans tes propres mots', 'Ajoute un exemple concret si tu peux']),
+    s('Réviser', ['Lis ta première fiche', 'Cache-la et essaie de te souvenir', 'Répète pour chaque fiche']),
+    s('Tester', ['Ferme tout et écris ce dont tu te souviens', 'Compare avec tes fiches', 'Note ce qui reste flou'])
+  ];
+  if (/exposé|présent|diapo|slide|soutenance/.test(t)) return [
+    s('Définir le sujet', ['Écris le sujet en une phrase', 'Note 3 points importants à couvrir', 'Choisis l\'ordre logique']),
+    s('Rechercher', ['Ouvre une source fiable', 'Lis l\'introduction', 'Note les informations essentielles']),
+    s('Faire le plan', ['Écris le plan sur une feuille', 'Introduction : 2 phrases', 'Conclusion : 1 phrase']),
+    s('Créer les slides', ['Ouvre ton outil de présentation', 'Fais le slide de titre', 'Fais un slide par point principal']),
+    s('Répéter', ['Lis ta présentation à voix haute', 'Chronomètre-toi', 'Ajuste ce qui est trop long'])
+  ];
+  if (/rang|nettoy|ménage|trier|organis/.test(t)) return [
+    s('Choisir une zone', ['Regarde autour de toi', 'Choisis UNE zone précise', 'Prends 5 objets hors de leur place']),
+    s('Trier', ['Objet 1 : garder ou non ?', 'Objet 2 : garder ou non ?', 'Continue avec les autres']),
+    s('Ranger', ['Mets chaque objet à sa place', 'Si pas de place : crée une zone', 'Ne cherche pas la perfection']),
+    s('Nettoyer', ['Essuie la surface dégagée', 'Donne un coup de balai si besoin', 'Admire le résultat']),
+    s('Valider', ['Est-ce que la zone est satisfaisante ?', 'Veux-tu continuer ailleurs ?', 'Prends une photo si tu en es fière'])
+  ];
+  if (/écri|rédig|lettre|mail|email|rapport|texte|essay/.test(t)) return [
+    s('Préparer', ['Ouvre un document vide', 'Écris juste le titre', 'Note 3 idées en vrac sans filtrer']),
+    s('Premier jet', ['Écris la première phrase sans te relire', 'Continue jusqu\'à couvrir l\'idée principale', 'Ne corrige rien pour l\'instant']),
+    s('Développer', ['Relis seulement la dernière phrase écrite', 'Ajoute un exemple ou un détail', 'Continue avec l\'idée suivante']),
+    s('Relire', ['Lis du début à la fin sans t\'arrêter', 'Note ce qui manque', 'Note ce qui est flou']),
+    s('Corriger', ['Corrige les grosses erreurs', 'Améliore une phrase difficile', 'Sauvegarde et envoie'])
+  ];
+  if (/cod|programm|développ|site|app|bug/.test(t)) return [
+    s('Comprendre', ['Relis l\'objectif en une phrase', 'Note ce que ça doit faire', 'Identifie le premier bloc à coder']),
+    s('Mettre en place', ['Ouvre ton éditeur', 'Crée ou ouvre le bon fichier', 'Lis le code existant si présent']),
+    s('Coder', ['Écris la structure de base', 'Implémente la logique principale', 'Teste rapidement en console']),
+    s('Corriger', ['Lance le projet', 'Teste le cas principal', 'Corrige les erreurs évidentes']),
+    s('Finir', ['Nettoie le code inutile', 'Sauvegarde ou commit', 'C\'est fait !'])
+  ];
+  if (/dossier|form|admin|document|demande/.test(t)) return [
+    s('Rassembler', ['Identifie les documents nécessaires', 'Trouve le premier document', 'Vérifie qu\'il est à jour']),
+    s('Lire les instructions', ['Lis les instructions une fois', 'Note les champs obligatoires', 'Prépare les informations manquantes']),
+    s('Remplir', ['Remplis ton nom et coordonnées', 'Continue avec les autres champs', 'Laisse vide si tu ne sais pas maintenant']),
+    s('Vérifier', ['Relis le formulaire une fois', 'Vérifie les dates importantes', 'Joins les pièces jointes']),
+    s('Envoyer', ['Sauvegarde une copie pour toi', 'Envoie ou dépose', 'Note la date d\'envoi'])
+  ];
+  return [
+    s('Démarrer', ['Ouvre ce dont tu as besoin', 'Installe-toi confortablement', 'Fais la toute première action visible']),
+    s('Avancer', ['Continue depuis là où tu es', 'Fais une chose à la fois', 'Si tu es bloquée, note et passe']),
+    s('Creuser', ['Approfondis la partie principale', 'Prends une courte pause si besoin', 'Reviens et continue']),
+    s('Finaliser', ['Termine le minimum utile', 'Vérifie que c\'est cohérent', 'Corrige ce qui bloque vraiment']),
+    s('Terminer', ['Relis ou reregarde une dernière fois', 'Sauvegarde ou range', 'C\'est fait !'])
+  ];
+}
+
+// ─── PROJECT UTILS ───
+function getCurrentStep(p) {
+  return p.steps.find(st => (st.done || 0) < st.micros.length) || null;
+}
+function getCurrentStepIdx(p) {
+  const i = p.steps.findIndex(st => (st.done || 0) < st.micros.length);
+  return i === -1 ? p.steps.length - 1 : i;
+}
+function globalPct(p) {
+  const total = p.steps.reduce((a, st) => a + st.micros.length, 0);
+  const done = p.steps.reduce((a, st) => a + (st.done || 0), 0);
+  return total ? Math.round(done / total * 100) : 0;
+}
+function stepPct(step) {
+  return step.micros.length ? Math.round((step.done || 0) / step.micros.length * 100) : 0;
+}
+
+// ─── OPEN PROJECT ───
+function openProject(p) {
+  currentProject = p;
+  setActiveId(p.id);
+  renderModeSelect();
+  show('mode-select');
+}
+
+// ─── MODE SELECT ───
+function renderModeSelect() {
+  const p = currentProject;
+  document.getElementById('ms-name').textContent = p.name;
+  document.getElementById('ms-goal').textContent = p.goal || 'On y va, une micro-action à la fois.';
+}
+
+document.querySelectorAll('.mode-card').forEach(card => {
+  card.onclick = () => { currentMode = card.dataset.mode; startSession(); };
+});
+
+// ─── TIMER STATE ───
+const MODES = {
+  '2min':    { label: 'Mode 2 minutes',   time: 120 },
+  'reverse': { label: 'Reverse Pomodoro', time: 1500 },
+  'micro':   { label: 'Micro-étapes',     time: 180 },
+  'one':     { label: 'Une seule chose',  time: 1200 }
+};
+let tRemain = 120, tTotal = 120, tRunning = false, tInterval = null;
+
+function startSession() {
+  renderSession();
+  show('session');
+}
+
+// ─── SESSION RENDER ───
+const storyLines = [
+  'Tu fais le premier pas dans la forêt...',
+  'Le chemin s\'ouvre devant toi.',
+  'Tu avances. Le brouillard se lève un peu.',
+  'Une petite clairière apparaît.',
+  'Tu continues, pas à pas.',
+  'Tu es à mi-chemin. C\'est bien.',
+  'Le chemin s\'éclaircit.',
+  'Tu aperçois de la lumière entre les arbres.',
+  'Presque là. Encore quelques pas.',
+  'Tu émerges dans la lumière. Tu as réussi.'
+];
+
+function renderSession() {
+  const p = currentProject;
+  if (!p) return;
+
+  const step = getCurrentStep(p);
+  if (!step) { finishProject(); return; }
+
+  const idx = getCurrentStepIdx(p);
+  const micro = step.micros[step.done || 0];
+
+  document.getElementById('s-step-label').textContent = 'Étape ' + (idx + 1) + ' / ' + p.steps.length;
+  document.getElementById('s-task-name').textContent = step.name;
+  document.getElementById('s-micro').textContent = micro;
+  document.getElementById('s-mode-label').textContent = MODES[currentMode].label;
+
+  const dotsEl = document.getElementById('s-dots');
+  dotsEl.innerHTML = '';
+  p.steps.forEach(function(_, i) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i < idx ? ' done' : i === idx ? ' active' : '');
+    dotsEl.appendChild(d);
+  });
+
+  const sp = stepPct(step);
+  const gp = globalPct(p);
+  document.getElementById('s-step-prog-label').textContent = step.name;
+  document.getElementById('s-step-pct').textContent = sp + '%';
+  document.getElementById('s-step-bar').style.width = sp + '%';
+  document.getElementById('s-global-pct').textContent = gp + '%';
+  document.getElementById('s-global-bar').style.width = gp + '%';
+
+  const totalM = p.steps.reduce((a, st) => a + st.micros.length, 0);
+  const doneM = p.steps.reduce((a, st) => a + (st.done || 0), 0);
+  const si = Math.min(Math.floor(doneM / Math.max(totalM, 1) * storyLines.length), storyLines.length - 1);
+  document.getElementById('s-story').textContent = storyLines[si];
+
+  resetTimer();
+}
+
+// ─── TIMER ───
+function resetTimer() {
+  clearInterval(tInterval);
+  tRunning = false;
+  tTotal = MODES[currentMode].time;
+  tRemain = tTotal;
+  renderTimerDisplay();
+  document.getElementById('t-toggle').textContent = '▶ Commencer';
+}
+
+function renderTimerDisplay() {
+  const m = Math.floor(tRemain / 60), s = tRemain % 60;
+  document.getElementById('s-timer').textContent = m + ':' + String(s).padStart(2, '0');
+  document.getElementById('s-timer-bar').style.width = (tTotal ? tRemain / tTotal * 100 : 100) + '%';
+}
+
+document.getElementById('t-toggle').onclick = function() {
+  if (tRunning) {
+    clearInterval(tInterval);
+    tRunning = false;
+    document.getElementById('t-toggle').textContent = '▶ Continuer';
+  } else {
+    if (tRemain <= 0) return;
+    tRunning = true;
+    document.getElementById('t-toggle').textContent = '⏸ Pause';
+    tInterval = setInterval(function() {
+      tRemain--;
+      renderTimerDisplay();
+      if (tRemain <= 0) {
+        clearInterval(tInterval);
+        tRunning = false;
+        document.getElementById('t-toggle').textContent = '▶ Rejouer';
+        document.getElementById('s-timer').textContent = '✓';
+      }
+    }, 1000);
+  }
+};
+document.getElementById('t-reset').onclick = resetTimer;
+
+// ─── DONE / SKIP ───
+function advanceMicro() {
+  const projects = getProjects();
+  const p = projects.find(x => x.id === currentProject.id);
+  if (!p) return;
+  const step = getCurrentStep(p);
+  if (!step) return;
+  step.done = Math.min((step.done || 0) + 1, step.micros.length);
+  saveProjects(projects);
+  currentProject = p;
+  clearInterval(tInterval); tRunning = false;
+
+  if (step.done >= step.micros.length) {
+    const allDone = p.steps.every(st => (st.done || 0) >= st.micros.length);
+    if (allDone) { finishProject(); return; }
+    const emojis = ['🎉', '⭐', '🌟', '✨', '🎊'];
+    document.getElementById('c-emoji').textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    document.getElementById('c-title').textContent = step.name + ' — terminé !';
+    const next = getCurrentStep(p);
+    document.getElementById('c-sub').textContent = next ? 'Prochaine étape : ' + next.name : 'Tu es presque au bout !';
+    show('celebration');
+  } else {
+    renderSession();
+  }
+}
+
+document.getElementById('btn-done').onclick = advanceMicro;
+document.getElementById('btn-skip').onclick = advanceMicro;
+
+function finishProject() {
+  setActiveId(null);
+  document.getElementById('f-sub').textContent = '"' + currentProject.name + '" est terminé. Vraiment bien joué.';
+  show('finished');
+}
+
+// ─── CELEBRATION & FINISHED ───
+document.getElementById('c-next').onclick = () => { renderSession(); show('session'); };
+document.getElementById('c-home').onclick = () => { renderHome(); show('home'); };
+document.getElementById('f-home').onclick = () => { renderHome(); show('home'); };
+document.getElementById('back-session').onclick = () => { clearInterval(tInterval); tRunning = false; renderHome(); show('home'); };
+
+// ─── TIMER LIBRE ───
+let ftDuration = 0, ftRemain = 0, ftTotal = 0;
+let ftRunning = false, ftInterval = null;
+let ftSession = 1, ftIsPause = false, ftTaskName = '';
+
+document.getElementById('btn-timers').onclick = () => {
+  resetFtSetup();
+  show('timer-setup');
+};
+document.getElementById('back-timer-setup').onclick = () => { renderHome(); show('home'); };
+document.getElementById('back-timer-free').onclick = () => { clearInterval(ftInterval); ftRunning = false; resetFtSetup(); show('timer-setup'); };
+
+function resetFtSetup() {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('ft-custom').value = '';
+  document.getElementById('ft-task-input').value = '';
+  document.getElementById('btn-start-ft').disabled = true;
+  ftDuration = 0;
+}
+
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('ft-custom').value = '';
+    btn.classList.add('selected');
+    ftDuration = parseInt(btn.dataset.min) * 60;
+    document.getElementById('btn-start-ft').disabled = false;
+  };
+});
+
+document.getElementById('ft-custom').oninput = function() {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+  const v = parseInt(this.value);
+  if (v > 0) { ftDuration = v * 60; document.getElementById('btn-start-ft').disabled = false; }
+  else { ftDuration = 0; document.getElementById('btn-start-ft').disabled = true; }
+};
+
+document.getElementById('btn-start-ft').onclick = () => {
+  ftTaskName = document.getElementById('ft-task-input').value.trim();
+  ftSession = 1;
+  ftIsPause = false;
+  startFtTimer(ftDuration);
+};
+
+function startFtTimer(seconds) {
+  ftTotal = seconds;
+  ftRemain = seconds;
+  ftRunning = false;
+  clearInterval(ftInterval);
+  renderFtTimer();
+  document.getElementById('ft-end-panel').style.display = 'none';
+  document.getElementById('ft-toggle').style.display = '';
+  document.getElementById('ft-stop').style.display = '';
+  show('timer-free');
+}
+
+function renderFtTimer() {
+  const m = Math.floor(ftRemain / 60), s = ftRemain % 60;
+  const numEl = document.getElementById('ft-num');
+  const barEl = document.getElementById('ft-bar');
+  const badgeEl = document.getElementById('ft-badge');
+  const toggleEl = document.getElementById('ft-toggle');
+
+  numEl.textContent = m + ':' + String(s).padStart(2, '0');
+  numEl.className = 'ft-num' + (ftIsPause ? ' pause-num' : '');
+  barEl.style.width = (ftTotal ? (1 - ftRemain / ftTotal) * 100 : 100) + '%';
+  barEl.className = 'ft-bar' + (ftIsPause ? ' pause-bar' : '');
+
+  if (ftIsPause) {
+    badgeEl.textContent = 'Pause ☕';
+    badgeEl.className = 'session-badge pause-mode';
+    toggleEl.className = 'ft-toggle pause-toggle';
+  } else {
+    badgeEl.textContent = 'Session ' + ftSession;
+    badgeEl.className = 'session-badge';
+    toggleEl.className = 'ft-toggle';
+  }
+
+  document.getElementById('ft-task-display').textContent = ftTaskName || '';
+}
+
+document.getElementById('ft-toggle').onclick = function() {
+  if (ftRunning) {
+    clearInterval(ftInterval);
+    ftRunning = false;
+    this.textContent = '▶ Continuer';
+  } else {
+    if (ftRemain <= 0) return;
+    ftRunning = true;
+    this.textContent = '⏸ Pause';
+    ftInterval = setInterval(() => {
+      ftRemain--;
+      renderFtTimer();
+      if (ftRemain <= 0) {
+        clearInterval(ftInterval);
+        ftRunning = false;
+        document.getElementById('ft-num').textContent = '✓';
+        document.getElementById('ft-toggle').style.display = 'none';
+        document.getElementById('ft-stop').style.display = 'none';
+        showFtEndPanel();
+      }
+    }, 1000);
+  }
+};
+
+document.getElementById('ft-stop').onclick = () => {
+  clearInterval(ftInterval);
+  ftRunning = false;
+  renderHome();
+  show('home');
+};
+
+function showFtEndPanel() {
+  const panel = document.getElementById('ft-end-panel');
+  const mins = Math.round(ftTotal / 60);
+  document.getElementById('ft-end-title').textContent = ftIsPause ? 'Pause terminée !' : 'Session ' + ftSession + ' terminée !';
+  document.getElementById('ft-end-sub').textContent = ftIsPause
+    ? 'Tu es prête à reprendre ?'
+    : mins + ' minutes de focus. Bien joué.';
+  panel.style.display = 'block';
+}
+
+document.getElementById('ft-opt-again').onclick = () => {
+  if (!ftIsPause) ftSession++;
+  ftIsPause = false;
+  startFtTimer(ftDuration);
+  document.getElementById('ft-toggle').textContent = '▶ Commencer';
+};
+
+document.getElementById('ft-opt-pause').onclick = () => {
+  ftIsPause = true;
+  startFtTimer(5 * 60);
+  document.getElementById('ft-toggle').textContent = '▶ Commencer';
+};
+
+document.getElementById('ft-opt-change').onclick = () => {
+  clearInterval(ftInterval);
+  ftRunning = false;
+  resetFtSetup();
+  show('timer-setup');
+};
+
+document.getElementById('ft-opt-home').onclick = () => {
+  clearInterval(ftInterval);
+  ftRunning = false;
+  renderHome();
+  show('home');
+};
+
+// ─── INIT ───
+renderHome();
 </script>
 </body>
 </html>

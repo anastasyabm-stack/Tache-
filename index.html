@@ -264,6 +264,8 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .plan-step-add-inp:focus { border-color: var(--accent); }
 .plan-step-add-inp::placeholder { color: var(--muted); }
 .plan-step-add-ok { border: none; border-radius: 9px; background: var(--accent); color: #fff; font: 700 13px 'Syne',sans-serif; padding: 8px 13px; cursor: pointer; }
+/* Docs badge on 📁 button */
+.docs-badge { position:absolute;top:-3px;right:-3px;background:var(--accent);color:#fff;border-radius:50%;font-size:9px;font-weight:700;width:14px;height:14px;display:flex;align-items:center;justify-content:center;line-height:1;pointer-events:none; }
 /* Add-micro 2-option UI */
 .add-micro-toggle { width:100%; background:none; border:1.5px dashed var(--border); border-radius:10px; color:var(--muted); font:600 12px 'DM Sans',sans-serif; padding:8px; cursor:pointer; margin-top:6px; transition:border-color .2s,color .2s; }
 .add-micro-toggle:hover { border-color:var(--accent); color:var(--accent); }
@@ -1112,10 +1114,11 @@ function scheduleSync() {
   _syncTimer = setTimeout(async () => {
     try {
       await _db.collection('users').doc(_fbUser.uid).set({
-        projects:   getProjectsRaw(),
-        activeId:   localStorage.getItem('tache_active') || null,
-        quicktodo:  getQTRaw(),
-        updatedAt:  firebase.firestore.FieldValue.serverTimestamp()
+        projects:          getProjectsRaw(),
+        deletedProjectIds: getDeletedIds(),
+        activeId:          localStorage.getItem('tache_active') || null,
+        quicktodo:         getQTRaw(),
+        updatedAt:         firebase.firestore.FieldValue.serverTimestamp()
       });
     } catch(e) { console.warn('Firestore sync:', e); }
   }, 2000);
@@ -1127,30 +1130,32 @@ async function loadFromFirestore(uid) {
     const localProjs = getProjectsRaw();
 
     if (snap.exists) {
-      const d          = snap.data();
-      const cloudProjs = d.projects || [];
+      const d = snap.data();
 
-      // Fusion ADDITIVE uniquement : on ne retire jamais de projets
+      // ── Tombstones : fusionner IDs supprimés cloud + local ──
+      const cloudDeletedIds = d.deletedProjectIds || [];
+      const localDeletedIds = getDeletedIds();
+      const allDeletedIds   = new Set([...cloudDeletedIds, ...localDeletedIds]);
+      // Sauvegarder localement la liste fusionnée
+      if (cloudDeletedIds.length > 0) {
+        localStorage.setItem('tache_deleted_ids',
+          JSON.stringify([...new Set([...localDeletedIds, ...cloudDeletedIds])]));
+      }
+
+      // ── Projets : fusion sans ressusciter les supprimés ──
+      const cloudProjs = (d.projects || []).filter(p => !allDeletedIds.has(p.id));
       const merged = [...cloudProjs];
       localProjs.forEach(lp => {
-        if (!merged.find(cp => cp.id === lp.id)) merged.push(lp);
+        if (!allDeletedIds.has(lp.id) && !merged.find(cp => cp.id === lp.id)) merged.push(lp);
       });
-
-      // Projets : mise à jour additive uniquement
-      if (merged.length >= localProjs.length) {
-        localStorage.setItem('tache_v3', JSON.stringify(merged));
-        if (d.activeId) localStorage.setItem('tache_active', d.activeId);
-      }
+      localStorage.setItem('tache_v3', JSON.stringify(merged));
+      if (d.activeId) localStorage.setItem('tache_active', d.activeId);
       if (merged.length > cloudProjs.length) uploadNow(uid, merged);
 
-      // QuickTodo : cloud est autoritaire, on garde seulement les items locaux absents du cloud
-      const localQT  = getQTRaw();
-      const cloudQT  = d.quicktodo || [];
-      const cloudIds = new Set(cloudQT.map(function(i) { return i.id; }));
-      const onlyLocal = localQT.filter(function(i) { return !cloudIds.has(i.id); });
-      const mergedQT = [...cloudQT, ...onlyLocal];
-      localStorage.setItem('ft_quicktodo', JSON.stringify(mergedQT));
-      if (onlyLocal.length > 0) scheduleSync(); // upload les items locaux nouveaux
+      // ── QuickTodo : cloud autoritaire — pas de fusion locale ──
+      // (évite la résurrection d'items supprimés sur un autre appareil)
+      const cloudQT = d.quicktodo || [];
+      localStorage.setItem('ft_quicktodo', JSON.stringify(cloudQT));
 
     } else if (localProjs.length > 0) {
       // Pas encore de document Firestore ET on a des projets locaux → premier upload
@@ -1164,10 +1169,11 @@ function uploadNow(uid, projects) {
   // Garde-fou : on ne remplace jamais le cloud par un tableau vide
   if (!_db || !projects || projects.length === 0) return;
   _db.collection('users').doc(uid).set({
-    projects:  projects,
-    activeId:  localStorage.getItem('tache_active') || null,
-    quicktodo: getQTRaw(),
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    projects:          projects,
+    deletedProjectIds: getDeletedIds(),
+    activeId:          localStorage.getItem('tache_active') || null,
+    quicktodo:         getQTRaw(),
+    updatedAt:         firebase.firestore.FieldValue.serverTimestamp()
   }).catch(e => console.warn('Firestore upload:', e));
 }
 
@@ -1266,6 +1272,9 @@ const STORE = 'tache_v3';
 const getProjectsRaw = () => JSON.parse(localStorage.getItem(STORE) || '[]');
 const getProjects    = () => getProjectsRaw();
 const saveProjects   = list => { localStorage.setItem(STORE, JSON.stringify(list)); scheduleSync(); };
+// Tombstone : IDs de projets supprimés (évite la résurrection multi-appareils)
+const getDeletedIds  = () => { try { return JSON.parse(localStorage.getItem('tache_deleted_ids') || '[]'); } catch(e) { return []; } };
+const addDeletedId   = id => { const ids = getDeletedIds(); if (!ids.includes(id)) { ids.push(id); localStorage.setItem('tache_deleted_ids', JSON.stringify(ids)); } };
 const getActiveId = () => localStorage.getItem('tache_active');
 const setActiveId = id => id ? localStorage.setItem('tache_active', id) : localStorage.removeItem('tache_active');
 
@@ -2213,6 +2222,7 @@ document.getElementById('pp-files-input').onchange = function() {
 document.getElementById('btn-delete-project').onclick = () => {
   if (!currentProject) return;
   if (!confirm('Supprimer "' + currentProject.name + '" ? Cette action est irréversible.')) return;
+  addDeletedId(currentProject.id); // tombstone : empêche la résurrection cloud
   saveProjects(getProjects().filter(p => p.id !== currentProject.id));
   if (getActiveId() === currentProject.id) setActiveId(null);
   currentProject = null;
@@ -3184,14 +3194,10 @@ function renderCategoryCard(cat, proj, container) {
   delBtn.className = 'cat-del'; delBtn.textContent = '🗑'; delBtn.title = 'Supprimer';
   (function(cid) { delBtn.onclick = () => deleteCategory(proj, cid); })(cat.id);
 
-  // ── 📎 Docs button (top row, icon only) ──
+  // ── 📁 Docs toggle button (top row) ──
   const docInput = document.createElement('input');
   docInput.type = 'file'; docInput.multiple = true; docInput.style.display = 'none';
-  const docIconBtn = document.createElement('button');
-  docIconBtn.className = 'cat-collapse-top';
-  docIconBtn.textContent = '📎'; docIconBtn.title = 'Ajouter des documents';
-  docIconBtn.style.cssText += ';font-size:16px;opacity:.65';
-  docIconBtn.onclick = function(e) { e.stopPropagation(); docInput.click(); };
+  card.appendChild(docInput);
   (function(catId) {
     docInput.onchange = function() {
       if (!this.files.length) return;
@@ -3210,9 +3216,29 @@ function renderCategoryCard(cat, proj, container) {
       catBubbleFn();
     };
   })(cat.id);
-  card.appendChild(docInput);
+  const catFilesCount = (proj.files || []).filter(f => (proj.fileCategories || {})[f] === cat.id).length;
+  const docsIconBtn = document.createElement('button');
+  docsIconBtn.className = 'cat-collapse-top';
+  docsIconBtn.title = 'Documents';
+  docsIconBtn.style.cssText += ';font-size:16px;opacity:.65;position:relative;overflow:visible';
+  docsIconBtn.textContent = '📁';
+  if (catFilesCount > 0) {
+    const badge = document.createElement('span');
+    badge.className = 'docs-badge';
+    badge.textContent = catFilesCount;
+    docsIconBtn.appendChild(badge);
+  }
+  let docsPanel = null; // référencé plus bas dans le body
+  docsIconBtn.onclick = function(e) {
+    e.stopPropagation();
+    if (!docsPanel) return;
+    const isOpen = docsPanel.style.display !== 'none';
+    docsPanel.style.display = isOpen ? 'none' : 'block';
+    docsIconBtn.style.opacity = isOpen ? '.65' : '1';
+    docsIconBtn.style.color   = isOpen ? '' : 'var(--accent)';
+  };
 
-  topRow.appendChild(circle); topRow.appendChild(nameDiv); topRow.appendChild(docIconBtn); topRow.appendChild(colBtn); topRow.appendChild(delBtn);
+  topRow.appendChild(circle); topRow.appendChild(nameDiv); topRow.appendChild(docsIconBtn); topRow.appendChild(colBtn); topRow.appendChild(delBtn);
 
   // ── ACTIONS ROW: mode chip + start button (2 items only) ──
   const actionsRow = document.createElement('div');
@@ -3254,25 +3280,30 @@ function renderCategoryCard(cat, proj, container) {
   } else {
     const stepsEl = document.createElement('div');
     stepsEl.className = 'cat-steps';
-    // ── Fichiers associés à cette catégorie ──
+    // ── Panneau Documents (toggle via bouton 📁 dans le header) ──
     const catFiles = (proj.files || []).filter(f => (proj.fileCategories || {})[f] === cat.id);
+    docsPanel = document.createElement('div');
+    docsPanel.style.cssText = 'display:none;padding:10px 12px 8px;border-bottom:1px solid var(--border);margin-bottom:4px';
     if (catFiles.length) {
-      const filesWrap = document.createElement('div');
-      filesWrap.style.cssText = 'padding:8px 12px 4px;display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--border);margin-bottom:4px';
-      const filesLabel = document.createElement('div');
-      filesLabel.style.cssText = 'width:100%;font-size:11px;color:var(--muted);margin-bottom:2px';
-      filesLabel.textContent = '📎 Fichiers associés';
-      filesWrap.appendChild(filesLabel);
+      const chipsWrap = document.createElement('div');
+      chipsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px';
       catFiles.forEach(function(fname) {
         const chip = document.createElement('button');
         chip.style.cssText = 'background:rgba(124,92,252,.12);border:1px solid rgba(124,92,252,.25);border-radius:8px;color:var(--accent);font-size:12px;font-weight:600;padding:4px 10px;cursor:pointer;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-        chip.title = fname;
-        chip.textContent = fname;
+        chip.title = fname; chip.textContent = fname;
         chip.onclick = function() { openStoredFile(proj.id, fname); };
-        filesWrap.appendChild(chip);
+        chipsWrap.appendChild(chip);
       });
-      body.appendChild(filesWrap);
+      docsPanel.appendChild(chipsWrap);
     }
+    const addDocBtn = document.createElement('button');
+    addDocBtn.style.cssText = 'width:100%;border:1.5px dashed var(--border);border-radius:9px;background:none;color:var(--muted);font:600 12px "DM Sans",sans-serif;padding:8px;cursor:pointer;transition:border-color .2s,color .2s';
+    addDocBtn.textContent = '+ Ajouter un document';
+    addDocBtn.onmouseover = function() { this.style.borderColor='var(--accent)'; this.style.color='var(--accent)'; };
+    addDocBtn.onmouseout  = function() { this.style.borderColor='var(--border)'; this.style.color='var(--muted)'; };
+    addDocBtn.onclick = function(e) { e.stopPropagation(); docInput.click(); };
+    docsPanel.appendChild(addDocBtn);
+    body.appendChild(docsPanel);
 
     renderStepsList(cat.steps || [], stepsEl, catSaveFn, cat.mode === 'seance');
     body.appendChild(stepsEl);

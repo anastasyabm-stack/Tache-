@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>focusTDAH</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -323,6 +327,41 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .cat-add-btn { width: 100%; border: 1.5px dashed var(--border); border-radius: 16px; background: none; color: var(--muted); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; padding: 14px; cursor: pointer; margin-bottom: 16px; transition: border-color .2s, color .2s; }
 .cat-add-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+/* ── AUTH ── */
+#auth { display: none; min-height: 100vh; padding: 60px 22px 40px; }
+#auth.active { display: block; }
+.auth-card {
+  background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 24px; padding: 30px 24px;
+}
+.auth-google-btn {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  width: 100%; border: 1.5px solid var(--border); border-radius: 16px;
+  background: #fff; color: #1a1a1a;
+  font: 600 15px 'DM Sans', sans-serif; padding: 16px 20px;
+  cursor: pointer; transition: box-shadow .15s, transform .13s;
+  margin-bottom: 10px;
+}
+.auth-google-btn:active { transform: scale(.97); }
+.auth-google-btn:hover { box-shadow: 0 4px 18px rgba(0,0,0,.18); }
+.auth-note { color: var(--muted); font-size: 12px; text-align: center; margin-top: 16px; line-height: 1.55; }
+.auth-loading { display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: 14px; padding: 16px 0; }
+.auth-spinner { width: 20px; height: 20px; border: 2.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.auth-user-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--soft); border: 1px solid var(--border);
+  border-radius: 999px; padding: 6px 14px 6px 8px;
+  font-size: 13px; color: var(--text); margin-bottom: 16px;
+}
+.auth-user-pill img { width: 24px; height: 24px; border-radius: 50%; }
+.auth-logout-btn {
+  background: none; border: none; color: var(--muted); font-size: 12px;
+  cursor: pointer; padding: 4px 8px; border-radius: 8px; margin-left: 4px;
+  transition: color .15s;
+}
+.auth-logout-btn:hover { color: #fc5c7d; }
+
 /* ── LANDING ── */
 #landing {
   display: none;
@@ -416,10 +455,34 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 <body>
 <main>
 
+<!-- AUTH -->
+<section class="screen" id="auth">
+  <div style="text-align:center; margin-bottom:48px">
+    <span class="logo" style="font-size:28px">✦ focusTDAH</span>
+    <p style="color:var(--muted);font-size:14px;margin-top:8px">Ton espace de travail TDAH</p>
+  </div>
+  <div class="auth-card">
+    <h2 style="margin-bottom:8px">Bienvenue ✦</h2>
+    <p class="sub" style="margin-bottom:28px">Connecte-toi pour retrouver tes projets sur tous tes appareils.</p>
+    <div id="auth-loading" class="auth-loading" style="display:none">
+      <div class="auth-spinner"></div> Connexion en cours…
+    </div>
+    <button class="auth-google-btn" id="btn-google-login">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="20" height="20">
+      Continuer avec Google
+    </button>
+    <button class="btn-ghost" id="btn-anon-continue" style="width:100%;justify-content:center;margin-top:4px;font-size:14px">
+      Continuer sans compte →
+    </button>
+    <p class="auth-note">Sans compte, tes données restent sur cet appareil uniquement.</p>
+  </div>
+</section>
+
 <!-- LANDING -->
 <section class="screen active" id="landing">
-  <div class="landing-logo-row">
+  <div class="landing-logo-row" style="justify-content:space-between;align-items:center">
     <span class="logo" style="font-size:26px">✦ focusTDAH</span>
+    <div id="landing-user" style="display:none"></div>
   </div>
   <p class="landing-tagline">Ton espace de travail TDAH</p>
 
@@ -728,10 +791,124 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 
 </main>
 <script>
+// ─── FIREBASE CONFIG ───────────────────────────────────────────────
+// ⬇⬇ REMPLACE CES VALEURS PAR TON firebaseConfig ⬇⬇
+const FIREBASE_CONFIG = {
+  apiKey:            "REPLACE_apiKey",
+  authDomain:        "REPLACE_authDomain",
+  projectId:         "REPLACE_projectId",
+  storageBucket:     "REPLACE_storageBucket",
+  messagingSenderId: "REPLACE_messagingSenderId",
+  appId:             "REPLACE_appId"
+};
+// ────────────────────────────────────────────────────────────────────
+
+const FB_READY = !FIREBASE_CONFIG.apiKey.startsWith('REPLACE');
+let _auth = null, _db = null, _fbUser = null;
+
+if (FB_READY) {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  _auth = firebase.auth();
+  _db   = firebase.firestore();
+}
+
+// Sync local data → Firestore (debounced 2 s)
+let _syncTimer = null;
+function scheduleSync() {
+  if (!FB_READY || !_fbUser) return;
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(async () => {
+    try {
+      await _db.collection('users').doc(_fbUser.uid).set({
+        projects:   getProjectsRaw(),
+        activeId:   localStorage.getItem('tache_active') || null,
+        quicktodo:  getQTRaw(),
+        updatedAt:  firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e) { console.warn('Firestore sync:', e); }
+  }, 2000);
+}
+
+async function loadFromFirestore(uid) {
+  try {
+    const snap = await _db.collection('users').doc(uid).get();
+    if (snap.exists) {
+      const d = snap.data();
+      if (d.projects)  localStorage.setItem('tache_v3',       JSON.stringify(d.projects));
+      if (d.activeId)  localStorage.setItem('tache_active',   d.activeId);
+      if (d.quicktodo) localStorage.setItem('ft_quicktodo',   JSON.stringify(d.quicktodo));
+    }
+  } catch(e) { console.warn('Firestore load:', e); }
+}
+
+function renderUserPill(user) {
+  const el = document.getElementById('landing-user');
+  if (!el) return;
+  if (!user) { el.style.display = 'none'; return; }
+  el.style.display = 'inline-flex';
+  el.innerHTML = `
+    <div class="auth-user-pill">
+      ${user.photoURL ? `<img src="${user.photoURL}" alt="">` : ''}
+      <span>${user.displayName ? user.displayName.split(' ')[0] : user.email}</span>
+      <button class="auth-logout-btn" id="btn-logout" title="Déconnexion">✕</button>
+    </div>`;
+  document.getElementById('btn-logout').onclick = () => {
+    _auth.signOut().then(() => { _fbUser = null; renderUserPill(null); show('auth'); });
+  };
+}
+
+function initAuth() {
+  if (!FB_READY) {
+    // Firebase pas configuré — mode local uniquement
+    initLanding(); renderHome();
+    return;
+  }
+
+  const loadingEl = document.getElementById('auth-loading');
+  const googleBtn = document.getElementById('btn-google-login');
+
+  // Google sign-in
+  googleBtn.onclick = async () => {
+    loadingEl.style.display = 'flex';
+    googleBtn.style.display = 'none';
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await _auth.signInWithPopup(provider);
+      // onAuthStateChanged prend le relais
+    } catch(e) {
+      loadingEl.style.display = 'none';
+      googleBtn.style.display = 'flex';
+      console.warn('Login error:', e);
+    }
+  };
+
+  // Continuer sans compte
+  document.getElementById('btn-anon-continue').onclick = () => {
+    show('landing'); initLanding(); renderHome();
+  };
+
+  // Écoute l'état auth
+  _auth.onAuthStateChanged(async user => {
+    _fbUser = user;
+    if (user) {
+      loadingEl.style.display = 'flex';
+      await loadFromFirestore(user.uid);
+      loadingEl.style.display = 'none';
+      renderUserPill(user);
+      show('landing');
+      initLanding();
+      renderHome();
+    } else {
+      show('auth');
+    }
+  });
+}
+
 // ─── STORAGE ───
 const STORE = 'tache_v3';
-const getProjects = () => JSON.parse(localStorage.getItem(STORE) || '[]');
-const saveProjects = list => localStorage.setItem(STORE, JSON.stringify(list));
+const getProjectsRaw = () => JSON.parse(localStorage.getItem(STORE) || '[]');
+const getProjects    = () => getProjectsRaw();
+const saveProjects   = list => { localStorage.setItem(STORE, JSON.stringify(list)); scheduleSync(); };
 const getActiveId = () => localStorage.getItem('tache_active');
 const setActiveId = id => id ? localStorage.setItem('tache_active', id) : localStorage.removeItem('tache_active');
 
@@ -743,11 +920,13 @@ function show(id) {
 }
 
 // ─── QUICK TODO ───
-function getQT() {
+function getQTRaw() {
   try { return JSON.parse(localStorage.getItem('ft_quicktodo') || '[]'); } catch(e) { return []; }
 }
+function getQT() { return getQTRaw(); }
 function saveQT(items) {
   localStorage.setItem('ft_quicktodo', JSON.stringify(items));
+  scheduleSync();
 }
 function renderQT() {
   const items = getQT();
@@ -1961,8 +2140,7 @@ document.getElementById('ft-opt-home').onclick = () => {
 };
 
 // ─── INIT ───
-initLanding();
-renderHome();
+initAuth();
 </script>
 </body>
 </html>

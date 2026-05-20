@@ -907,7 +907,6 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
     <div class="file-chips" id="pp-files-chips"></div>
   </div>
   <div id="pp-update-msg" class="pp-update-msg" style="display:none">✓ Plan mis à jour</div>
-  <label class="file-add-btn" for="pp-files-input">+ Ajouter des documents</label>
   <input id="pp-files-input" type="file" multiple style="display:none">
   <div class="section-label" style="margin-bottom:10px">Plan généré automatiquement</div>
   <div id="pp-plan"></div>
@@ -1639,7 +1638,7 @@ function s(name, micros, priority, duration) {
 function mergeProgress(oldSteps, newSteps) {
   return newSteps.map(function(ns) {
     const old = oldSteps.find(function(os) { return os.name === ns.name; });
-    return old ? Object.assign({}, ns, { done: Math.min(old.done || 0, ns.micros.length) }) : ns;
+    return old ? Object.assign({}, ns, { done: Math.min(old.done || 0, stT(ns)) }) : ns;
   });
 }
 
@@ -1753,11 +1752,11 @@ function getActiveSteps(p) {
   return p.steps || [];
 }
 function getCurrentStep(p) {
-  return getActiveSteps(p).find(st => (st.done || 0) < st.micros.length) || null;
+  return getActiveSteps(p).find(st => !stComplete(st)) || null;
 }
 function getCurrentStepIdx(p) {
   const steps = getActiveSteps(p);
-  const i = steps.findIndex(st => (st.done || 0) < st.micros.length);
+  const i = steps.findIndex(st => !stComplete(st));
   return i === -1 ? steps.length - 1 : i;
 }
 function globalPct(p) {
@@ -1768,14 +1767,14 @@ function globalPct(p) {
         const items = (c.priorities || []).flatMap(pr => pr.items || []);
         total += items.length; done += items.filter(i => i.done).length;
       } else {
-        (c.steps || []).forEach(st => { total += st.micros.length; done += (st.done || 0); });
+        (c.steps || []).forEach(st => { total += stT(st); done += stD(st); });
       }
     });
     return total ? Math.round(done / total * 100) : 0;
   }
   const steps = p.steps || [];
-  const total = steps.reduce((a, st) => a + st.micros.length, 0);
-  const done  = steps.reduce((a, st) => a + (st.done || 0), 0);
+  const total = steps.reduce((a, st) => a + stT(st), 0);
+  const done  = steps.reduce((a, st) => a + stD(st), 0);
   return total ? Math.round(done / total * 100) : 0;
 }
 function catPct(cat) {
@@ -1783,13 +1782,17 @@ function catPct(cat) {
     const items = (cat.priorities || []).flatMap(p => p.items || []);
     return items.length ? Math.round(items.filter(i => i.done).length / items.length * 100) : 0;
   }
-  const total = (cat.steps || []).reduce((a, st) => a + st.micros.length, 0);
-  const done  = (cat.steps || []).reduce((a, st) => a + (st.done || 0), 0);
+  const total = (cat.steps || []).reduce((a, st) => a + stT(st), 0);
+  const done  = (cat.steps || []).reduce((a, st) => a + stD(st), 0);
   return total ? Math.round(done / total * 100) : 0;
 }
 function stepPct(step) {
-  return step.micros.length ? Math.round((step.done || 0) / step.micros.length * 100) : 0;
+  return Math.round(stD(step) / stT(step) * 100);
 }
+// Helpers : une étape sans micros compte comme 1 action (pas 0)
+function stT(st) { return (st.micros && st.micros.length) ? st.micros.length : 1; }
+function stD(st) { return (st.micros && st.micros.length) ? (st.done || 0) : ((st.done || 0) > 0 ? 1 : 0); }
+function stComplete(st) { return stD(st) >= stT(st); }
 
 // ─── OPEN PROJECT ───
 function openProject(p) {
@@ -2242,7 +2245,7 @@ document.getElementById('btn-start-project').onclick = () => {
   isNewProjectFlow = false;
   const proj = currentProject;
   if (proj && proj.categories && proj.categories.length > 0) {
-    const firstIncomplete = proj.categories.find(c => c.steps.some(st => (st.done || 0) < st.micros.length));
+    const firstIncomplete = proj.categories.find(c => c.steps.some(st => !stComplete(st)));
     currentCategoryId = (firstIncomplete || proj.categories[0]).id;
   } else {
     currentCategoryId = null;
@@ -2281,10 +2284,7 @@ function renderStepsList(steps, container, saveFn, seanceMode) {
 
   function renderStep(step, idx) {
     if (!step.micros) step.micros = [];
-    // allDone: if no micros, a manual done=1 flag marks it complete
-    const allDone = step.micros.length === 0
-      ? (step.done || 0) > 0
-      : (step.done || 0) >= step.micros.length;
+    const allDone = stComplete(step);
     const el = document.createElement('div');
     el.className = 'plan-step' + (allDone ? ' done' : '');
     el.dataset.stepIdx = String(idx);
@@ -2361,7 +2361,7 @@ function renderStepsList(steps, container, saveFn, seanceMode) {
     right.className = 'plan-step-right';
     const countSpan = document.createElement('span');
     countSpan.className = 'plan-step-count';
-    countSpan.textContent = (step.done || 0) + '/' + step.micros.length;
+    countSpan.textContent = stD(step) + '/' + stT(step);
     const expandArrow = document.createElement('span');
     expandArrow.style.cssText = 'color:var(--muted);font-size:11px;margin-left:2px';
     expandArrow.textContent = '▶';
@@ -2398,8 +2398,8 @@ function renderStepsList(steps, container, saveFn, seanceMode) {
           ckBtn.className = 'plan-micro-check' + (mIdx < st.done ? ' checked' : '');
           ckBtn.textContent = mIdx < st.done ? '✓' : '';
           txtEl.className = 'plan-micro-text' + (mIdx < st.done ? ' checked' : '');
-          countSpan.textContent = st.done + '/' + st.micros.length;
-          const isDone = st.done >= st.micros.length && st.micros.length > 0;
+          countSpan.textContent = stD(st) + '/' + stT(st);
+          const isDone = stComplete(st);
           el.classList.toggle('done', isDone);
           if (isDone) {
             // Fade then move to bottom
@@ -2933,16 +2933,16 @@ function promptAddCategory(proj) {
 
 // ─── SÉANCE MICROS PICKER ───
 const SEANCE_MICRO_OPTIONS = [
-  { emoji: '📖', label: 'Lire le cours' },
-  { emoji: '🗂', label: 'Commencer à ficher' },
-  { emoji: '✅', label: 'Finir de ficher' },
-  { emoji: '📹', label: 'Regarder la vidéo / cours' },
-  { emoji: '✏️', label: 'Faire les exercices' },
-  { emoji: '❓', label: 'Faire des quizzs' },
-  { emoji: '🖍', label: 'Surligner les fiches' },
-  { emoji: '🧠', label: 'Faire une carte mentale' },
-  { emoji: '🔁', label: 'Réviser les fiches' },
-  { emoji: '📄', label: 'Page vierge' }
+  { emoji: '🗂',  label: 'Commencer à ficher',       primary: true  },
+  { emoji: '✅',  label: 'Finir de ficher',            primary: true  },
+  { emoji: '✏️', label: 'Faire les exercices',        primary: true  },
+  { emoji: '❓',  label: 'Faire des quizzs',           primary: true  },
+  { emoji: '🖍',  label: 'Surligner les fiches',       primary: true  },
+  { emoji: '📖',  label: 'Lire le cours',              primary: false },
+  { emoji: '📹',  label: 'Regarder la vidéo / cours',  primary: false },
+  { emoji: '🧠',  label: 'Faire une carte mentale',    primary: false },
+  { emoji: '🔁',  label: 'Réviser les fiches',         primary: false },
+  { emoji: '📄',  label: 'Page vierge',                primary: false }
 ];
 function promptSeanceMicros(onConfirm) {
   const selected = new Set();
@@ -3149,12 +3149,12 @@ function renderCategoryCard(cat, proj, container) {
       const doneCount = items.filter(i => i.done).length;
       info.textContent = doneCount + '/' + items.length + ' tâches';
     } else if (cat.mode === 'seance') {
-      const totalDone = (cat.steps || []).reduce((a, st) => a + (st.done || 0), 0);
-      const totalM = (cat.steps || []).reduce((a, st) => a + (st.micros || []).length, 0);
+      const totalDone = (cat.steps || []).reduce((a, st) => a + stD(st), 0);
+      const totalM    = (cat.steps || []).reduce((a, st) => a + stT(st), 0);
       info.textContent = totalDone + '/' + totalM + ' actions · ' + (cat.steps || []).length + ' séances';
     } else {
-      const totalDone = (cat.steps || []).reduce((a, st) => a + (st.done || 0), 0);
-      const totalM = (cat.steps || []).reduce((a, st) => a + (st.micros || []).length, 0);
+      const totalDone = (cat.steps || []).reduce((a, st) => a + stD(st), 0);
+      const totalM    = (cat.steps || []).reduce((a, st) => a + stT(st), 0);
       info.textContent = totalDone + '/' + totalM + ' actions · ' + (cat.steps || []).length + ' étapes';
     }
     const newPct = catPct(cat);
@@ -3288,11 +3288,17 @@ function renderCategoryCard(cat, proj, container) {
       const chipsWrap = document.createElement('div');
       chipsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px';
       catFiles.forEach(function(fname) {
-        const chip = document.createElement('button');
-        chip.style.cssText = 'background:rgba(124,92,252,.12);border:1px solid rgba(124,92,252,.25);border-radius:8px;color:var(--accent);font-size:12px;font-weight:600;padding:4px 10px;cursor:pointer;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-        chip.title = fname; chip.textContent = fname;
-        chip.onclick = function() { openStoredFile(proj.id, fname); };
-        chipsWrap.appendChild(chip);
+        const chipWrap = document.createElement('span');
+        chipWrap.className = 'file-chip-wrap';
+        const chip = document.createElement('span');
+        chip.className = 'file-chip file-chip-clickable';
+        chip.textContent = '📎 ' + fname; chip.title = 'Ouvrir';
+        (function(n) { chip.onclick = function() { openStoredFile(proj.id, n); }; })(fname);
+        const del = document.createElement('button');
+        del.className = 'file-chip-del'; del.textContent = '×'; del.title = 'Supprimer';
+        (function(n) { del.onclick = function(e) { e.stopPropagation(); deleteFile(proj, n); }; })(fname);
+        chipWrap.appendChild(chip); chipWrap.appendChild(del);
+        chipsWrap.appendChild(chipWrap);
       });
       docsPanel.appendChild(chipsWrap);
     }
@@ -3455,7 +3461,8 @@ function renderPlanPreview(project) {
   document.getElementById('pp-proj-name').textContent = project.name;
   document.getElementById('pp-proj-goal').textContent = project.goal || '';
 
-  renderFilesSection(project, document.getElementById('pp-files-wrap'));
+  // Section docs globale supprimée — les docs se gèrent via le bouton 📁 de chaque catégorie
+  document.getElementById('pp-files-wrap').style.display = 'none';
 
   const planEl = document.getElementById('pp-plan');
   planEl.innerHTML = '';
@@ -3530,7 +3537,7 @@ function renderSession() {
   if (!step) { finishProject(); return; }
 
   const idx = getCurrentStepIdx(p);
-  const micro = step.micros[step.done || 0];
+  const micro = step.micros.length ? step.micros[step.done || 0] : step.name;
 
   const activeSteps = getActiveSteps(p);
   document.getElementById('s-step-label').textContent = 'Étape ' + (idx + 1) + ' / ' + activeSteps.length;
@@ -3554,8 +3561,8 @@ function renderSession() {
   document.getElementById('s-global-pct').textContent = gp + '%';
   document.getElementById('s-global-bar').style.width = gp + '%';
 
-  const totalM = activeSteps.reduce((a, st) => a + st.micros.length, 0);
-  const doneM = activeSteps.reduce((a, st) => a + (st.done || 0), 0);
+  const totalM = activeSteps.reduce((a, st) => a + stT(st), 0);
+  const doneM  = activeSteps.reduce((a, st) => a + stD(st), 0);
   const si = Math.min(Math.floor(doneM / Math.max(totalM, 1) * storyLines.length), storyLines.length - 1);
   document.getElementById('s-story').textContent = storyLines[si];
 
@@ -3609,7 +3616,7 @@ function advanceMicro() {
   if (!p) return;
   const step = getCurrentStep(p);
   if (!step) return;
-  step.done = Math.min((step.done || 0) + 1, step.micros.length);
+  step.done = Math.min((step.done || 0) + 1, stT(step));
   if (p.categories && p.categories.length > 0 && currentCategoryId) {
     const activeCat = p.categories.find(c => c.id === currentCategoryId);
     if (activeCat) p.categories = [activeCat].concat(p.categories.filter(c => c.id !== currentCategoryId));
@@ -3618,8 +3625,8 @@ function advanceMicro() {
   currentProject = p;
   clearInterval(tInterval); tRunning = false;
 
-  if (step.done >= step.micros.length) {
-    const allDone = getActiveSteps(p).every(st => (st.done || 0) >= st.micros.length);
+  if (stComplete(step)) {
+    const allDone = getActiveSteps(p).every(st => stComplete(st));
     if (allDone) { finishProject(); return; }
     const emojis = ['🎉', '⭐', '🌟', '✨', '🎊'];
     document.getElementById('c-emoji').textContent = emojis[Math.floor(Math.random() * emojis.length)];
@@ -4084,7 +4091,7 @@ function showSwitchTask() {
   const allSteps = (p && p.categories && p.categories.length)
     ? p.categories.flatMap(c => c.steps.map(s => ({...s, catName:c.name})))
     : ((p && p.steps) || []).map(s => ({...s, catName:null}));
-  const available = allSteps.filter(s => (s.done||0) < s.micros.length);
+  const available = allSteps.filter(s => !stComplete(s));
   if (!available.length) {
     document.getElementById('blocked-action-content').innerHTML = `
       <div style="text-align:center;padding:40px 0">
@@ -4094,7 +4101,7 @@ function showSwitchTask() {
       </div>`; return;
   }
   const list = available.slice(0,6).map(s => {
-    const pct = s.micros.length ? Math.round((s.done||0)/s.micros.length*100) : 0;
+    const pct = Math.round(stD(s) / stT(s) * 100);
     return `<button class="strategy-card" onclick="show('${blockedCalledFrom}')">
       <div class="strategy-info">
         ${s.catName ? `<div style="font-size:11px;color:var(--muted);margin-bottom:3px">${s.catName}</div>` : ''}

@@ -117,6 +117,34 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .btn-green:active { transform: scale(.97); }
 .btn-ghost { background: none; border: none; color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 5px; padding: 10px 0; }
 
+.fed-up-btn {
+  display: block; width: 100%; margin-top: 14px;
+  border: none; border-radius: 14px;
+  background: rgba(252,92,125,.07);
+  color: #fc5c7d;
+  font: 600 14px 'DM Sans', sans-serif;
+  padding: 13px 0; cursor: pointer; text-align: center;
+  transition: background .15s, transform .1s;
+}
+.fed-up-btn:active { transform: scale(.98); background: rgba(252,92,125,.14); }
+
+/* Fed-up break modal */
+.fed-up-sheet { border-radius: 28px 28px 0 0; background: var(--card); padding: 16px 22px 36px; }
+.fed-up-activity {
+  background: var(--soft); border-radius: 18px; padding: 20px;
+  text-align: center; margin: 18px 0;
+}
+.fed-up-activity-emoji { font-size: 52px; margin-bottom: 10px; }
+.fed-up-activity-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+.fed-up-activity-desc { color: var(--muted); font-size: 14px; line-height: 1.55; }
+.fed-up-timer-num {
+  font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 900;
+  text-align: center; color: var(--text);
+  letter-spacing: -2px; margin: 4px 0 10px;
+}
+.fed-up-track { height: 6px; border-radius: 999px; background: var(--border); margin-bottom: 20px; }
+.fed-up-bar { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #fc5c7d, #fc875c); width: 100%; transition: width .9s linear; }
+
 .field { margin-bottom: 20px; }
 .field label { display: block; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 9px; }
 .field input, .field textarea {
@@ -1749,6 +1777,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <button class="btn-green" id="btn-done">✓ C'est fait</button>
   <button class="btn-ghost" id="btn-skip">Passer cette micro-action →</button>
   <button class="btn-blocked" id="btn-blocked">🆘 Je suis bloqué</button>
+  <button class="fed-up-btn" id="fed-up-session">😮‍💨 J'en ai marre</button>
   <div class="progress-wrap" style="margin-top:22px">
     <div class="prog-row">
       <span id="s-step-prog-label">Étape en cours</span>
@@ -1806,6 +1835,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
       <div class="suppl-timer-num" id="suppl-timer-num">05:00</div>
       <div class="timer-track" style="margin:8px 0 14px"><div class="timer-bar" id="suppl-timer-bar" style="width:100%;background:linear-gradient(90deg,#fcba5c,#f0d060)"></div></div>
       <p class="suppl-drink-label" style="text-align:center;margin:0">Prépare et bois ta boisson ☕</p>
+      <button class="fed-up-btn" id="fed-up-suppl">😮‍💨 J'en ai marre</button>
     </div>
   </div>
 
@@ -1897,6 +1927,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   </div>
   <div class="transition-activity-card" id="transition-activity-card"></div>
   <button class="btn-outline" id="btn-transition-skip" style="margin-top:18px;width:100%">→ Je me sens prêt(e), on y va</button>
+  <button class="fed-up-btn" id="fed-up-transition">😮‍💨 J'en ai marre</button>
 </section>
 
 <!-- BLOQUÉ V2 : TYPE DE FRICTION -->
@@ -1976,6 +2007,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
     <div class="panic-mantra">🔥 Une chose. Maintenant. C'est tout.</div>
     <button class="btn-outline" id="btn-panic-done" style="margin-top:16px">✓ C'est fait — je souffle</button>
     <button class="btn-ghost" id="btn-panic-new-round" style="width:100%;justify-content:center">↺ Nouveau round</button>
+    <button class="fed-up-btn" id="fed-up-panic">😮‍💨 J'en ai marre</button>
   </div>
 
   <!-- Étape 3b : mode guidé micro-tâches -->
@@ -1999,6 +2031,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
     <div class="panic-mantra" id="panic-micro-mantra">🔥 Une étape. Maintenant. C'est tout.</div>
     <button class="btn" id="btn-panic-micro-done" style="margin-top:16px;background:linear-gradient(135deg,#fc5c7d,#fc875c)">✓ C'est fait !</button>
     <button class="btn-ghost" id="btn-panic-micro-skip" style="width:100%;justify-content:center;margin-top:8px">→ Passer cette étape</button>
+    <button class="fed-up-btn" id="fed-up-panic-micro">😮‍💨 J'en ai marre</button>
   </div>
 
   <!-- Chargement analyse -->
@@ -2105,6 +2138,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
     <button class="ft-toggle" id="ft-toggle">▶ Commencer</button>
     <button class="ft-stop" id="ft-stop">✕</button>
   </div>
+  <button class="fed-up-btn" id="fed-up-free">😮‍💨 J'en ai marre</button>
   <div id="ft-end-panel" style="display:none" class="end-panel">
     <div class="end-title" id="ft-end-title">Session terminée !</div>
     <div class="end-sub" id="ft-end-sub">Bien joué. Que veux-tu faire ?</div>
@@ -5070,6 +5104,145 @@ function renderSettingsFocus(container) {
 
 document.getElementById('settings-fab').onclick = openSettings;
 document.getElementById('back-settings').onclick = () => show(settingsReturnScreen || 'home');
+
+// ════════════════════════════════════════════════
+// ─── "J'EN AI MARRE" — PAUSE 2 MINUTES ───
+
+const FED_UP_MESSAGES = [
+  "C'est normal. Ton cerveau a travaillé dur.",
+  "On ne peut pas être en mode turbo tout le temps.",
+  "Le TDAH consomme beaucoup d'énergie. Tu as le droit de souffler.",
+  "Ce n'est pas de la faiblesse. C'est de la gestion.",
+  "2 minutes, c'est juste ce qu'il faut pour repartir.",
+];
+
+const FED_UP_ACTIVITIES = [
+  { emoji: '🌬️', title: 'Respiration 4-4-4', desc: 'Inspire lentement en comptant jusqu\'à 4. Retiens en comptant 4. Expire en comptant 4. Répète jusqu\'au bout du chrono.' },
+  { emoji: '👀', title: 'Repos des yeux', desc: 'Ferme les yeux. Laisse tes épaules descendre. Ton cerveau fait une pause, lui aussi.' },
+  { emoji: '💧', title: 'Un verre d\'eau', desc: 'Lève-toi et va chercher un grand verre d\'eau. Bois-le lentement, sans regarder ton téléphone.' },
+  { emoji: '🤸', title: 'Deux étirements', desc: 'Lève les bras au-dessus de ta tête. Tourne doucement le cou à droite, puis à gauche. Secoue les mains.' },
+  { emoji: '🌿', title: 'Regarde au loin', desc: 'Trouve une fenêtre. Regarde le plus loin possible et laisse ton regard flotter. Ton système visuel se repose.' },
+  { emoji: '🧠', title: 'Pose tout', desc: 'Pose ton téléphone face contre table. Ferme les yeux. Tu n\'as juste qu\'à exister pendant 2 minutes. Rien d\'autre.' },
+];
+
+const FED_UP_DURATION = 120; // 2 minutes
+let fedUpInterval = null;
+let fedUpPauseFn = null;
+let fedUpResumeFn = null;
+
+function showFedUpModal(pauseFn, resumeFn) {
+  if (document.getElementById('fed-up-bd')) return;
+
+  if (pauseFn) pauseFn();
+  fedUpPauseFn = pauseFn;
+  fedUpResumeFn = resumeFn;
+
+  const msg      = FED_UP_MESSAGES[Math.floor(Math.random() * FED_UP_MESSAGES.length)];
+  const activity = FED_UP_ACTIVITIES[Math.floor(Math.random() * FED_UP_ACTIVITIES.length)];
+
+  const bd = document.createElement('div');
+  bd.id = 'fed-up-bd';
+  bd.className = 'cat-modal-backdrop';
+
+  bd.innerHTML = `
+    <div class="fed-up-sheet">
+      <div class="cat-modal-handle"></div>
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:13px;color:var(--muted);font-style:italic;line-height:1.5">"${msg}"</div>
+      </div>
+
+      <div class="fed-up-activity">
+        <div class="fed-up-activity-emoji">${activity.emoji}</div>
+        <div class="fed-up-activity-title">${activity.title}</div>
+        <div class="fed-up-activity-desc">${activity.desc}</div>
+      </div>
+
+      <div class="fed-up-timer-num" id="fu-num">2:00</div>
+      <div class="fed-up-track"><div class="fed-up-bar" id="fu-bar"></div></div>
+
+      <div id="fu-end" style="display:none;text-align:center;margin-bottom:16px">
+        <div style="font-size:32px;margin-bottom:8px">🌟</div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px">Bien joué !</div>
+        <div style="font-size:14px;color:var(--muted);line-height:1.5">Ton cerveau vient de se recharger.<br>Tu es prêt(e) à reprendre.</div>
+      </div>
+
+      <button class="btn" id="fu-resume" style="display:none">▶ Je reprends !</button>
+      <button class="btn-ghost" id="fu-skip" style="width:100%;justify-content:center">Passer la pause →</button>
+    </div>`;
+
+  document.body.appendChild(bd);
+
+  let remaining = FED_UP_DURATION;
+  const numEl = bd.querySelector('#fu-num');
+  const barEl = bd.querySelector('#fu-bar');
+
+  function fmtFU(s) { return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+  clearInterval(fedUpInterval);
+  fedUpInterval = setInterval(() => {
+    remaining--;
+    const pct = ((FED_UP_DURATION - remaining) / FED_UP_DURATION) * 100;
+    numEl.textContent = fmtFU(remaining);
+    barEl.style.width = pct + '%';
+    if (remaining <= 0) {
+      clearInterval(fedUpInterval);
+      numEl.style.display = 'none';
+      bd.querySelector('.fed-up-track').style.display = 'none';
+      bd.querySelector('#fu-end').style.display = '';
+      bd.querySelector('#fu-resume').style.display = '';
+      bd.querySelector('#fu-skip').style.display = 'none';
+    }
+  }, 1000);
+
+  function dismiss(shouldResume) {
+    clearInterval(fedUpInterval);
+    bd.remove();
+    if (shouldResume && fedUpResumeFn) fedUpResumeFn();
+    fedUpPauseFn = null;
+    fedUpResumeFn = null;
+  }
+
+  bd.querySelector('#fu-resume').onclick = () => dismiss(true);
+  bd.querySelector('#fu-skip').onclick   = () => dismiss(true);
+}
+
+// Pause/resume helpers for each timer type
+function pauseSessionTimer()  { if (tRunning) { tRunning = false; clearInterval(tInterval); } }
+function resumeSessionTimer() {
+  if (!tRunning && tRemain > 0) {
+    tRunning = true;
+    tInterval = setInterval(() => {
+      tRemain--;
+      const pct = (tRemain / tTotal) * 100;
+      document.getElementById('s-timer').textContent = Math.floor(tRemain/60)+':'+String(tRemain%60).padStart(2,'0');
+      document.getElementById('s-timer-bar').style.width = pct + '%';
+      if (tRemain <= 0) { clearInterval(tInterval); tRunning = false; }
+    }, 1000);
+    document.getElementById('t-toggle').textContent = '⏸ Pause';
+  }
+}
+function pauseFreeTimer()  { if (ftRunning) { ftRunning = false; clearInterval(ftInterval); } }
+function resumeFreeTimer() {
+  if (!ftRunning && ftRemain > 0) {
+    ftRunning = true;
+    ftInterval = setInterval(() => {
+      ftRemain--;
+      const pct = (ftRemain / ftTotal) * 100;
+      document.getElementById('ft-num').textContent = Math.floor(ftRemain/60)+':'+String(ftRemain%60).padStart(2,'0');
+      document.getElementById('ft-bar').style.width = pct + '%';
+      if (ftRemain <= 0) { clearInterval(ftInterval); ftRunning = false; }
+    }, 1000);
+    document.getElementById('ft-toggle').textContent = '⏸ Pause';
+  }
+}
+
+// Wire up all "J'en ai marre" buttons
+document.getElementById('fed-up-session').onclick     = () => showFedUpModal(pauseSessionTimer, resumeSessionTimer);
+document.getElementById('fed-up-free').onclick        = () => showFedUpModal(pauseFreeTimer, resumeFreeTimer);
+document.getElementById('fed-up-panic').onclick       = () => showFedUpModal(null, null);
+document.getElementById('fed-up-panic-micro').onclick = () => showFedUpModal(null, null);
+document.getElementById('fed-up-transition').onclick  = () => showFedUpModal(null, null);
+document.getElementById('fed-up-suppl').onclick       = () => showFedUpModal(null, null);
 
 // ─── TIMER STATE ───
 const MODES = {

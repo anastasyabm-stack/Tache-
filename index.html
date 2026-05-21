@@ -566,6 +566,28 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   background: rgba(124,92,252,.15);
 }
 
+/* ── Focus level ring ── */
+.focus-level-ring {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 10px);
+  left: 10px;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  z-index: 450;
+  -webkit-tap-highlight-color: transparent;
+}
+.focus-level-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.focus-level-ring__num {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 800;
+  transition: color .4s;
+}
+.focus-level-ring:active { opacity: .7; }
+/* Push back buttons past the ring */
+.back { margin-left: 48px; }
+
 .focus-toast {
   position: fixed;
   bottom: calc(env(safe-area-inset-bottom) + 16px);
@@ -2105,6 +2127,17 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 
 <button class="settings-fab" id="settings-fab" title="Paramètres">⚙️</button>
 <button class="focus-fab" id="focus-fab" title="Mode Focus">📵</button>
+
+<!-- Anneau niveau de focus -->
+<div class="focus-level-ring" id="focus-level-ring" title="Niveau de focus">
+  <svg viewBox="0 0 36 36">
+    <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--border)" stroke-width="3.5"/>
+    <circle id="flr-bar" cx="18" cy="18" r="15.9" fill="none" stroke="#ef5350"
+      stroke-width="3.5" stroke-dasharray="100" stroke-dashoffset="100"
+      stroke-linecap="round" style="transition:stroke-dashoffset .6s ease,stroke .4s"/>
+  </svg>
+  <span class="focus-level-ring__num" id="flr-num" style="color:#ef5350">--</span>
+</div>
 </main>
 <script>
 // ─── FIREBASE CONFIG ───────────────────────────────────────────────
@@ -4879,79 +4912,28 @@ document.querySelectorAll('#st-tabs .settings-tab').forEach(t => {
 
 function renderRitalinSettingsCard(container) {
   const s = getSettings();
-  const answer = getRitalinAnswer();
-  const hasAnswered = answer !== null;
-  const savedTime = localStorage.getItem('focustdah_ritalin_time') || '';
-  const savedType = localStorage.getItem('focustdah_ritalin_type') || 'IR';
-
   container.innerHTML = `
     <div class="ritalin-settings-card">
       <div class="ritalin-settings-title">
-        💊 Ritaline
+        💊 Rappel Ritaline au démarrage
         <label class="settings-toggle">
           <input type="checkbox" id="rs-toggle" ${s.ritalinEnabled ? 'checked' : ''}>
           <span class="settings-toggle-track"></span>
         </label>
       </div>
-      <div id="rs-body" style="${s.ritalinEnabled ? '' : 'opacity:.4;pointer-events:none'}">
-        <div style="color:var(--muted);font-size:13px;margin-bottom:10px">
-          ${hasAnswered ? "Ta réponse d'aujourd'hui :" : "Tu n'as pas encore répondu aujourd'hui."}
-        </div>
-        <div class="ritalin-answer-row">
-          <button class="rs-answer-btn oui ${answer === 'oui' ? 'active' : ''}" id="rs-oui">✓ Oui</button>
-          <button class="rs-answer-btn non ${answer === 'non' ? 'active' : ''}" id="rs-non">Non</button>
-        </div>
-        <div id="rs-time-section" style="${answer === 'oui' ? '' : 'display:none'}; margin-top:14px">
-          <div style="color:var(--muted);font-size:13px;margin-bottom:8px">Heure de prise :</div>
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-            <input type="time" id="rs-time" class="rm-time-input" style="font-size:18px;padding:10px;flex:1" value="${savedTime}">
-          </div>
-          <div style="color:var(--muted);font-size:13px;margin-bottom:8px">Type :</div>
-          <div class="ritalin-type-row">
-            <button class="ritalin-type-btn ${savedType === 'IR' ? 'active' : ''}" id="rs-ir">⚡ IR · 4h</button>
-            <button class="ritalin-type-btn ${savedType === 'LP' ? 'active' : ''}" id="rs-lp">🌊 LP · 8-12h</button>
-          </div>
-          <button id="rs-save-time" style="width:100%;border:none;border-radius:12px;background:var(--accent);color:#fff;font:700 13px 'Syne',sans-serif;padding:11px;cursor:pointer">Enregistrer l'heure →</button>
-        </div>
-        ${!hasAnswered ? `<button id="rs-ask-now" style="margin-top:10px;background:none;border:none;color:var(--accent);font:600 13px 'DM Sans',sans-serif;cursor:pointer;padding:0">Poser la question maintenant →</button>` : ''}
-        <p class="ritalin-settings-note">La question s'affiche une fois par jour au démarrage.</p>
-      </div>
+      <p class="ritalin-settings-note" style="margin-bottom:14px">La question "As-tu pris ta Ritaline ?" s'affiche une fois par jour au démarrage de l'app.</p>
+      <button id="rs-open-panel" style="width:100%;border:none;border-radius:12px;background:var(--accent);color:#fff;font:700 14px 'Syne',sans-serif;padding:13px;cursor:pointer">
+        Enregistrer ma prise d'aujourd'hui →
+      </button>
     </div>`;
 
   container.querySelector('#rs-toggle').onchange = e => {
     const ns = getSettings(); ns.ritalinEnabled = e.target.checked; saveSettings(ns);
-    container.querySelector('#rs-body').style.cssText = e.target.checked ? '' : 'opacity:.4;pointer-events:none';
   };
-
-  let currentType = savedType;
-  function setType(t) {
-    currentType = t;
-    container.querySelector('#rs-ir').classList.toggle('active', t === 'IR');
-    container.querySelector('#rs-lp').classList.toggle('active', t === 'LP');
-  }
-  container.querySelector('#rs-ir').onclick = () => setType('IR');
-  container.querySelector('#rs-lp').onclick = () => setType('LP');
-
-  const saveTimeBtn = container.querySelector('#rs-save-time');
-  if (saveTimeBtn) saveTimeBtn.onclick = () => {
-    const t = container.querySelector('#rs-time').value;
-    if (t) { localStorage.setItem('focustdah_ritalin_time', t); localStorage.setItem('focustdah_ritalin_type', currentType); startReboundWatch(); }
-    saveTimeBtn.textContent = 'Enregistré ✓';
-    setTimeout(() => { saveTimeBtn.textContent = 'Enregistrer l\'heure →'; }, 1500);
+  container.querySelector('#rs-open-panel').onclick = () => {
+    show(settingsReturnScreen || 'home');
+    openFocusPanel();
   };
-
-  function updateAnswer(val) {
-    setRitalinAnswer(val);
-    container.querySelectorAll('.rs-answer-btn').forEach(b => b.classList.remove('active'));
-    container.querySelector(`#rs-${val === 'oui' ? 'oui' : 'non'}`).classList.add('active');
-    container.querySelector('#rs-time-section').style.display = val === 'oui' ? '' : 'none';
-    const askBtn = container.querySelector('#rs-ask-now'); if (askBtn) askBtn.remove();
-  }
-  container.querySelector('#rs-oui').onclick = () => updateAnswer('oui');
-  container.querySelector('#rs-non').onclick = () => updateAnswer('non');
-
-  const askNow = container.querySelector('#rs-ask-now');
-  if (askNow) askNow.onclick = () => { show(settingsReturnScreen || 'home'); showRitalinModal(); };
 }
 
 function renderSettingsMicros(container, s) {
@@ -5549,6 +5531,234 @@ function showGentleSupport() {
   document.getElementById('gs-home').onclick   = () => { renderHome(); show('home'); };
   show('blocked-action');
 }
+
+// ════════════════════════════════════════════════
+// ─── FOCUS LEVEL SYSTEM ───
+
+function getFocusSupplTaken() {
+  const today = new Date().toDateString();
+  if (localStorage.getItem('ft_suppl_date') !== today) return [];
+  return JSON.parse(localStorage.getItem('ft_suppl_taken') || '[]');
+}
+function setFocusSupplTaken(arr) {
+  localStorage.setItem('ft_suppl_date', new Date().toDateString());
+  localStorage.setItem('ft_suppl_taken', JSON.stringify(arr));
+}
+
+function focusScoreColor(s) {
+  return s < 30 ? '#ef5350' : s < 55 ? '#ffa726' : s < 78 ? '#66bb6a' : '#7c5cfc';
+}
+
+function calcFocusScore() {
+  let score = 0;
+  const answer = getRitalinAnswer();
+  if (answer === 'oui') {
+    const timeStr = localStorage.getItem('focustdah_ritalin_time');
+    const type    = localStorage.getItem('focustdah_ritalin_type') || 'IR';
+    if (timeStr) {
+      const [h, m] = timeStr.split(':').map(Number);
+      const takenAt = new Date(); takenAt.setHours(h, m, 0, 0);
+      if (takenAt > new Date()) takenAt.setDate(takenAt.getDate() - 1);
+      const min = (new Date() - takenAt) / 60000;
+      if (type === 'IR') {
+        score += min < 30 ? 25 : min < 120 ? 60 : min < 210 ? 45 : min < 300 ? 25 : 5;
+      } else {
+        score += min < 60 ? 30 : min < 540 ? 55 : min < 720 ? 40 : 10;
+      }
+    } else { score += 35; }
+  }
+  const taken = getFocusSupplTaken();
+  score += Math.min(taken.length * 10, 40);
+  return Math.min(Math.round(score), 100);
+}
+
+function updateFocusRing() {
+  const score = calcFocusScore();
+  const color = focusScoreColor(score);
+  const numEl = document.getElementById('flr-num');
+  const barEl = document.getElementById('flr-bar');
+  if (!numEl || !barEl) return;
+  numEl.textContent = score;
+  numEl.style.color = color;
+  barEl.style.strokeDashoffset = 100 - score;
+  barEl.style.stroke = color;
+}
+
+function refreshFocusPanelScore() {
+  const score = calcFocusScore();
+  const color = focusScoreColor(score);
+  const labels = ['Faible', 'Modéré', 'Bon', 'Excellent'];
+  const label  = score < 30 ? labels[0] : score < 55 ? labels[1] : score < 78 ? labels[2] : labels[3];
+  const tip    = score < 30 ? 'Pense à prendre tes compléments ou ta Ritaline.'
+               : score < 55 ? 'Tu peux booster ça avec tes compléments.'
+               : 'Bonne fenêtre de travail !';
+  const num = document.getElementById('fp-score-num');
+  const bar = document.getElementById('fp-score-bar');
+  const lbl = document.getElementById('fp-score-label');
+  const tipEl = document.getElementById('fp-score-tip');
+  if (num) { num.textContent = score; num.style.color = color; }
+  if (bar) { bar.style.strokeDashoffset = 100 - score; bar.style.stroke = color; }
+  if (lbl) { lbl.textContent = label; lbl.style.color = color; }
+  if (tipEl) tipEl.textContent = tip;
+  updateFocusRing();
+}
+
+function renderFocusPanelRitalin(container) {
+  if (!container) return;
+  const answer = getRitalinAnswer();
+  const time   = localStorage.getItem('focustdah_ritalin_time') || '';
+  const type   = localStorage.getItem('focustdah_ritalin_type') || 'IR';
+
+  function activeStyle(on) {
+    return on
+      ? 'border:1.5px solid var(--accent);background:rgba(124,92,252,.12);color:var(--accent)'
+      : 'border:1.5px solid var(--border);background:var(--soft);color:var(--muted)';
+  }
+  const base = 'flex:1;padding:12px;border-radius:12px;cursor:pointer;font:600 14px \'DM Sans\',sans-serif;transition:all .15s';
+
+  container.innerHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:${answer === 'oui' ? '12px' : '0'}">
+      <button id="fp-oui" style="${base};${activeStyle(answer === 'oui')}">✓ Oui</button>
+      <button id="fp-non" style="${base};${activeStyle(answer === 'non')}">Non / pas concerné</button>
+    </div>
+    ${answer === 'oui' ? `
+    <div style="background:var(--soft);border-radius:14px;padding:14px">
+      <div style="color:var(--muted);font-size:12px;margin-bottom:8px">Heure de prise</div>
+      <input type="time" id="fp-time" value="${time}"
+        style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:16px;padding:10px;outline:none;margin-bottom:10px">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button id="fp-ir" style="${base};${activeStyle(type === 'IR')}">⚡ IR · 4h</button>
+        <button id="fp-lp" style="${base};${activeStyle(type === 'LP')}">🌊 LP · 8-12h</button>
+      </div>
+      <button id="fp-save" style="width:100%;border:none;border-radius:10px;background:var(--accent);color:#fff;font:700 14px 'Syne',sans-serif;padding:12px;cursor:pointer">Enregistrer →</button>
+    </div>` : ''}`;
+
+  let curType = type;
+
+  function setFpAns(val) {
+    setRitalinAnswer(val);
+    renderFocusPanelRitalin(container);
+    refreshFocusPanelScore();
+  }
+  container.querySelector('#fp-oui').onclick = () => setFpAns('oui');
+  container.querySelector('#fp-non').onclick = () => setFpAns('non');
+
+  if (answer === 'oui') {
+    function setFpType(t) {
+      curType = t;
+      const irBtn = container.querySelector('#fp-ir');
+      const lpBtn = container.querySelector('#fp-lp');
+      ['border-color','background','color'].forEach(p => {
+        irBtn.style[p.replace(/-./g, m => m[1].toUpperCase())] = '';
+        lpBtn.style[p.replace(/-./g, m => m[1].toUpperCase())] = '';
+      });
+      irBtn.style.borderColor  = t === 'IR' ? 'var(--accent)' : 'var(--border)';
+      irBtn.style.background   = t === 'IR' ? 'rgba(124,92,252,.12)' : 'var(--soft)';
+      irBtn.style.color        = t === 'IR' ? 'var(--accent)' : 'var(--muted)';
+      lpBtn.style.borderColor  = t === 'LP' ? 'var(--accent)' : 'var(--border)';
+      lpBtn.style.background   = t === 'LP' ? 'rgba(124,92,252,.12)' : 'var(--soft)';
+      lpBtn.style.color        = t === 'LP' ? 'var(--accent)' : 'var(--muted)';
+    }
+    container.querySelector('#fp-ir').onclick = () => setFpType('IR');
+    container.querySelector('#fp-lp').onclick = () => setFpType('LP');
+    container.querySelector('#fp-save').onclick = () => {
+      const t = container.querySelector('#fp-time').value;
+      if (t) {
+        localStorage.setItem('focustdah_ritalin_time', t);
+        localStorage.setItem('focustdah_ritalin_type', curType);
+        if (typeof startReboundWatch === 'function') startReboundWatch();
+      }
+      refreshFocusPanelScore();
+      const btn = container.querySelector('#fp-save');
+      btn.textContent = 'Enregistré ✓';
+      setTimeout(() => { btn.textContent = 'Enregistrer →'; }, 1500);
+    };
+  }
+}
+
+function renderFocusPanelSuppl(container) {
+  if (!container) return;
+  const supplements = getSettings().supplements || [];
+  const taken = getFocusSupplTaken();
+
+  if (!supplements.length) {
+    container.innerHTML = '<p style="color:var(--muted);font-size:13px;line-height:1.5">Aucun complément configuré. Ajoute-en dans Paramètres → Compléments.</p>';
+    return;
+  }
+
+  container.innerHTML = supplements.map(s => {
+    const name    = s.label || s;
+    const emoji   = s.emoji || '';
+    const checked = taken.includes(name);
+    return `<div class="fp-suppl-item" data-name="${name}"
+      style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:14px;margin-bottom:8px;cursor:pointer;border:1.5px solid ${checked ? 'var(--accent)' : 'var(--border)'};background:${checked ? 'rgba(124,92,252,.07)' : 'var(--soft)'};transition:all .15s">
+      <div style="width:24px;height:24px;border-radius:50%;border:2px solid ${checked ? 'var(--accent)' : 'var(--border)'};background:${checked ? 'var(--accent)' : 'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;color:#fff;transition:all .15s">${checked ? '✓' : ''}</div>
+      <span style="font-size:14px;font-weight:${checked ? 600 : 400};color:${checked ? 'var(--text)' : 'var(--muted)'}">${emoji ? emoji + ' ' : ''}${name}</span>
+    </div>`;
+  }).join('');
+
+  container.querySelectorAll('.fp-suppl-item').forEach(row => {
+    row.onclick = () => {
+      const name = row.dataset.name;
+      const cur  = getFocusSupplTaken();
+      setFocusSupplTaken(cur.includes(name) ? cur.filter(n => n !== name) : [...cur, name]);
+      renderFocusPanelSuppl(container);
+      refreshFocusPanelScore();
+    };
+  });
+}
+
+function openFocusPanel() {
+  if (document.getElementById('focus-panel-bd')) {
+    document.getElementById('focus-panel-bd').remove(); return;
+  }
+  const score = calcFocusScore();
+  const color = focusScoreColor(score);
+  const label = score < 30 ? 'Faible' : score < 55 ? 'Modéré' : score < 78 ? 'Bon' : 'Excellent';
+  const tip   = score < 30 ? 'Pense à prendre tes compléments ou ta Ritaline.'
+              : score < 55 ? 'Tu peux booster ça avec tes compléments.'
+              : 'Bonne fenêtre de travail !';
+
+  const bd = document.createElement('div');
+  bd.id = 'focus-panel-bd';
+  bd.className = 'cat-modal-backdrop';
+  bd.innerHTML = `
+    <div class="cat-modal-sheet" style="max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
+      <div class="cat-modal-handle"></div>
+
+      <div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--soft);border-radius:16px;margin-bottom:24px">
+        <div style="position:relative;width:68px;height:68px;flex-shrink:0">
+          <svg style="position:absolute;inset:0;transform:rotate(-90deg)" viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--border)" stroke-width="3.5"/>
+            <circle id="fp-score-bar" cx="18" cy="18" r="15.9" fill="none" stroke="${color}"
+              stroke-width="3.5" stroke-dasharray="100" stroke-dashoffset="${100 - score}"
+              stroke-linecap="round" style="transition:stroke-dashoffset .5s,stroke .3s"/>
+          </svg>
+          <span id="fp-score-num" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:${color}">${score}</span>
+        </div>
+        <div>
+          <div id="fp-score-label" style="font-size:18px;font-weight:700;color:${color}">${label}</div>
+          <div id="fp-score-tip" style="font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45">${tip}</div>
+        </div>
+      </div>
+
+      <div class="settings-section-title" style="margin-bottom:10px">Ritaline</div>
+      <div id="fp-ritalin"></div>
+
+      <div class="settings-section-title" style="margin-bottom:10px;margin-top:22px">Compléments pris aujourd'hui</div>
+      <div id="fp-suppl"></div>
+      <div style="height:16px"></div>
+    </div>`;
+
+  document.body.appendChild(bd);
+  bd.addEventListener('click', e => { if (e.target === bd) bd.remove(); });
+  renderFocusPanelRitalin(document.getElementById('fp-ritalin'));
+  renderFocusPanelSuppl(document.getElementById('fp-suppl'));
+}
+
+document.getElementById('focus-level-ring').onclick = openFocusPanel;
+updateFocusRing();
+setInterval(updateFocusRing, 60000); // recalcule chaque minute (Ritaline qui diminue)
 
 // ════════════════════════════════════════════════
 // ─── FOCUS MODE (iOS Raccourcis) ───

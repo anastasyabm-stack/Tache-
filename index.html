@@ -612,6 +612,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .settings-add-inp:focus { border-color: var(--accent); }
 .settings-add-btn { border: none; border-radius: 12px; background: var(--accent); color: #fff; font: 700 16px 'Syne', sans-serif; padding: 12px 18px; cursor: pointer; }
 .settings-primary-badge { font-size: 10px; padding: 2px 8px; border-radius: 999px; background: rgba(124,92,252,.15); color: var(--accent); font-weight: 700; }
+.settings-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 .ritalin-settings-card {
   background: rgba(124,92,252,.07); border: 1.5px solid rgba(124,92,252,.22);
   border-radius: 18px; padding: 16px 18px; margin-bottom: 20px;
@@ -1282,6 +1283,54 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   text-decoration: underline; text-underline-offset: 3px;
 }
 
+/* ── DUMB GUIDE ── */
+.dumb-hero {
+  background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 20px; padding: 22px 18px; margin-bottom: 14px; text-align: center;
+}
+.dumb-hero-title {
+  font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800;
+  color: var(--text); margin-bottom: 8px;
+}
+.dumb-hero-sub { font-size: 14px; color: var(--muted); line-height: 1.6; }
+.dumb-why-card {
+  background: rgba(124,92,252,.06); border: 1.5px solid rgba(124,92,252,.2);
+  border-radius: 18px; padding: 16px 18px; margin-bottom: 14px;
+}
+.dumb-why-title {
+  font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+  color: var(--accent); margin-bottom: 10px; letter-spacing: .03em;
+}
+.dumb-why-item {
+  font-size: 13px; color: var(--muted); line-height: 1.55;
+  padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.dumb-why-item:last-child { border-bottom: none; }
+.dumb-step {
+  display: flex; gap: 14px; align-items: flex-start;
+  background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 16px; padding: 14px 16px; margin-bottom: 10px;
+}
+.dumb-step-num {
+  width: 30px; height: 30px; border-radius: 50%; flex: 0 0 30px;
+  background: var(--soft); border: 1.5px solid var(--border);
+  color: var(--muted); font: 700 13px 'Syne', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+}
+.dumb-step-title {
+  font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+  color: var(--text); margin-bottom: 4px;
+}
+.dumb-step-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.dumb-link-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; border: 1.5px solid var(--border); border-radius: 16px;
+  background: var(--card); color: var(--text); padding: 15px;
+  font: 700 15px 'Syne', sans-serif; cursor: pointer; margin-bottom: 10px;
+  text-decoration: none; transition: border-color .15s, background .15s;
+}
+.dumb-link-btn:hover { border-color: var(--accent); background: rgba(124,92,252,.06); }
+
 /* ── SHORTCUTS SETUP SCREEN ── */
 .setup-step {
   display: flex; gap: 14px; align-items: flex-start;
@@ -1744,6 +1793,12 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <button class="back" id="back-blocked-strategies">← Retour</button>
   <div id="strategies-header"></div>
   <div id="strategies-list"></div>
+</section>
+
+<!-- GUIDE DUMB -->
+<section class="screen" id="dumb-guide">
+  <button class="back" id="back-dumb-guide">← Retour</button>
+  <div id="dumb-guide-content"></div>
 </section>
 
 <!-- BLOCKED: ACTION -->
@@ -4778,7 +4833,7 @@ document.querySelectorAll('.mode-card').forEach(card => {
 });
 
 // ─── SETTINGS MODAL ───
-function openSettings() {
+function openSettings(initialTab) {
   const existing = document.getElementById('settings-modal-bd');
   if (existing) { existing.remove(); return; }
   const bd = document.createElement('div');
@@ -4795,6 +4850,7 @@ function openSettings() {
       <button class="settings-tab" data-tab="modes">⏱ Modes</button>
       <button class="settings-tab" data-tab="drinks">☕ Boissons</button>
       <button class="settings-tab" data-tab="suppl">💊 Compléments</button>
+      <button class="settings-tab" data-tab="focus">📵 Focus</button>
     </div>
     <div id="st-content"></div>`;
   bd.appendChild(sheet);
@@ -4811,9 +4867,10 @@ function openSettings() {
     else if (tab === 'modes')  renderSettingsModes(c, s);
     else if (tab === 'drinks') renderSettingsList(c, s, 'drinks', 'Boissons énergisantes', '☕');
     else if (tab === 'suppl')  renderSettingsList(c, s, 'supplements', 'Compléments alimentaires', '💊');
+    else if (tab === 'focus')  renderSettingsFocus(c);
   }
   bd.querySelectorAll('.settings-tab').forEach(t => { t.onclick = () => switchTab(t.dataset.tab); });
-  switchTab('micros');
+  switchTab(initialTab || 'micros');
 }
 
 function renderRitalinSettingsCard(container) {
@@ -4980,6 +5037,49 @@ function renderSettingsList(container, s, key, title, defaultEmoji) {
     renderSettingsList(container, getSettings(), key, title, defaultEmoji);
   };
   container.appendChild(addRow);
+}
+
+function renderSettingsFocus(container) {
+  const ready = localStorage.getItem(LS_SHORTCUTS_READY) === 'true';
+  container.innerHTML = `
+    <div style="padding:0 0 8px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">
+        Le Mode Focus combine deux outils : un raccourci Apple qui active ton mode Ne pas déranger, et l'app Dumb qui remplace les icônes colorées par des boutons texte. Ensemble, ils éliminent les distractions visuelles et les notifications.
+      </div>
+
+      <div class="settings-section-title" style="margin-bottom:8px">Raccourci iPhone</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--card);border-radius:12px;margin-bottom:10px">
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text)">${ready ? '✅ Raccourci configuré' : '⚠️ Pas encore configuré'}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${ready ? 'FocusTDAH est prêt' : 'Le raccourci FocusTDAH n\'existe pas encore'}</div>
+        </div>
+        <button class="btn-outline" id="sf-shortcut-btn" style="font-size:13px;padding:8px 14px;white-space:nowrap;margin-left:10px">${ready ? 'Reconfigurer' : 'Configurer'}</button>
+      </div>
+
+      <div class="settings-section-title" style="margin-bottom:8px;margin-top:20px">App Dumb</div>
+      <div style="padding:12px 14px;background:var(--card);border-radius:12px;margin-bottom:10px">
+        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">📵 Dumb — Écran minimaliste</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Remplace tes icônes colorées par des boutons texte. Moins d'appels à l'attention, moins d'impulsivité.</div>
+        <button class="dumb-link-btn" id="sf-dumb-btn">📵 Guide d'utilisation de Dumb</button>
+      </div>
+
+      <div style="margin-top:20px;padding:14px;background:linear-gradient(135deg,rgba(var(--accent-rgb,99,91,255),0.08),rgba(var(--accent2-rgb,255,91,178),0.08));border-radius:14px;border:1px solid rgba(var(--accent-rgb,99,91,255),0.15)">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">Comment ça marche ensemble ?</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6">
+          1. Tu lances un timer dans focusTDAH<br>
+          2. Tu appuies sur 📵 → le raccourci active ton mode Focus iPhone<br>
+          3. Dumb remplace automatiquement tes icônes<br>
+          4. Résultat : téléphone gris, notifs silencieuses, cerveau focalisé
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('sf-shortcut-btn').onclick = () => {
+    localStorage.setItem('ft_shortcuts_return_from', 'settings');
+    show('shortcuts-setup');
+    startShortcutGuide();
+  };
+  document.getElementById('sf-dumb-btn').onclick = () => showDumbGuide('settings');
 }
 
 document.getElementById('settings-fab').onclick = openSettings;
@@ -5501,10 +5601,85 @@ function showFocusModal(from) {
   }
 }
 
+// ── Guide DUMB ──
+function showDumbGuide(returnScreen) {
+  const c = document.getElementById('dumb-guide-content');
+  if (!c) return;
+  const back = returnScreen || 'shortcuts-setup';
+  document.getElementById('back-dumb-guide').onclick = () => {
+    if (back === 'settings') { openSettings('focus'); }
+    else { show(back); }
+  };
+
+  c.innerHTML = `
+    <div class="dumb-hero">
+      <div style="font-size:52px;margin-bottom:12px">📵</div>
+      <div class="dumb-hero-title">Mode DUMB</div>
+      <div class="dumb-hero-sub">Une app qui transforme ton iPhone en téléphone minimaliste. Finis les icônes colorées, les badges de notifs et les tentations visuelles — juste l'essentiel, en texte.</div>
+    </div>
+
+    <div class="dumb-why-card">
+      <div class="dumb-why-title">Pourquoi c'est fait pour le TDAH</div>
+      <div class="dumb-why-item">🎨 Les icônes colorées déclenchent des impulsions de clic — Dumb les remplace par du texte simple</div>
+      <div class="dumb-why-item">🔴 Les badges de notifications créent de l'anxiété et de la distraction — Dumb les masque</div>
+      <div class="dumb-why-item">📱 Voir Instagram ou TikTok sur ton écran suffit à déclencher l'envie — Dumb les cache</div>
+      <div class="dumb-why-item">⚡ Moins de stimulation visuelle = moins de charge cognitive = plus de focus</div>
+    </div>
+
+    <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px">Comment configurer</div>
+
+    <div class="dumb-step">
+      <div class="dumb-step-num">1</div>
+      <div>
+        <div class="dumb-step-title">Télécharge l'app Dumb Phone</div>
+        <div class="dumb-step-desc">Disponible sur l'App Store. Gratuit 7 jours, puis 9,99€/an ou 24,99€ à vie.</div>
+      </div>
+    </div>
+    <a class="dumb-link-btn" href="https://apps.apple.com/us/app/dumb-phone-dp/id6504743503" target="_blank">
+      📲 Ouvrir dans l'App Store
+    </a>
+
+    <div class="dumb-step">
+      <div class="dumb-step-num">2</div>
+      <div>
+        <div class="dumb-step-title">Configure Dumb avec tes apps essentielles</div>
+        <div class="dumb-step-desc">Dans Dumb, choisis maximum 4-6 apps à garder visibles — Téléphone, Messages, Maps, et ton app de travail. Laisse les apps distractives hors de la liste.</div>
+      </div>
+    </div>
+
+    <div class="dumb-step">
+      <div class="dumb-step-num">3</div>
+      <div>
+        <div class="dumb-step-title">Crée une page d'accueil "Focus" sur ton iPhone</div>
+        <div class="dumb-step-desc">Dans l'app Dumb, active le widget sur ton écran d'accueil. Crée ensuite une nouvelle page d'accueil avec uniquement ce widget. Cette page devient ton écran de travail.</div>
+      </div>
+    </div>
+
+    <div class="dumb-step">
+      <div class="dumb-step-num">4</div>
+      <div>
+        <div class="dumb-step-title">Lie ton mode Focus à cette page</div>
+        <div class="dumb-step-desc">Dans Réglages → Focus → FocusTDAH → Personnaliser les écrans → Active uniquement la page Dumb. Maintenant, quand focusTDAH active ton mode Focus, ton téléphone bascule automatiquement sur l'écran Dumb.</div>
+      </div>
+    </div>
+
+    <div class="setup-warning" style="margin-top:14px">
+      <strong>Le résultat</strong><br>
+      Quand tu appuies sur 📵 dans focusTDAH → ton iPhone active le mode Focus → l'écran d'accueil passe en mode Dumb → plus de distractions visuelles. Un seul bouton pour tout bloquer.
+    </div>
+
+    <a class="dumb-link-btn" href="https://dumbphone.so/" target="_blank" style="margin-top:4px">
+      🌐 Site officiel de Dumb
+    </a>
+  `;
+  show('dumb-guide');
+}
+
 function showShortcutsSetupReturn() {
   const from = localStorage.getItem('ft_shortcuts_return_from') || 'aide-menu';
   localStorage.removeItem('ft_shortcuts_return_from');
-  showBlockedBefore(from);
+  if (from === 'settings') { openSettings('focus'); }
+  else { showBlockedBefore(from); }
 }
 
 // ── Guide raccourci étape par étape ──
@@ -5557,7 +5732,11 @@ function renderShortcutStep() {
         Vérifie que ton raccourci s'appelle exactement <strong style="color:var(--text)">FocusTDAH</strong> — une seule lettre différente, un espace en trop, ou une majuscule manquante et ça ne marchera pas.
       </div>
       <button class="btn" id="ssg-test" style="margin-bottom:10px">▶ Tester le raccourci maintenant</button>
-      <button class="btn-outline" id="ssg-skip" style="width:100%;margin-top:4px">Terminer sans tester</button>`;
+      <button class="btn-outline" id="ssg-skip" style="width:100%;margin-top:4px">Terminer sans tester</button>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:10px">Aller encore plus loin</div>
+        <button class="dumb-link-btn" id="ssg-dumb">📵 Découvrir le mode DUMB — blocage total</button>
+      </div>`;
     document.getElementById('ssg-test').onclick = () => {
       localStorage.setItem(LS_SHORTCUTS_READY, 'true');
       triggerShortcut();
@@ -5567,6 +5746,7 @@ function renderShortcutStep() {
       localStorage.setItem(LS_SHORTCUTS_READY, 'true');
       showShortcutsSetupReturn();
     };
+    document.getElementById('ssg-dumb').onclick = () => showDumbGuide('shortcuts-setup');
     return;
   }
 

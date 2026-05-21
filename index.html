@@ -127,6 +127,32 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   transition: background .15s, transform .1s;
 }
 .fed-up-btn:active { transform: scale(.98); background: rgba(252,92,125,.14); }
+.reentry-btn { display:block; width:100%; margin-top:8px; border:1.5px solid var(--border); border-radius:14px; background:none; color:var(--muted); font:600 13px 'DM Sans',sans-serif; padding:11px 0; cursor:pointer; text-align:center; transition:all .15s; }
+.reentry-btn:active { background:var(--soft); }
+
+/* Streak badge */
+.streak-badge { display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg,#ff9800,#ef5350); color:#fff; border-radius:20px; padding:6px 14px; font:700 13px 'DM Sans',sans-serif; cursor:default; }
+
+/* HALT check */
+.halt-item { display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--border); font-size:14px; color:var(--text); }
+.halt-toggle { display:flex; gap:6px; }
+.halt-btn { border:1.5px solid var(--border); border-radius:10px; padding:6px 14px; font:600 13px 'DM Sans',sans-serif; background:var(--soft); color:var(--muted); cursor:pointer; transition:all .13s; }
+.halt-btn.yes { border-color:#ef5350; background:rgba(239,83,80,.1); color:#ef5350; }
+.halt-btn.no  { border-color:#66bb6a; background:rgba(102,187,106,.1); color:#66bb6a; }
+
+/* Brain dump zone tabs */
+.dump-zone-tabs { display:flex; gap:6px; margin-bottom:10px; }
+.dump-zone-tab { flex:1; padding:9px 4px; border:1.5px solid var(--border); border-radius:10px; background:var(--soft); color:var(--muted); font:600 12px 'DM Sans',sans-serif; cursor:pointer; text-align:center; transition:all .13s; }
+.dump-zone-tab.active { border-color:var(--accent); background:rgba(124,92,252,.1); color:var(--accent); }
+
+/* Daily plan */
+.plan-row { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; background:var(--soft); border-radius:12px; margin-bottom:8px; }
+.plan-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+.plan-text { font-size:14px; color:var(--text); font-weight:500; flex:1; word-break:break-word; }
+.plan-text.done { text-decoration:line-through; color:var(--muted); }
+
+/* RSD mode */
+.rsd-card { background:linear-gradient(135deg,rgba(252,92,125,.08),rgba(124,92,252,.08)); border:1.5px solid rgba(252,92,125,.2); border-radius:16px; padding:18px; margin-bottom:14px; line-height:1.65; font-size:14px; color:var(--text); }
 
 /* Fed-up break modal */
 .fed-up-sheet { border-radius: 28px 28px 0 0; background: var(--card); padding: 16px 22px 36px; }
@@ -1563,9 +1589,12 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <button class="back" id="back-home">← Ma liste</button>
   <div style="margin-bottom:20px">
     <span class="logo">✦ focusTDAH</span>
+    <div id="home-streak-wrap" style="display:none;margin-top:6px;margin-bottom:4px"></div>
     <h1>Tu veux faire quoi <em>maintenant</em> ?</h1>
     <p class="sub">Je m'occupe du reste.</p>
   </div>
+  <button class="btn-outline" id="btn-daily-plan" style="margin-bottom:14px;width:100%">📋 Plan du jour</button>
+  <div id="home-plan-preview" style="display:none;margin-bottom:14px"></div>
 
   <!-- ZONE 1 : SOUTIEN -->
   <div class="home-zone-label">🧠 J'ai besoin d'aide</div>
@@ -1777,6 +1806,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <button class="btn-ghost" id="btn-skip">Passer cette micro-action →</button>
   <button class="btn-blocked" id="btn-blocked">🆘 Je suis bloqué</button>
   <button class="fed-up-btn" id="fed-up-session">😮‍💨 J'en ai marre</button>
+  <button class="reentry-btn" id="btn-reentry-session">🔄 J'ai été interrompu(e)</button>
   <div class="progress-wrap" style="margin-top:22px">
     <div class="prog-row">
       <span id="s-step-prog-label">Étape en cours</span>
@@ -1901,6 +1931,10 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <button class="block-btn block-aide" id="aide-btn-demarrage" style="border-color:#7c5cfc;background:rgba(124,92,252,.06)">
     <span class="b-title">🚀 Je veux travailler mais j'arrive pas à m'y mettre</span>
     <span class="b-sub">J'ai l'intention · Mais quelque chose bloque le démarrage</span>
+  </button>
+  <button class="block-btn" id="aide-btn-rsd" style="border-color:rgba(252,92,125,.5);background:rgba(252,92,125,.06)">
+    <span class="b-title">💔 Je suis submergé(e) émotionnellement</span>
+    <span class="b-sub">Critique reçue · Rejet · Honte · Colère intense · RSD</span>
   </button>
 </section>
 
@@ -2098,6 +2132,11 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <div id="dump-free-zone">
     <p class="sub" style="margin-top:10px">Écris tout ce qui tourne en boucle. Rien à organiser — juste vider.</p>
     <div class="brain-dump-hint">💡 Pensées, peurs, tâches oubliées, idées aléatoires, stress… tout y passe.</div>
+    <div class="dump-zone-tabs" id="dump-zone-tabs">
+      <button class="dump-zone-tab active" data-zone="0">📌 Tâches</button>
+      <button class="dump-zone-tab" data-zone="1">💭 Pensées</button>
+      <button class="dump-zone-tab" data-zone="2">😰 Peurs / stress</button>
+    </div>
     <textarea class="brain-dump-area" id="brain-dump-text" placeholder="Je pense à…&#10;Je dois…&#10;J'ai oublié de…&#10;Je suis stressé par…&#10;J'ai peur que…&#10;J'aurais dû…"></textarea>
     <button class="btn" id="btn-brain-dump-done" style="margin-top:16px">✓ C'est noté — retour au travail</button>
     <button class="btn-outline" id="btn-brain-dump-clear">🗑 Effacer tout</button>
@@ -2142,6 +2181,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
     <button class="ft-stop" id="ft-stop">✕</button>
   </div>
   <button class="fed-up-btn" id="fed-up-free">😮‍💨 J'en ai marre</button>
+  <button class="reentry-btn" id="btn-reentry-free">🔄 J'ai été interrompu(e)</button>
   <div id="ft-end-panel" style="display:none" class="end-panel">
     <div class="end-title" id="ft-end-title">Session terminée !</div>
     <div class="end-sub" id="ft-end-sub">Bien joué. Que veux-tu faire ?</div>
@@ -2900,6 +2940,8 @@ function renderHome() {
   }
 
   checkNotifBanner();
+  renderStreakBadge();
+  renderDailyPlanPreview();
   const wrap = document.getElementById('home-proj-wrap');
   const listEl = document.getElementById('home-proj-list');
   if (projects.length > 0) {
@@ -2936,6 +2978,10 @@ document.getElementById('aide-btn-panique').onclick = () => showModePanique();
 document.getElementById('aide-btn-reset').onclick = () => showResetCognitif();
 document.getElementById('aide-btn-dump').onclick = () => show('brain-dump');
 document.getElementById('aide-btn-demarrage').onclick = () => showDemarrageModal();
+document.getElementById('aide-btn-rsd').onclick = () => showRSDMode();
+document.getElementById('btn-daily-plan').onclick = () => showDailyPlanning();
+document.getElementById('btn-reentry-session').onclick = () => showReentryModal();
+document.getElementById('btn-reentry-free').onclick = () => showReentryModal();
 document.getElementById('back-create').onclick = () => { renderHome(); show('home'); };
 document.getElementById('back-mode').onclick = () => {
   if (currentProject) { renderPlanPreview(currentProject); show('plan-preview'); }
@@ -5367,18 +5413,20 @@ document.getElementById('t-toggle').onclick = function() {
     document.getElementById('t-toggle').textContent = '▶ Continuer';
   } else {
     if (tRemain <= 0) return;
-    maybeAskFocus();
-    tRunning = true;
-    tEndTimestamp = Date.now() + tRemain * 1000;
-    startContinuousFocus();
-    requestWakeLock();
-    document.getElementById('t-toggle').textContent = '⏸ Pause';
-    tInterval = setInterval(function() {
-      tRemain = Math.max(0, Math.ceil((tEndTimestamp - Date.now()) / 1000));
-      renderTimerDisplay();
-      if (tRemain <= 0) onSessionTimerEnd();
-    }, 1000);
-    triggerTimerShortcut(tRemain);
+    checkHALT(function() {
+      maybeAskFocus();
+      tRunning = true;
+      tEndTimestamp = Date.now() + tRemain * 1000;
+      startContinuousFocus();
+      requestWakeLock();
+      document.getElementById('t-toggle').textContent = '⏸ Pause';
+      tInterval = setInterval(function() {
+        tRemain = Math.max(0, Math.ceil((tEndTimestamp - Date.now()) / 1000));
+        renderTimerDisplay();
+        if (tRemain <= 0) onSessionTimerEnd();
+      }, 1000);
+      triggerTimerShortcut(tRemain);
+    });
   }
 };
 document.getElementById('t-reset').onclick = resetTimer;
@@ -5550,18 +5598,21 @@ document.getElementById('ft-toggle').onclick = function() {
     this.textContent = '▶ Continuer';
   } else {
     if (ftRemain <= 0) return;
-    maybeAskFocus();
-    ftRunning = true;
-    ftEndTimestamp = Date.now() + ftRemain * 1000;
-    startContinuousFocus();
-    requestWakeLock();
-    this.textContent = '⏸ Pause';
-    ftInterval = setInterval(() => {
-      ftRemain = Math.max(0, Math.ceil((ftEndTimestamp - Date.now()) / 1000));
-      renderFtTimer();
-      if (ftRemain <= 0) onFtTimerEnd();
-    }, 1000);
-    triggerTimerShortcut(ftRemain);
+    const toggleEl = this;
+    checkHALT(function() {
+      maybeAskFocus();
+      ftRunning = true;
+      ftEndTimestamp = Date.now() + ftRemain * 1000;
+      startContinuousFocus();
+      requestWakeLock();
+      toggleEl.textContent = '⏸ Pause';
+      ftInterval = setInterval(() => {
+        ftRemain = Math.max(0, Math.ceil((ftEndTimestamp - Date.now()) / 1000));
+        renderFtTimer();
+        if (ftRemain <= 0) onFtTimerEnd();
+      }, 1000);
+      triggerTimerShortcut(ftRemain);
+    });
   }
 };
 
@@ -5783,6 +5834,7 @@ function onSessionTimerEnd() {
   addBehaviorEvent('complete');
   releaseWakeLock();
   playTimerEndSound();
+  recordSession();
   setTimeout(showFocusCheckIn, 900);
 }
 function onFtTimerEnd() {
@@ -5795,6 +5847,7 @@ function onFtTimerEnd() {
   addBehaviorEvent('complete');
   releaseWakeLock();
   playTimerEndSound();
+  recordSession();
   showFtEndPanel();
   setTimeout(showFocusCheckIn, 900);
 }
@@ -6353,6 +6406,8 @@ function openFocusPanel() {
         ${ssRow('friction',  '🧱', 'Friction',        ss.friction,  true)}
       </div>
 
+      <div id="fp-suggestion" style="margin-bottom:12px"></div>
+
       <div class="settings-section-title" style="margin-bottom:10px">Ritaline</div>
       <div id="fp-ritalin"></div>
 
@@ -6371,6 +6426,28 @@ function openFocusPanel() {
     bd.querySelector('#fp-score-card div:last-child').textContent =
       isOpen ? 'Appuie pour comprendre le calcul →' : 'Appuie pour fermer ↑';
   };
+  // Suggestion basée sur le score le plus faible
+  const suggEl = document.getElementById('fp-suggestion');
+  const scoreEntries = [
+    { key: 'momentum',  isNeg: false, label: 'Momentum',        tip: 'Lance un timer maintenant — même 5 minutes.' },
+    { key: 'focusBrut', isNeg: false, label: 'Focus brut',      tip: 'Prends la Ritaline ou un café/matcha si pas encore fait.' },
+    { key: 'energie',   isNeg: false, label: 'Énergie mentale', tip: 'Mange quelque chose, hydrate-toi, ou fais 2 min de mouvement.' },
+    { key: 'dopamine',  isNeg: false, label: 'Dopamine',        tip: 'Brain dump ou musique de travail pour booster la dopamine.' },
+    { key: 'surcharge', isNeg: true,  label: 'Surcharge',       tip: 'Ferme les onglets inutiles et fais un brain dump.' },
+    { key: 'friction',  isNeg: true,  label: 'Friction',        tip: 'Fais une seule micro-action de 2 minutes pour démarrer.' },
+  ];
+  const worst = scoreEntries.reduce((prev, cur) => {
+    const prevVal = prev.isNeg ? (100 - ss[prev.key]) : ss[prev.key];
+    const curVal  = cur.isNeg  ? (100 - ss[cur.key])  : ss[cur.key];
+    return curVal < prevVal ? cur : prev;
+  });
+  if (suggEl) {
+    suggEl.innerHTML = `<div style="background:rgba(124,92,252,.08);border:1.5px solid rgba(124,92,252,.2);border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.55;color:var(--text)">
+      <div style="font-weight:700;margin-bottom:4px;color:var(--accent)">💡 Suggestion — ${worst.label} faible</div>
+      ${worst.tip}
+    </div>`;
+  }
+
   renderFocusPanelRitalin(document.getElementById('fp-ritalin'));
   renderFocusPanelSuppl(document.getElementById('fp-suppl'));
 }
@@ -7941,6 +8018,7 @@ document.getElementById('btn-brain-dump-clear').onclick = () => {
   if (confirm('Effacer tout le contenu ?')) {
     document.getElementById('brain-dump-text').value = '';
     localStorage.removeItem('focustdah_brain_dump');
+    [0,1,2].forEach(i => localStorage.removeItem('ft_dump_' + i));
   }
 };
 
@@ -7997,15 +8075,282 @@ document.getElementById('btn-panic-micro-skip').onclick = () => advancePanicMicr
 // Reset cognitif steps
 document.getElementById('btn-rs-breath').onclick = () => startResetStep('breath');
 
+// ─── STREAKS & RÉCOMPENSES ───
+function getRewardsData() {
+  try { return JSON.parse(localStorage.getItem('ft_rewards') || '{}'); } catch(e) { return {}; }
+}
+function saveRewardsData(d) { localStorage.setItem('ft_rewards', JSON.stringify(d)); }
+
+function recordSession() {
+  const d = getRewardsData();
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (d.lastDay === today) {
+    d.todaySessions = (d.todaySessions || 0) + 1;
+  } else if (d.lastDay === yesterday) {
+    d.streak = (d.streak || 0) + 1;
+    d.todaySessions = 1;
+    d.lastDay = today;
+  } else {
+    d.streak = 1;
+    d.todaySessions = 1;
+    d.lastDay = today;
+  }
+  saveRewardsData(d);
+  if (d.streak >= 2) {
+    setTimeout(() => showDopamineToast('🔥 ' + d.streak + ' jours de suite ! Continue comme ça.', 3500), 1400);
+  }
+}
+
+function renderStreakBadge() {
+  const wrap = document.getElementById('home-streak-wrap');
+  if (!wrap) return;
+  const d = getRewardsData();
+  const today = new Date().toDateString();
+  if (!d.streak || d.lastDay !== today) { wrap.style.display = 'none'; return; }
+  const sessions = d.todaySessions || 1;
+  wrap.style.display = 'block';
+  wrap.innerHTML = '<span class="streak-badge">🔥 ' + d.streak + ' jour' + (d.streak > 1 ? 's' : '') + ' · ' + sessions + ' session' + (sessions > 1 ? 's' : '') + ' aujourd\'hui</span>';
+}
+
+// ─── HALT CHECK ───
+function checkHALT(onPass) {
+  const today = new Date().toDateString();
+  if (localStorage.getItem('ft_halt_date') === today) { onPass(); return; }
+  const items = [
+    { id: 'H', label: 'Faim (Hungry)', emoji: '🍽️' },
+    { id: 'A', label: 'Agité(e) / En colère', emoji: '😤' },
+    { id: 'L', label: 'Seul(e) / Isolé(e)', emoji: '😔' },
+    { id: 'T', label: 'Fatigué(e) (Tired)', emoji: '😴' },
+  ];
+  const bd = document.createElement('div');
+  bd.id = 'halt-bd';
+  bd.className = 'cat-modal-backdrop';
+  bd.innerHTML = `
+    <div class="cat-modal-sheet">
+      <div class="cat-modal-handle"></div>
+      <div style="font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:4px">Avant de commencer 🔍</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">Le check HALT aide à identifier ce qui pourrait bloquer ta session.</div>
+      <div id="halt-items">
+        ${items.map(it => `
+          <div class="halt-item">
+            <span>${it.emoji} ${it.label}</span>
+            <div class="halt-toggle">
+              <button class="halt-btn" data-halt="${it.id}" data-v="yes">Oui</button>
+              <button class="halt-btn" data-halt="${it.id}" data-v="no">Non</button>
+            </div>
+          </div>`).join('')}
+      </div>
+      <button class="btn" id="halt-ok" style="margin-top:16px">C'est noté — on y va ✓</button>
+    </div>`;
+  document.body.appendChild(bd);
+  bd.querySelectorAll('.halt-btn').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.halt;
+      bd.querySelectorAll('[data-halt="' + id + '"]').forEach(b => b.classList.remove('yes', 'no'));
+      btn.classList.add(btn.dataset.v);
+    };
+  });
+  document.getElementById('halt-ok').onclick = () => {
+    const concerns = items.filter(it => bd.querySelector('[data-halt="' + it.id + '"].yes')).length;
+    localStorage.setItem('ft_halt_date', today);
+    bd.remove();
+    if (concerns >= 2) showDopamineToast('⚠️ ' + concerns + ' signaux HALT. Prends soin de toi si possible.', 4000);
+    onPass();
+  };
+}
+
+// ─── RSD / DYSRÉGULATION ÉMOTIONNELLE ───
+function showRSDMode() {
+  const bd = document.createElement('div');
+  bd.id = 'rsd-bd';
+  bd.className = 'cat-modal-backdrop';
+  document.body.appendChild(bd);
+  bd.addEventListener('click', e => { if (e.target === bd) bd.remove(); });
+
+  function step1() {
+    bd.innerHTML = `
+      <div class="cat-modal-sheet">
+        <div class="cat-modal-handle"></div>
+        <div style="font-size:28px;text-align:center;margin-bottom:8px">💙</div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;text-align:center;margin-bottom:10px">Ce que tu ressens est réel.</div>
+        <div class="rsd-card">Le RSD (Dysrégulation Émotionnelle Sensible au Rejet) est neurologique — pas une faiblesse. Ton cerveau TDAH amplifie la douleur du rejet jusqu'à 10×. Ce n'est pas exagéré. C'est biologique.</div>
+        <button class="btn" id="rsd-next1">Je comprends → ancrage</button>
+        <button style="background:none;border:none;color:var(--muted);font:600 13px 'DM Sans',sans-serif;width:100%;padding:8px;cursor:pointer;margin-top:4px" onclick="document.getElementById('rsd-bd').remove()">Fermer</button>
+      </div>`;
+    bd.querySelector('#rsd-next1').onclick = step2;
+  }
+
+  function step2() {
+    bd.innerHTML = `
+      <div class="cat-modal-sheet">
+        <div class="cat-modal-handle"></div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:10px">🌍 Ancrage rapide</div>
+        <div style="font-size:14px;color:var(--text);line-height:1.75;margin-bottom:16px">
+          Nomme mentalement <strong>5 choses</strong> que tu vois.<br>
+          Pose tes pieds à plat sur le sol.<br>
+          Inspire <strong>4 sec</strong> → expire <strong>6 sec</strong>.<br><br>
+          <em style="color:var(--muted);font-size:13px">L'intensité émotionnelle va diminuer — le pic dure rarement plus de 20 min.</em>
+        </div>
+        <button class="btn" id="rsd-next2">Fait → que faire maintenant ?</button>
+      </div>`;
+    bd.querySelector('#rsd-next2').onclick = step3;
+  }
+
+  function step3() {
+    bd.innerHTML = `
+      <div class="cat-modal-sheet">
+        <div class="cat-modal-handle"></div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:12px">Que veux-tu faire ?</div>
+        <div style="display:grid;gap:10px;margin-bottom:10px">
+          <button class="block-btn" id="rsd-dump">
+            <span class="b-title">🧠 Vider mon cerveau</span>
+            <span class="b-sub">Écrire ce qui tourne en boucle</span>
+          </button>
+          <button class="block-btn" id="rsd-work">
+            <span class="b-title">💪 Reprendre le travail</span>
+            <span class="b-sub">Petite tâche pour se remettre en mouvement</span>
+          </button>
+          <button class="block-btn" id="rsd-pause">
+            <span class="b-title">🛋️ Pause totale</span>
+            <span class="b-sub">Mon cerveau a besoin de récupérer</span>
+          </button>
+        </div>
+        <button style="background:none;border:none;color:var(--muted);font:600 13px 'DM Sans',sans-serif;width:100%;padding:6px;cursor:pointer" id="rsd-close">Fermer</button>
+      </div>`;
+    bd.querySelector('#rsd-dump').onclick = () => { bd.remove(); show('brain-dump'); };
+    bd.querySelector('#rsd-work').onclick = () => { bd.remove(); show('aide-menu'); };
+    bd.querySelector('#rsd-pause').onclick = () => { bd.remove(); showDopamineToast("C'est OK de faire une pause. Ton cerveau récupère. 💙", 4000); };
+    bd.querySelector('#rsd-close').onclick = () => bd.remove();
+  }
+
+  step1();
+}
+
+// ─── DAILY PLANNING ───
+function getDailyPlan() {
+  const today = new Date().toDateString();
+  try {
+    const saved = JSON.parse(localStorage.getItem('ft_daily_plan') || '{"date":"","items":[]}');
+    return saved.date === today ? saved : { date: today, items: [] };
+  } catch(e) { return { date: new Date().toDateString(), items: [] }; }
+}
+function saveDailyPlan(plan) { localStorage.setItem('ft_daily_plan', JSON.stringify(plan)); }
+
+function renderDailyPlanPreview() {
+  const wrap = document.getElementById('home-plan-preview');
+  if (!wrap) return;
+  const plan = getDailyPlan();
+  if (!plan.items.length) { wrap.style.display = 'none'; return; }
+  const colors = ['#7c5cfc', '#ff9800', '#ef5350'];
+  wrap.style.display = 'block';
+  wrap.innerHTML = plan.items.map((item, i) => `
+    <div class="plan-row" style="cursor:pointer" onclick="togglePlanItem(${i})">
+      <div class="plan-dot" style="background:${colors[i] || '#888'};${item.done ? 'opacity:.35' : ''}"></div>
+      <div class="plan-text${item.done ? ' done' : ''}">${item.text}</div>
+    </div>`).join('');
+}
+
+function togglePlanItem(idx) {
+  const plan = getDailyPlan();
+  if (plan.items[idx]) plan.items[idx].done = !plan.items[idx].done;
+  saveDailyPlan(plan);
+  renderDailyPlanPreview();
+}
+
+function showDailyPlanning() {
+  const plan = getDailyPlan();
+  const bd = document.createElement('div');
+  bd.id = 'plan-bd';
+  bd.className = 'cat-modal-backdrop';
+  const placeholders = [
+    '🔴 La plus importante du jour',
+    '🟠 La deuxième priorité',
+    '🟡 Si j\'ai le temps',
+  ];
+  bd.innerHTML = `
+    <div class="cat-modal-sheet">
+      <div class="cat-modal-handle"></div>
+      <div style="font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:4px">📋 3 choses aujourd'hui</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">Ton cerveau TDAH travaille mieux avec 3 priorités max. Pas plus.</div>
+      ${[0,1,2].map(i => `<input class="plan-input" data-i="${i}" type="text" placeholder="${placeholders[i]}"
+        value="${plan.items[i] ? plan.items[i].text.replace(/"/g,'&quot;') : ''}"
+        style="display:block;width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--soft);color:var(--text);font:500 14px 'DM Sans',sans-serif;margin-bottom:10px">`).join('')}
+      <button class="btn" id="plan-save" style="margin-top:6px">Enregistrer ✓</button>
+      <button style="background:none;border:none;color:var(--muted);font:600 13px 'DM Sans',sans-serif;width:100%;padding:8px;cursor:pointer;margin-top:4px" id="plan-close">Fermer</button>
+    </div>`;
+  document.body.appendChild(bd);
+  bd.addEventListener('click', e => { if (e.target === bd) bd.remove(); });
+  document.getElementById('plan-save').onclick = () => {
+    const inputs = bd.querySelectorAll('.plan-input');
+    const items = [];
+    inputs.forEach((inp, i) => {
+      const txt = inp.value.trim();
+      if (txt) items.push({ text: txt, done: (plan.items[i] && plan.items[i].done) || false });
+    });
+    plan.items = items;
+    plan.date = new Date().toDateString();
+    saveDailyPlan(plan);
+    bd.remove();
+    renderDailyPlanPreview();
+    showDopamineToast('Plan du jour enregistré ✓', 2500);
+  };
+  document.getElementById('plan-close').onclick = () => bd.remove();
+}
+
+// ─── RE-ENTRY APRÈS INTERRUPTION ───
+function showReentryModal() {
+  const bd = document.createElement('div');
+  bd.id = 'reentry-bd';
+  bd.className = 'cat-modal-backdrop';
+  bd.innerHTML = `
+    <div class="cat-modal-sheet">
+      <div class="cat-modal-handle"></div>
+      <div style="font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:4px">🔄 Re-centrage</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">Une interruption ? Normal. Revenons ensemble là où tu en étais.</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Tu travaillais sur quoi ?</div>
+      <input id="re-what" type="text" placeholder="Ex : intro du rapport, email client…"
+        style="display:block;width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--soft);color:var(--text);font:500 14px 'DM Sans',sans-serif;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">La prochaine action exacte :</div>
+      <input id="re-next" type="text" placeholder="Ex : ouvrir le doc et écrire le premier paragraphe"
+        style="display:block;width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--soft);color:var(--text);font:500 14px 'DM Sans',sans-serif;margin-bottom:16px">
+      <button class="btn" id="re-go">Je reprends ✓</button>
+      <button style="background:none;border:none;color:var(--muted);font:600 13px 'DM Sans',sans-serif;width:100%;padding:8px;cursor:pointer;margin-top:4px" id="re-close">Fermer</button>
+    </div>`;
+  document.body.appendChild(bd);
+  bd.addEventListener('click', e => { if (e.target === bd) bd.remove(); });
+  document.getElementById('re-go').onclick = () => {
+    const next = document.getElementById('re-next').value.trim();
+    bd.remove();
+    showDopamineToast(next ? '🎯 ' + next : 'Re-centrage fait. Bonne session ! 💪', next ? 6000 : 3000);
+  };
+  document.getElementById('re-close').onclick = () => bd.remove();
+}
+
 // ─── INIT ───
 // Afficher la modal Ritaline immédiatement (sur le splash), sans attendre Firebase
 checkRitalinReminder();
 initAuth();
 
-// Load brain dump from localStorage
+// Load brain dump from localStorage (zone 0 by default)
+let currentDumpZone = 0;
 (function() {
-  const saved = localStorage.getItem('focustdah_brain_dump');
+  const saved = localStorage.getItem('ft_dump_0') || localStorage.getItem('focustdah_brain_dump') || '';
   if (saved) document.getElementById('brain-dump-text').value = saved;
+
+  document.getElementById('dump-zone-tabs').addEventListener('click', function(e) {
+    const btn = e.target.closest('.dump-zone-tab');
+    if (!btn) return;
+    localStorage.setItem('ft_dump_' + currentDumpZone, document.getElementById('brain-dump-text').value);
+    currentDumpZone = parseInt(btn.dataset.zone);
+    document.querySelectorAll('.dump-zone-tab').forEach(b => b.classList.toggle('active', parseInt(b.dataset.zone) === currentDumpZone));
+    document.getElementById('brain-dump-text').value = localStorage.getItem('ft_dump_' + currentDumpZone) || '';
+  });
+
+  document.getElementById('brain-dump-text').addEventListener('input', function() {
+    localStorage.setItem('ft_dump_' + currentDumpZone, this.value);
+    localStorage.setItem('focustdah_brain_dump', this.value);
+  });
 })();
 </script>
 </body>

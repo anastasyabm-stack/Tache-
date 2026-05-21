@@ -873,6 +873,12 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 }
 .block-reset .b-title { color: var(--green); }
 .block-reset .b-sub { color: var(--muted); }
+.block-aide {
+  background: linear-gradient(135deg, rgba(252,92,125,.08), rgba(92,252,160,.06));
+  border: 1.5px solid rgba(124,92,252,.28) !important; color: var(--text);
+}
+.block-aide .b-title { color: var(--text); font-size: 17px; }
+.block-aide .b-sub { color: var(--muted); }
 
 /* ── FRICTION GRID (bloqué V2) ── */
 .friction-grid { display: grid; gap: 10px; }
@@ -1104,29 +1110,11 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
     <span class="b-sub">Travaille par intervalles, sans créer de projet</span>
   </button>
 
-  <!-- ZONE 2 : JE SUIS BLOQUÉ -->
-  <div class="home-zone-label" style="margin-top:6px">🆘 Je suis bloqué</div>
-  <button class="block-btn block-blocked" id="btn-blocked-home">
-    <span class="b-title">Qu'est-ce qui me bloque ?</span>
-    <span class="b-sub">Brouillard · Panique · Vide · Évitement · et plus</span>
-  </button>
-
-  <!-- ZONE 3 : URGENCE -->
-  <div class="home-zone-label" style="margin-top:6px">🔥 Urgence</div>
-  <button class="block-btn block-panic" id="btn-mode-panique">
-    <span class="b-title">Mode panique 🔥</span>
-    <span class="b-sub">Deadline proche · Une seule action · Survie</span>
-  </button>
-
-  <!-- ZONE 4 : SE RESSOURCER -->
-  <div class="home-zone-label" style="margin-top:6px">🧘 Me ressourcer</div>
-  <button class="block-btn block-reset" id="btn-reset-cognitif">
-    <span class="b-title">Reset cognitif 🧘</span>
-    <span class="b-sub">Respiration · Corps · Clarté · Nouveau départ</span>
-  </button>
-  <button class="block-btn block-secondary" id="btn-brain-dump">
-    <span class="b-title">Vider mon cerveau 🧠</span>
-    <span class="b-sub">Écrire tout ce qui tourne en boucle pour libérer l'espace mental</span>
+  <!-- ZONE 2 : SOUTIEN -->
+  <div class="home-zone-label" style="margin-top:6px">🧠 J'ai besoin d'aide</div>
+  <button class="block-btn block-aide" id="btn-aide-menu">
+    <span class="b-title">Je suis bloqué · Panique · Reset</span>
+    <span class="b-sub">Frictions · Mode survie · Respiration · Vider le cerveau</span>
   </button>
 
   <div id="notif-banner" class="notif-banner" style="display:none">
@@ -1385,6 +1373,31 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 <section class="screen" id="blocked-action">
   <button class="back" id="back-blocked-action">← Changer de stratégie</button>
   <div id="blocked-action-content"></div>
+</section>
+
+<!-- MENU AIDE -->
+<section class="screen" id="aide-menu">
+  <button class="back" id="back-aide-menu">← Accueil</button>
+  <div style="margin-bottom:24px">
+    <h1>De quoi tu as <em>besoin</em> ?</h1>
+    <p class="sub">Choisis ce qui correspond le mieux à ton état maintenant.</p>
+  </div>
+  <button class="block-btn block-blocked" id="aide-btn-blocked">
+    <span class="b-title">🆘 Je suis bloqué</span>
+    <span class="b-sub">Brouillard · Panique · Vide · Évitement · Saturation · et plus</span>
+  </button>
+  <button class="block-btn block-panic" id="aide-btn-panique">
+    <span class="b-title">🔥 Mode panique</span>
+    <span class="b-sub">Deadline proche · Une seule action · Timer survie</span>
+  </button>
+  <button class="block-btn block-reset" id="aide-btn-reset">
+    <span class="b-title">🧘 Reset cognitif</span>
+    <span class="b-sub">Respiration · Étirement · Eau · Mini victoire</span>
+  </button>
+  <button class="block-btn block-secondary" id="aide-btn-dump">
+    <span class="b-title">🧠 Vider mon cerveau</span>
+    <span class="b-sub">Écrire tout ce qui tourne en boucle pour libérer l'espace mental</span>
+  </button>
 </section>
 
 <!-- BLOQUÉ V2 : TYPE DE FRICTION -->
@@ -2302,10 +2315,12 @@ function renderHome() {
 
 document.getElementById('btn-new').onclick = () => show('create');
 document.getElementById('back-home').onclick = () => show('landing');
-document.getElementById('btn-blocked-home').onclick = () => showBlockedV2('home');
-document.getElementById('btn-mode-panique').onclick = () => showModePanique();
-document.getElementById('btn-reset-cognitif').onclick = () => showResetCognitif();
-document.getElementById('btn-brain-dump').onclick = () => show('brain-dump');
+document.getElementById('btn-aide-menu').onclick = () => show('aide-menu');
+document.getElementById('back-aide-menu').onclick = () => { renderHome(); show('home'); };
+document.getElementById('aide-btn-blocked').onclick = () => showBlockedV2('aide-menu');
+document.getElementById('aide-btn-panique').onclick = () => showModePanique();
+document.getElementById('aide-btn-reset').onclick = () => showResetCognitif();
+document.getElementById('aide-btn-dump').onclick = () => show('brain-dump');
 document.getElementById('back-create').onclick = () => { renderHome(); show('home'); };
 document.getElementById('back-mode').onclick = () => {
   if (currentProject) { renderPlanPreview(currentProject); show('plan-preview'); }
@@ -5162,11 +5177,11 @@ function showResetComplete(victoryText) {
       <div class="reset-relaunch-title">Reset terminé !</div>
       <div class="reset-relaunch-sub">${victoryText ? '"' + victoryText + '"<br><br>' : ''}Ton cerveau est prêt pour un nouveau départ.</div>
       <button class="btn" id="btn-after-reset">🚀 Retour au travail</button>
-      <button class="btn-outline" id="btn-after-reset-home" style="margin-top:10px">← Retour à l'accueil</button>
+      <button class="btn-outline" id="btn-after-reset-home" style="margin-top:10px">← Accueil</button>
     </div>`;
   showDopamineToast('✨ Reset réussi — nouveau départ !');
-  document.getElementById('btn-after-reset').onclick = () => show('home');
-  document.getElementById('btn-after-reset-home').onclick = () => show('landing');
+  document.getElementById('btn-after-reset').onclick = () => { renderHome(); show('home'); };
+  document.getElementById('btn-after-reset-home').onclick = () => show('aide-menu');
 }
 
 
@@ -5554,12 +5569,12 @@ document.getElementById('back-blocked-action').onclick  = () => {
 };
 document.getElementById('back-blocked-type').onclick    = () => show(blockedCalledFrom);
 document.getElementById('back-friction-strategies').onclick = () => show('blocked-type');
-document.getElementById('back-mode-panique').onclick    = () => { clearPanicTimer(); show('home'); };
-document.getElementById('back-reset-cognitif').onclick  = () => show('home');
-document.getElementById('back-brain-dump').onclick      = () => show('home');
+document.getElementById('back-mode-panique').onclick    = () => { clearPanicTimer(); show('aide-menu'); };
+document.getElementById('back-reset-cognitif').onclick  = () => show('aide-menu');
+document.getElementById('back-brain-dump').onclick      = () => show('aide-menu');
 document.getElementById('btn-brain-dump-done').onclick  = () => {
   localStorage.setItem('focustdah_brain_dump', document.getElementById('brain-dump-text').value);
-  show('home');
+  show('aide-menu');
 };
 document.getElementById('btn-brain-dump-clear').onclick = () => {
   if (confirm('Effacer tout le contenu ?')) {
@@ -5580,7 +5595,7 @@ document.getElementById('panic-reset').onclick        = () => resetPanicTimer();
 document.getElementById('btn-panic-done').onclick     = () => {
   clearPanicTimer();
   showDopamineToast('🔥 Mission accomplie — tu l\'as fait !');
-  renderHome(); show('home');
+  renderHome(); show('aide-menu');
 };
 document.getElementById('btn-panic-new-round').onclick = () => resetPanicTimer(true);
 

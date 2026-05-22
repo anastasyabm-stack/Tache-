@@ -1543,6 +1543,182 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .dopamine-toast.fading { animation: toastOut .4s ease forwards; }
 @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(20px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 @keyframes toastOut { from{opacity:1;transform:translateX(-50%) translateY(0)} to{opacity:0;transform:translateX(-50%) translateY(-16px)} }
+
+/* ═══════════════════════════════════════════
+   DESKTOP LAYOUT  (≥ 768px)
+   ═══════════════════════════════════════════ */
+@media (min-width: 768px) {
+
+  /* ── Global ── */
+  body {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .screen {
+    padding: 40px 56px;
+    max-width: 860px;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+
+  /* ── Modals : centre flottant ── */
+  .cat-modal-backdrop { align-items: center; }
+  .cat-modal-sheet {
+    border-radius: 24px;
+    width: auto;
+    min-width: 440px;
+    max-width: 560px;
+    max-height: 85vh;
+    padding-bottom: 28px;
+  }
+  .cat-modal-handle { display: none; }
+
+  /* ── Landing ── */
+  #landing {
+    max-width: none;
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+  }
+  #landing.active {
+    display: flex !important;
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .landing-left {
+    width: 300px;
+    flex-shrink: 0;
+    padding: 44px 32px 32px 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-right: 1.5px solid var(--border);
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .landing-right {
+    flex: 1;
+    min-width: 0;
+    padding: 44px 48px 40px;
+    overflow-y: auto;
+    height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Work button full-width in sidebar */
+  .work-btn {
+    font-size: 18px;
+    padding: 20px 20px;
+    margin-top: 16px;
+  }
+
+  /* Actions vertical list on desktop */
+  .landing-actions {
+    flex-direction: column;
+    gap: 7px;
+    margin-top: 14px !important;
+  }
+  .landing-action-btn {
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    padding: 12px 16px !important;
+    border-radius: 14px !important;
+    font-size: 13px !important;
+    text-align: left !important;
+  }
+  .landing-action-btn .la-icon {
+    font-size: 18px !important;
+    display: inline !important;
+    flex-shrink: 0;
+  }
+  .landing-action-btn br { display: none; }
+  .landing-action-btn span:last-child { white-space: nowrap; }
+
+  /* Projects always shown on desktop */
+  #home-proj-wrap {
+    display: block !important;
+    margin-top: 0 !important;
+  }
+
+  /* Right panel: projects + todo fill height */
+  .landing-right .quicktodo {
+    flex: 1;
+    margin-top: 20px !important;
+  }
+
+  /* Notif banner less margin */
+  #notif-banner { margin-top: 0 !important; }
+
+  /* ── Session screen ── */
+  #session {
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 80px;
+    box-sizing: border-box;
+    margin: 0;
+  }
+  #session.active { display: flex; }
+  #session .back { align-self: flex-start; margin-bottom: 16px; }
+  #session > div:nth-child(2) { width: 100%; max-width: 520px; }
+  #session .task-name { font-size: 22px; max-width: 520px; }
+  #session .micro-box { max-width: 520px; }
+  #session .timer-wrap { max-width: 520px; width: 100%; }
+  #session .timer-num { font-size: 96px; }
+  #session .btn-green,
+  #session .btn-ghost,
+  #session .btn-blocked,
+  #session .fed-up-btn,
+  #session .reentry-btn { max-width: 520px; }
+  #session .progress-wrap { max-width: 520px; width: 100%; }
+
+  /* ── Free timer ── */
+  #timer-free {
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 80px;
+    box-sizing: border-box;
+    margin: 0;
+  }
+  #timer-free.active { display: flex; }
+  #timer-free .timer-num { font-size: 96px; }
+  #timer-free .timer-wrap { max-width: 520px; width: 100%; }
+
+  /* ── Settings ── */
+  #settings { max-width: 720px; }
+
+  /* ── Other content screens ── */
+  #aide-menu,
+  #brain-dump,
+  #timer-setup,
+  #mode-panique,
+  #blocked-energy,
+  #blocked-strategies,
+  #blocked-action,
+  #dumb-guide,
+  #reset-cognitif { max-width: 680px; }
+
+  /* ── Focus ring (landing top-bar) ── */
+  .landing-logo-row { margin-bottom: 24px !important; }
+}
 </style>
 </head>
 <body>
@@ -1579,6 +1755,8 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 
 <!-- ACCUEIL -->
 <section class="screen" id="landing">
+
+  <div class="landing-left">
 
   <!-- Barre du haut -->
   <div class="landing-logo-row" style="justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -1621,6 +1799,10 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
     </button>
   </div>
 
+  </div><!-- /.landing-left -->
+
+  <div class="landing-right">
+
   <!-- Bannière notifications -->
   <div id="notif-banner" class="notif-banner" style="display:none;margin-top:14px">
     <span class="notif-icon">🔔</span>
@@ -1654,6 +1836,8 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 
   <!-- Fin de journée — discret, en bas -->
   <button id="btn-end-of-day" style="display:block;width:100%;background:none;border:none;color:var(--muted);font:500 13px 'DM Sans',sans-serif;padding:18px 0 4px;cursor:pointer;text-align:center">🌙 Fin de journée</button>
+
+  </div><!-- /.landing-right -->
 
 </section>
 

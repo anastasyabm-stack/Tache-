@@ -1547,6 +1547,36 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .gentle-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; margin-bottom: 8px; }
 .gentle-sub { color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
 
+/* ── MORNING GREETING ── */
+.morning-overlay { position:fixed; inset:0; background:rgba(10,10,15,.75); display:flex; align-items:center; justify-content:center; z-index:9100; padding:20px; }
+.morning-sheet { background:var(--card); border-radius:28px; padding:32px 24px 28px; width:100%; max-width:380px; text-align:center; animation:pop .35s cubic-bezier(.34,1.56,.64,1); }
+.morning-emoji-row { display:flex; gap:12px; justify-content:center; margin:24px 0 8px; }
+.morning-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; padding:20px 8px 16px; border:2px solid var(--border); border-radius:20px; background:var(--soft); cursor:pointer; transition:all .15s; }
+.morning-btn:hover { border-color:var(--accent); background:rgba(124,92,252,.08); transform:translateY(-2px); }
+.morning-btn span:first-child { font-size:36px; }
+.morning-btn span:last-child { font:700 12px 'DM Sans',sans-serif; color:var(--muted); }
+.morning-btn.selected { border-color:var(--accent); background:rgba(124,92,252,.12); }
+
+/* ── MODE DU JOUR PILL ── */
+.day-mode-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; font:600 12px 'DM Sans',sans-serif; margin-bottom:12px; }
+.day-mode-pill.calme  { background:rgba(100,181,246,.12); color:#64b5f6; border:1px solid rgba(100,181,246,.25); }
+.day-mode-pill.normal { background:rgba(124,92,252,.09); color:var(--accent); border:1px solid rgba(124,92,252,.22); }
+.day-mode-pill.boost  { background:rgba(252,92,125,.1); color:#fc5c7d; border:1px solid rgba(252,92,125,.25); }
+
+/* ── SESSION END CHOICE ── */
+.session-end-sheet { background:var(--card); border-radius:24px 24px 0 0; padding:28px 20px 36px; width:100%; max-width:600px; animation:slideUp .3s ease; }
+@keyframes slideUp { from { transform:translateY(60px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+.session-end-mins { font-family:'Syne',sans-serif; font-size:56px; font-weight:900; line-height:1; color:var(--accent); }
+.session-end-choice { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; }
+.sec-btn { padding:16px 10px; border-radius:16px; border:1.5px solid var(--border); background:var(--soft); cursor:pointer; font:700 13px 'DM Sans',sans-serif; color:var(--text); transition:all .15s; text-align:center; line-height:1.4; }
+.sec-btn:hover { border-color:var(--accent); background:rgba(124,92,252,.08); }
+.sec-btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.sec-btn.primary:hover { opacity:.9; }
+
+/* ── MICRO CHECK PULSE ── */
+@keyframes checkPulse { 0%{transform:scale(1)} 40%{transform:scale(1.35)} 70%{transform:scale(.92)} 100%{transform:scale(1)} }
+.plan-micro-check.checked { animation: checkPulse .32s ease; }
+
 /* ── DOPAMINE TOAST ── */
 .dopamine-toast {
   position: fixed; bottom: calc(env(safe-area-inset-bottom) + 80px); left: 50%;
@@ -1873,6 +1903,9 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
       <div id="landing-user" style="display:none"></div>
     </div>
   </div>
+
+  <!-- Mode du jour pill -->
+  <div id="day-mode-slot" style="display:none;margin-bottom:4px"></div>
 
   <!-- Bannière rebound Ritaline (si active) -->
   <div id="rebound-banner-slot"></div>
@@ -3380,6 +3413,138 @@ function renderHome() {
   } else {
     wrap.style.display = 'none';
   }
+  renderDayModePill();
+  if (!hasGreetedToday()) setTimeout(showMorningGreeting, 400);
+}
+
+// ══════════════════════════════════════════════════
+// PARCOURS JOURNÉE — Mode du jour + Matin
+// ══════════════════════════════════════════════════
+
+const DAY_MODE_KEY = 'ft_day_mode';
+const DAY_MODE_TS  = 'ft_morning_ts';
+
+function getDayMode() {
+  const today = new Date().toDateString();
+  try {
+    const s = JSON.parse(localStorage.getItem(DAY_MODE_KEY) || '{}');
+    return s.date === today ? s.mode : null;
+  } catch { return null; }
+}
+
+function setDayMode(mode) {
+  localStorage.setItem(DAY_MODE_KEY, JSON.stringify({ date: new Date().toDateString(), mode }));
+  localStorage.setItem(DAY_MODE_TS, new Date().toDateString());
+}
+
+function hasGreetedToday() {
+  return localStorage.getItem(DAY_MODE_TS) === new Date().toDateString();
+}
+
+function renderDayModePill() {
+  const slot = document.getElementById('day-mode-slot');
+  if (!slot) return;
+  const mode = getDayMode();
+  if (!mode) { slot.style.display = 'none'; return; }
+  const meta = {
+    calme:  { emoji: '🌙', label: 'Mode Calme', cls: 'calme' },
+    normal: { emoji: '✦',  label: 'Mode Standard', cls: 'normal' },
+    boost:  { emoji: '⚡',  label: 'Mode Boost', cls: 'boost' },
+  };
+  const m = meta[mode] || meta.normal;
+  slot.style.display = 'block';
+  slot.innerHTML = `<div class="day-mode-pill ${m.cls}">${m.emoji} ${m.label}</div>`;
+}
+
+function showMorningGreeting() {
+  if (hasGreetedToday()) return;
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Bonjour ☀️' : hour < 17 ? 'Bon après-midi' : 'Bonsoir 🌙';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'morning-overlay';
+  overlay.innerHTML = `
+    <div class="morning-sheet">
+      <div style="font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px">${greet}</div>
+      <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:900;line-height:1.2;margin-bottom:4px">Comment tu arrives<br>aujourd'hui ?</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:4px">L'app s'adapte à ton énergie.</div>
+      <div class="morning-emoji-row">
+        <button class="morning-btn" data-mode="calme">  <span>😴</span><span>Épuisé·e</span> </button>
+        <button class="morning-btn" data-mode="normal"> <span>😐</span><span>Normal</span>   </button>
+        <button class="morning-btn" data-mode="boost">  <span>⚡</span><span>En forme</span> </button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:12px;cursor:pointer" id="mg-skip">Passer →</div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  overlay.querySelectorAll('.morning-btn').forEach(btn => {
+    btn.onclick = () => {
+      setDayMode(btn.dataset.mode);
+      overlay.remove();
+      renderDayModePill();
+      const msgs = {
+        calme:  'Mode Calme activé 🌙 — une chose à la fois.',
+        normal: 'Mode Standard ✦ — bonne journée.',
+        boost:  'Mode Boost ⚡ — profite de cette énergie !',
+      };
+      showDopamineToast(msgs[btn.dataset.mode], 3000);
+    };
+  });
+  overlay.querySelector('#mg-skip').onclick = () => {
+    setDayMode('normal');
+    overlay.remove();
+  };
+}
+
+// ══════════════════════════════════════════════════
+// FIN DE SESSION — carte douce 2 boutons
+// ══════════════════════════════════════════════════
+
+function showSessionEndChoice(mins) {
+  if (document.getElementById('session-end-bd')) return;
+  const bd = document.createElement('div');
+  bd.id = 'session-end-bd';
+  bd.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,15,.55);display:flex;align-items:flex-end;justify-content:center;z-index:9050';
+
+  const hour = new Date().getHours();
+  const score = calcFocusScore();
+  const todayS = getTodayStats();
+  const isFirst = (todayS.sessions || 0) <= 1;
+
+  const warmMsg = score < 35 ? 'Malgré la fatigue, tu l\'as fait.' :
+    isFirst ? 'Le premier pas est souvent le plus dur. Tu l\'as fait.' :
+    hour >= 20 ? 'Tu travailles le soir — ça compte vraiment.' :
+    ['Tu avances, pour de vrai.', 'Chaque session construit quelque chose.', 'Bien joué — simple et efficace.', 'Ton cerveau TDAH vient de gagner ce round.'][Math.floor(Math.random() * 4)];
+
+  bd.innerHTML = `
+    <div class="session-end-sheet">
+      <div class="cat-modal-handle"></div>
+      <div style="text-align:center;padding:8px 0 4px">
+        <div class="session-end-mins">${mins}</div>
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--muted);margin-top:2px">minutes de focus</div>
+        <div style="font-size:14px;color:var(--text);margin-top:12px;line-height:1.5">${warmMsg}</div>
+      </div>
+      <div class="session-end-choice">
+        <button class="sec-btn" id="sec-pause">☕ Pause méritée</button>
+        <button class="sec-btn primary" id="sec-more">⏱ Encore 5 min</button>
+      </div>
+    </div>`;
+  document.body.appendChild(bd);
+
+  document.getElementById('sec-pause').onclick = () => {
+    bd.remove();
+    renderHome(); show('landing');
+  };
+  document.getElementById('sec-more').onclick = () => {
+    bd.remove();
+    currentMode = 'micro';
+    startSession();
+    tTotal = 5 * 60;
+    tRemain = 5 * 60;
+    renderTimerDisplay();
+    showDopamineToast('5 min de plus ⚡', 2000);
+  };
+  bd.addEventListener('click', e => { if (e.target === bd) { bd.remove(); renderHome(); show('landing'); } });
 }
 
 // ══════════════════════════════════════════════════
@@ -6885,21 +7050,7 @@ function onSessionTimerEnd() {
   addBehaviorEvent('complete');
   releaseWakeLock();
   playTimerEndSound();
-  // Context-aware session-end message
-  try {
-    const score = calcFocusScore();
-    const hour = new Date().getHours();
-    const todayS = getTodayStats();
-    const isFirstSession = (todayS.sessions || 0) <= 1;
-    const defaultMsgs = ['Bien joué.', 'Continue comme ça.', 'Chaque session compte.', 'Tu avances.'];
-    let endMsg;
-    if (score < 35) endMsg = 'Tu as travaillé malgré la fatigue — respect.';
-    else if (hour >= 20) endMsg = 'Travailler le soir — tu t\'investis vraiment.';
-    else if (isFirstSession) endMsg = 'Le premier pas est fait. C\'est le plus dur.';
-    else endMsg = defaultMsgs[Math.floor(Math.random() * defaultMsgs.length)];
-    showDopamineToast(endMsg, 3500);
-  } catch(e) {}
-  setTimeout(() => showFocusCheckIn('session'), 900);
+  setTimeout(() => showSessionEndChoice(Math.round(tTotal / 60)), 600);
 }
 function onFtTimerEnd() {
   if (ftRunning) { addTodayStats({ focusMin: Math.floor((ftDuration - ftRemain) / 60) }); renderLandingStats(); }
@@ -9665,26 +9816,58 @@ function showRSDMode() {
 
 // ─── DAILY PLANNING ───
 function showEndOfDay() {
+  const stats = getTodayStats();
   const plan = getDailyPlan();
-  const done = plan.items.filter(i => i.done).length;
-  const total = plan.items.length;
+  const donePlan = plan.items.filter(i => i.done).length;
+  const totalPlan = plan.items.length;
+  const mins = Math.round(stats.focusMin || 0);
+  const tasks = stats.tasks || 0;
+  const sessions = stats.sessions || 0;
+
+  // Build accomplishment lines — only show what actually happened
+  const accs = [];
+  if (mins > 0) accs.push(`⏱ <strong>${mins} min</strong> de focus`);
+  if (sessions > 0) accs.push(`🎯 <strong>${sessions}</strong> session${sessions > 1 ? 's' : ''} terminée${sessions > 1 ? 's' : ''}`);
+  if (tasks > 0) accs.push(`✅ <strong>${tasks}</strong> tâche${tasks > 1 ? 's' : ''} cochée${tasks > 1 ? 's' : ''}`);
+  if (donePlan > 0 && totalPlan > 0) accs.push(`📋 Plan du jour : <strong>${donePlan}/${totalPlan}</strong>`);
+
+  const nothingDone = accs.length === 0;
+  const warmClose = nothingDone
+    ? 'Certains jours servent à récupérer. C\'est aussi du travail.'
+    : mins >= 60 ? 'Une vraie journée de travail. Repos mérité.'
+    : sessions >= 3 ? 'Plusieurs sessions — tu as su recommencer. C\'est fort.'
+    : 'Chaque minute compte. Vraiment.';
+
   const bd = document.createElement('div');
   bd.className = 'cat-modal-backdrop';
   bd.innerHTML = `
-    <div class="cat-modal-sheet" style="text-align:center">
+    <div class="cat-modal-sheet">
       <div class="cat-modal-handle"></div>
-      <div style="font-size:44px;margin-bottom:10px">🌙</div>
-      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px">Bonne journée !</div>
-      <div style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6">
-        ${total > 0 ? `Plan du jour : <strong style="color:var(--text)">${done} / ${total}</strong> tâche${total>1?'s':''} faite${done>1?'s':''}.` : 'Aucun plan du jour défini.'}
-        <br>Ton cerveau a travaillé. C'est bien.
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:40px;margin-bottom:10px">🌙</div>
+        <div style="font-family:'Syne',sans-serif;font-size:21px;font-weight:900">Ta journée,<br>en vrai.</div>
       </div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.55">Demain, tu repars de zéro — sans la pression d'aujourd'hui.</div>
-      <button class="btn" id="eod-close">Fermer ✓</button>
+      ${accs.length ? `
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+          ${accs.map(a => `<div style="padding:12px 16px;border-radius:14px;background:rgba(124,92,252,.07);border:1px solid rgba(124,92,252,.18);font-size:14px;color:var(--text);line-height:1.5">${a}</div>`).join('')}
+        </div>` :
+        `<div style="padding:16px;border-radius:14px;background:var(--soft);font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6;text-align:center">Pas de session enregistrée.<br>Certains jours, c'est ok.</div>`
+      }
+      <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;text-align:center">${warmClose}<br><span style="font-size:12px">Demain recommence à zéro.</span></div>
+      <button class="btn" id="eod-dump" style="background:var(--soft);color:var(--text);border:1.5px solid var(--border);margin-bottom:8px">🧠 Vider mon cerveau avant de dormir</button>
+      <button class="btn" id="eod-close">Bonne nuit ✓</button>
     </div>`;
   document.body.appendChild(bd);
   bd.addEventListener('click', e => { if (e.target === bd) bd.remove(); });
-  bd.querySelector('#eod-close').onclick = () => bd.remove();
+  bd.querySelector('#eod-close').onclick = () => {
+    bd.remove();
+    setDayMode(null); // reset mode for tomorrow
+    localStorage.removeItem(DAY_MODE_TS); // allow morning greeting tomorrow
+  };
+  bd.querySelector('#eod-dump').onclick = () => {
+    bd.remove();
+    show('brain-dump');
+  };
 }
 
 function getDailyPlan() {

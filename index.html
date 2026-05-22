@@ -2174,7 +2174,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <h2 id="c-title">Étape terminée !</h2>
   <p class="celeb-sub" id="c-sub">Tu avances vraiment bien.</p>
   <button class="btn" id="c-next">Étape suivante →</button>
-  <button class="btn-outline" id="c-home">Retour à l'accueil</button>
+  <button class="btn-outline" id="c-home">← Accueil</button>
 </section>
 
 <!-- BLOCKED: ÉNERGIE -->
@@ -2480,6 +2480,9 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   </div>
   <!-- Guide interactif (masqué par défaut) -->
   <div id="dump-guide-panel" class="dump-guide-panel" style="display:none">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:4px">
+      <button onclick="hideDumpGuide()" style="background:none;border:none;color:var(--muted);font:500 13px 'DM Sans',sans-serif;cursor:pointer;padding:0">Mode libre →</button>
+    </div>
     <div id="dump-guide-content"></div>
   </div>
   <!-- Zone libre (visible par défaut) -->
@@ -2553,7 +2556,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <span class="big-emoji">🏆</span>
   <h2>Projet terminé !</h2>
   <p class="celeb-sub" id="f-sub">Tu as accompli quelque chose d'important aujourd'hui.</p>
-  <button class="btn" id="f-home">Retour à l'accueil</button>
+  <button class="btn" id="f-home">← Accueil</button>
 </section>
 
 <button class="settings-fab" id="settings-fab" title="Paramètres">⚙️</button>
@@ -2776,7 +2779,7 @@ function showRitalinModal() {
           <button class="ritalin-type-btn" id="rt-lp">🌊 LP · 8-12 heures</button>
         </div>
         <div class="ritalin-btns">
-          <button class="ritalin-yes" id="rm-confirm">C'est noté ✓</button>
+          <button class="ritalin-yes" id="rm-confirm">✓ C'est noté</button>
           <button class="ritalin-no" id="rm-skip">Passer cette étape</button>
         </div>
       </div>
@@ -4073,9 +4076,12 @@ function showNewProjectModeModal() {
 
   sheet.innerHTML = `
     <div class="cat-modal-handle"></div>
-    <h2 style="font-family:Syne,sans-serif;font-size:20px;font-weight:800;margin-bottom:8px">
-      Comment organiser <em style="font-style:normal;${grad}">ton plan</em> ?
-    </h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <h2 style="font-family:Syne,sans-serif;font-size:20px;font-weight:800;margin:0">
+        Comment organiser <em style="font-style:normal;${grad}">ton plan</em> ?
+      </h2>
+      <button id="npm-close" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0">✕</button>
+    </div>
     <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:20px">Tu pourras toujours changer de mode plus tard.</p>
     <div id="npm-s1">
       <button class="cm-mode-card npm-card" data-mode="default">
@@ -4109,6 +4115,9 @@ function showNewProjectModeModal() {
 
   backdrop.appendChild(sheet);
   document.body.appendChild(backdrop);
+
+  // Close button → apply default plan
+  document.getElementById('npm-close').onclick = () => { backdrop.remove(); applyNewProjectMode('default', null); };
 
   // Mode cards
   sheet.querySelectorAll('.npm-card').forEach(card => {
@@ -4740,7 +4749,7 @@ function renderStepsList(steps, container, saveFn, seanceMode, _openNames) {
 
       // Delete micro button
       const delMicro = document.createElement('button');
-      delMicro.className = 'micro-del-btn'; delMicro.textContent = '×'; delMicro.title = 'Supprimer';
+      delMicro.className = 'micro-del-btn'; delMicro.textContent = '✕'; delMicro.title = 'Supprimer';
 
       (function(st, mIdx, ckBtn, txtEl) {
         ckBtn.onclick = function(e) {
@@ -5662,7 +5671,7 @@ function renderCategoryCard(cat, proj, container) {
         chip.textContent = '📎 ' + fname; chip.title = 'Ouvrir';
         (function(n) { chip.onclick = function() { openStoredFile(proj.id, n); }; })(fname);
         const del = document.createElement('button');
-        del.className = 'file-chip-del'; del.textContent = '×'; del.title = 'Supprimer';
+        del.className = 'file-chip-del'; del.textContent = '✕'; del.title = 'Supprimer';
         (function(n) { del.onclick = function(e) { e.stopPropagation(); deleteFile(proj, n); }; })(fname);
         chipWrap.appendChild(chip); chipWrap.appendChild(del);
         chipsWrap.appendChild(chipWrap);
@@ -5770,7 +5779,7 @@ function renderFilesSection(proj, container) {
       chip.textContent = '📎 ' + f; chip.title = 'Ouvrir';
       (function(name) { chip.onclick = () => openStoredFile(proj.id, name); })(f);
       const del = document.createElement('button');
-      del.className = 'file-chip-del'; del.textContent = '×'; del.title = 'Supprimer';
+      del.className = 'file-chip-del'; del.textContent = '✕'; del.title = 'Supprimer';
       (function(name) { del.onclick = e => { e.stopPropagation(); deleteFile(proj, name); }; })(f);
       chipWrap.appendChild(chip); chipWrap.appendChild(del); wrap.appendChild(chipWrap);
     });
@@ -6786,7 +6795,7 @@ function showGentleSupport() {
       <button class="btn" id="gs-pause" style="margin-bottom:10px">☕ Pause complète — je décroche 5 min</button>
       <button class="btn-outline" id="gs-reset" style="margin-bottom:10px">🧘 Reset cognitif (respiration + corps)</button>
       <button class="btn-outline" id="gs-dump" style="margin-bottom:10px">🧠 Vider ce qui tourne dans ma tête</button>
-      <button class="btn-outline" id="gs-home">← Retour à l'accueil — j'arrête pour aujourd'hui</button>
+      <button class="btn-outline" id="gs-home">🌙 J'arrête pour aujourd'hui</button>
     </div>`;
   document.getElementById('gs-pause').onclick  = () => startStrategy('pause');
   document.getElementById('gs-reset').onclick  = () => { show('reset-cognitif'); showResetCognitif(); };
@@ -7739,7 +7748,7 @@ function openFocusPanel() {
     <div class="cat-modal-sheet" style="max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
       <div class="cat-modal-handle"></div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:-8px">
-        <button id="fp-close" style="background:none;border:none;font-size:24px;color:var(--muted);cursor:pointer;padding:0 4px;line-height:1">×</button>
+        <button id="fp-close" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;padding:0 4px;line-height:1">✕</button>
       </div>
 
       <div id="fp-score-card" style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--soft);border-radius:16px;margin-bottom:8px;cursor:pointer">
@@ -7927,7 +7936,7 @@ function showTimerShortcutSetupModal() {
         ⚠️ L'étape 5 est importante : l'app envoie la durée en secondes. Si l'unité reste « minutes », le minuteur sera 60× trop long.
       </div>
       <button class="btn-outline" id="tsc-open" style="margin-bottom:10px">📱 Ouvrir l'app Raccourcis</button>
-      <button class="btn" id="tsc-done" style="margin-bottom:10px">✅ C'est fait — activer</button>
+      <button class="btn" id="tsc-done" style="margin-bottom:10px">✓ C'est fait — activer</button>
       <button class="btn-outline" id="tsc-skip" style="color:var(--muted)">Plus tard</button>
     </div>`;
   document.body.appendChild(bd);
@@ -9478,7 +9487,7 @@ function checkHALT(onPass) {
             </div>
           </div>`).join('')}
       </div>
-      <button class="btn" id="halt-ok" style="margin-top:16px">C'est noté — on y va ✓</button>
+      <button class="btn" id="halt-ok" style="margin-top:16px">✓ C'est noté — on y va</button>
     </div>`;
   document.body.appendChild(bd);
   bd.querySelectorAll('.halt-btn').forEach(btn => {

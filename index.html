@@ -1547,6 +1547,15 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .gentle-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; margin-bottom: 8px; }
 .gentle-sub { color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
 
+/* ── CLAUDE INSIGHT ── */
+.claude-insight { background:linear-gradient(135deg,rgba(124,92,252,.1),rgba(252,92,125,.07)); border:1px solid rgba(124,92,252,.25); border-radius:16px; padding:14px 16px; font-size:14px; color:var(--text); line-height:1.6; position:relative; }
+.claude-insight-label { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin-bottom:6px; display:flex; align-items:center; gap:5px; }
+.claude-insight-loading { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; padding:10px 0; }
+@keyframes thinking { 0%,100%{opacity:.3} 50%{opacity:1} }
+.thinking-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:thinking 1.2s ease infinite; }
+.thinking-dot:nth-child(2) { animation-delay:.2s; }
+.thinking-dot:nth-child(3) { animation-delay:.4s; }
+
 /* ── MORNING GREETING ── */
 .morning-overlay { position:fixed; inset:0; background:rgba(10,10,15,.75); display:flex; align-items:center; justify-content:center; z-index:9100; padding:20px; }
 .morning-sheet { background:var(--card); border-radius:28px; padding:32px 24px 28px; width:100%; max-width:380px; text-align:center; animation:pop .35s cubic-bezier(.34,1.56,.64,1); }
@@ -2329,6 +2338,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <button class="back" id="back-blocked-type">← Retour</button>
   <h1>Qu'est-ce qui te <em>bloque</em> ?</h1>
   <p class="sub">Dis-moi exactement, je vais t'aider à sortir de là.</p>
+  <div id="claude-insight-slot" style="display:none;margin-bottom:16px"></div>
   <div class="friction-grid" id="friction-grid"></div>
 </section>
 
@@ -3415,6 +3425,83 @@ function renderHome() {
   }
   renderDayModePill();
   if (!hasGreetedToday()) setTimeout(showMorningGreeting, 400);
+}
+
+// ══════════════════════════════════════════════════
+// CLAUDE API — proxy Vercel
+// ══════════════════════════════════════════════════
+
+const CLAUDE_PROXY = '/api/claude';
+
+const CLAUDE_SYSTEM = `Tu es un assistant cognitif pour personnes avec TDAH.
+Tu analyses des patterns comportementaux réels pour identifier le vrai blocage derrière la procrastination — pas celui déclaré, le vrai.
+Réponds TOUJOURS en français. Maximum 2 phrases courtes. Ton chaud, direct, sans culpabiliser.
+Identifie le vrai mécanisme (peur, tâche trop abstraite, charge émotionnelle, ennui, perfectionnisme…) et propose UNE action ultra-concrète et minuscule.`;
+
+function buildBlockedContext() {
+  const score    = calcFocusScore();
+  const hour     = new Date().getHours();
+  const mode     = getDayMode() || 'normal';
+  const step     = currentProject ? getCurrentStep(currentProject) : null;
+  const stepName = step ? step.name : null;
+  const proj     = currentProject ? currentProject.name : null;
+
+  // Comportements récents
+  const log = getAideLog();
+  const blockTypes = log.entries.filter(e => e.source === 'blocked').slice(-5).map(e => e.feeling || '?');
+
+  // Sessions du jour
+  const stats = getTodayStats();
+
+  let ctx = `Il est ${hour}h. Focus score : ${score}/100. Mode du jour : ${mode}.`;
+  if (proj)      ctx += ` Projet actif : "${proj}".`;
+  if (stepName)  ctx += ` Étape actuelle : "${stepName}".`;
+  if (stats.sessions) ctx += ` Sessions aujourd'hui : ${stats.sessions} (${Math.round(stats.focusMin || 0)} min au total).`;
+  if (blockTypes.length) ctx += ` Blocages récents : ${blockTypes.join(', ')}.`;
+  ctx += ` L'utilisateur vient de cliquer "Je suis bloqué".`;
+  ctx += ` Identifie le vrai blocage probable et dis-lui UNE chose concrète à faire maintenant.`;
+  return ctx;
+}
+
+async function fetchClaudeInsight(userMessage) {
+  const body = {
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 150,
+    system: [{ type: 'text', text: CLAUDE_SYSTEM, cache_control: { type: 'ephemeral' } }],
+    messages: [{ role: 'user', content: userMessage }],
+  };
+  const resp = await fetch(CLAUDE_PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) throw new Error('Proxy error ' + resp.status);
+  const data = await resp.json();
+  return data.content?.[0]?.text || null;
+}
+
+async function showClaudeInsight() {
+  const slot = document.getElementById('claude-insight-slot');
+  if (!slot) return;
+
+  // Loading state
+  slot.style.display = 'block';
+  slot.innerHTML = `<div class="claude-insight-loading">
+    <div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div>
+    <span>J'analyse ton contexte…</span>
+  </div>`;
+
+  try {
+    const ctx = buildBlockedContext();
+    const insight = await fetchClaudeInsight(ctx);
+    if (!insight) { slot.style.display = 'none'; return; }
+    slot.innerHTML = `<div class="claude-insight">
+      <div class="claude-insight-label">✦ Analyse</div>
+      ${insight.replace(/</g,'&lt;')}
+    </div>`;
+  } catch(e) {
+    slot.style.display = 'none';
+  }
 }
 
 // ══════════════════════════════════════════════════
@@ -8513,6 +8600,10 @@ function showBlockedV2(from) {
   blockedCalledFrom = from || 'session';
   renderFrictionGrid();
   show('blocked-type');
+  // Reset insight slot, then fire async (non-blocking)
+  const slot = document.getElementById('claude-insight-slot');
+  if (slot) slot.style.display = 'none';
+  showClaudeInsight();
 }
 
 function renderFrictionGrid() {

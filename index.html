@@ -578,26 +578,6 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .ritalin-no { border:1.5px solid var(--border); border-radius:16px; background:none; color:var(--muted); font:600 14px 'DM Sans',sans-serif; padding:15px; cursor:pointer; }
 
 /* ── SETTINGS FAB ── */
-/* ── TOP STATS WIDGET (inline, inside landing) ── */
-.top-stats-widget {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  align-items: flex-start;
-  margin: 10px 0 16px;
-}
-.top-stat-row {
-  display: flex;
-  align-items: baseline;
-  gap: 3px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 4px 10px;
-  font-family: 'Syne', sans-serif;
-}
-.top-stat-num { font-size: 14px; font-weight: 800; }
-.top-stat-lbl { font-size: 10px; color: var(--muted); font-weight: 600; font-family: 'DM Sans', sans-serif; }
 
 /* ── TOP-RIGHT STACK (compte + settings + focus + stats) ── */
 .top-right-stack {
@@ -1683,13 +1663,6 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   /* Logo row on desktop: no extra left padding (ring is far from sidebar content) */
   .landing-logo-row { padding-left: 0 !important; margin-bottom: 4px !important; }
 
-  /* Stats widget on desktop: horizontal in sidebar, full width */
-  .top-stats-widget {
-    margin: 8px 0 14px !important;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-  }
-
   /* Work button full-width in sidebar */
   .work-btn {
     font-size: 17px;
@@ -1937,13 +1910,10 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <div class="landing-left">
 
   <!-- Barre du haut — décalée à droite pour ne pas couvrir l'anneau de focus -->
-  <div class="landing-logo-row" style="align-items:center;padding-left:54px">
+  <div class="landing-logo-row" style="align-items:center;padding-left:54px;padding-right:62px">
     <span class="logo" style="font-size:24px">✦ focusTDAH</span>
     <button id="landing-halt-btn" style="display:none;background:none;border:1.5px solid var(--border);border-radius:10px;padding:5px 10px;color:var(--muted);font:600 12px 'DM Sans',sans-serif;cursor:pointer;margin-left:auto">🔍</button>
   </div>
-
-  <!-- Stats du jour -->
-  <div class="top-stats-widget" id="top-stats-widget"></div>
 
   <!-- Bannière rebound Ritaline (si active) -->
   <div id="rebound-banner-slot"></div>
@@ -2324,10 +2294,6 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <button class="block-btn block-reset" id="aide-btn-reset">
     <span class="b-title">🧘 Reset cognitif</span>
     <span class="b-sub">Respiration · Étirement · Eau · Mini victoire</span>
-  </button>
-  <button class="block-btn block-secondary" id="aide-btn-methodes" style="margin-top:6px">
-    <span class="b-title">📚 Méthodes de travail</span>
-    <span class="b-sub">Choisir une méthode adaptée à ton niveau d'énergie</span>
   </button>
 </section>
 
@@ -3905,7 +3871,6 @@ document.getElementById('aide-btn-panique').onclick = () => showModePanique();
 document.getElementById('aide-btn-reset').onclick = () => showResetCognitif();
 document.getElementById('aide-btn-dump').onclick = () => show('brain-dump');
 document.getElementById('aide-btn-rsd').onclick   = () => showRSDMode();
-document.getElementById('aide-btn-methodes').onclick = () => showMethodes('aide-menu');
 document.getElementById('btn-daily-plan').onclick = () => showDailyPlanning();
 document.getElementById('btn-end-of-day').onclick = () => showEndOfDay();
 document.getElementById('btn-reentry-session').onclick = () => showReentryModal();
@@ -8225,7 +8190,7 @@ function renderShortcutStep() {
     const tasks   = s.tasks || 0;
     const sessions = s.sessions || 0;
     const score   = Math.round(calcFocusScore());
-    const mode    = getDayMode ? getDayMode() : null;
+    const mode    = typeof getDayMode !== 'undefined' ? getDayMode() : null;
     const modeEmoji = mode === 'calme' ? '🧘' : mode === 'boost' ? '⚡' : mode === 'normal' ? '✨' : null;
     const modeLabel = mode === 'calme' ? 'Calme' : mode === 'boost' ? 'Boost' : mode === 'normal' ? 'Normal' : null;
     const scoreColor = score >= 70 ? 'var(--green)' : score >= 40 ? 'var(--accent)' : '#fc5c7d';

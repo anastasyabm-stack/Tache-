@@ -1805,7 +1805,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   body { max-width: none; background: white; }
   .screen { display: block !important; padding: 20px; }
   .screen:not(#plan-preview) { display: none !important; }
-  .back, #btn-start-project, #btn-delete-project, .file-add-btn { display: none !important; }
+  .back, #btn-start-project, #btn-export-plan, #btn-delete-project, .file-add-btn { display: none !important; }
 }
 </style>
 </head>
@@ -1870,8 +1870,8 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <!-- Barre d'actions rapides -->
   <div class="landing-actions">
     <button class="landing-action-btn" id="btn-timers">
-      <span class="la-icon">⏱</span>
-      <span>Timer<br>libre</span>
+      <span class="la-icon">🚀</span>
+      <span>Dé<br>marrer</span>
     </button>
     <button class="landing-action-btn landing-action-aide" id="btn-aide-menu">
       <span class="la-icon">🧠</span>
@@ -2037,6 +2037,7 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <div id="pp-plan"></div>
   <div class="pp-total" id="pp-total"></div>
   <button class="btn" id="btn-start-project">Commencer →</button>
+  <button class="btn" id="btn-export-plan" style="background:var(--soft);color:var(--text);border:1.5px solid var(--border);margin-top:8px">📄 Exporter / Imprimer</button>
   <button class="btn-delete-project" id="btn-delete-project" style="display:none">Supprimer ce projet</button>
 </section>
 
@@ -3353,28 +3354,215 @@ function addTodayStats(delta) {
   const s = getTodayStats();
   Object.keys(delta).forEach(k => { s[k] = Math.round(((s[k] || 0) + delta[k]) * 10) / 10; });
   localStorage.setItem('ft_today_stats', JSON.stringify(s));
+  // Update week stats
+  try {
+    const today = new Date().toDateString();
+    const raw = JSON.parse(localStorage.getItem('ft_week_stats') || '{}');
+    if (!raw[today]) raw[today] = { focusMin: 0, sessions: 0, tasks: 0 };
+    Object.keys(delta).forEach(k => { raw[today][k] = Math.round(((raw[today][k] || 0) + delta[k]) * 10) / 10; });
+    // keep last 7 days only
+    const keys = Object.keys(raw).sort((a, b) => new Date(a) - new Date(b));
+    if (keys.length > 7) keys.slice(0, keys.length - 7).forEach(k => delete raw[k]);
+    localStorage.setItem('ft_week_stats', JSON.stringify(raw));
+  } catch(e) {}
+  // Update lifetime stats
+  try {
+    const lt = JSON.parse(localStorage.getItem('ft_lifetime_stats') || '{"totalMin":0,"totalTasks":0,"totalSessions":0}');
+    if (delta.focusMin) lt.totalMin = Math.round(((lt.totalMin || 0) + delta.focusMin) * 10) / 10;
+    if (delta.tasks) lt.totalTasks = (lt.totalTasks || 0) + delta.tasks;
+    if (delta.sessions) lt.totalSessions = (lt.totalSessions || 0) + delta.sessions;
+    localStorage.setItem('ft_lifetime_stats', JSON.stringify(lt));
+  } catch(e) {}
+  checkAndAwardBadges();
+  renderLandingStats();
 }
 
 function renderLandingStats() {
   const el = document.getElementById('landing-stats');
   if (!el) return;
   const s = getTodayStats();
-  if (!s.focusMin && !s.tasks && !s.sessions) { el.innerHTML = ''; return; }
 
-  const msgs = s.focusMin >= 60 ? '🔥 Plus d\'une heure de focus — vraiment bien.'
-    : s.focusMin >= 25 ? '💪 Tu as bien travaillé aujourd\'hui.'
-    : s.focusMin >= 10 ? '✨ Bon début. Continue comme ça.'
-    : s.sessions >= 1  ? '🌱 Tu as commencé — c\'est déjà beaucoup.'
-    : '';
+  // Motivational message
+  const motivMsgs = s.focusMin >= 60 ? ['🔥 Plus d\'une heure de focus — vraiment bien.', '🔥 Incroyable concentration aujourd\'hui !']
+    : s.focusMin >= 25 ? ['💪 Tu as bien travaillé aujourd\'hui.', '✨ Solide journée de focus !']
+    : s.focusMin >= 10 ? ['✨ Bon début. Continue comme ça.', '🌱 Chaque minute compte.']
+    : s.sessions >= 1  ? ['🌱 Tu as commencé — c\'est déjà beaucoup.', '👏 Le premier pas est fait.']
+    : ['📅 Bonne journée à venir !', '🚀 Prêt(e) pour aujourd\'hui ?', '💡 C\'est le bon moment de commencer.'];
+  const motiv = motivMsgs[Math.floor(Math.random() * motivMsgs.length)];
+
+  // Week bar chart
+  let weekHtml = '';
+  try {
+    const raw = JSON.parse(localStorage.getItem('ft_week_stats') || '{}');
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const dayLabels = ['L','M','M','J','V','S','D'];
+    const today = new Date();
+    const todayStr = today.toDateString();
+    const weekData = days.map((d, i) => {
+      const dt = new Date(today);
+      const dayOfWeek = today.getDay(); // 0=Sun
+      const diff = i - ((dayOfWeek + 6) % 7); // Mon=0
+      dt.setDate(today.getDate() + diff);
+      const key = dt.toDateString();
+      return { label: dayLabels[i], key: key, val: (raw[key] || {}).focusMin || 0, isToday: key === todayStr };
+    });
+    const maxVal = Math.max(...weekData.map(d => d.val), 1);
+    weekHtml = `<div class="week-chart">${weekData.map(d => {
+      const h = Math.round((d.val / maxVal) * 34) + 2;
+      return `<div class="week-bar-wrap"><div class="week-bar${d.isToday ? ' today' : ''}" style="height:${h}px"></div><div class="week-bar-lbl">${d.label}</div></div>`;
+    }).join('')}</div>`;
+  } catch(e) {}
+
+  // Badges
+  let badgesHtml = '';
+  try {
+    const badges = JSON.parse(localStorage.getItem('ft_badges') || '[]');
+    if (badges.length > 0) {
+      const allDefs = typeof BADGES_DEF !== 'undefined' ? BADGES_DEF : [];
+      const chips = badges.map(id => {
+        const def = allDefs.find(b => b.id === id);
+        return def ? `<span class="badge-chip">${def.label}</span>` : '';
+      }).join('');
+      badgesHtml = `<div class="badge-chips">${chips}</div>`;
+    }
+  } catch(e) {}
+
+  // Recent events
+  let eventsHtml = '';
+  try {
+    const { events = [] } = getBehaviorData();
+    const last4 = events.slice(-4).reverse();
+    const evIcons = { complete: '✅', fedup: '😤', reset_cognitif: '🧘', brain_dump: '🧠', '10min': '⏱', transition_good: '🔀', selfassess: '📊' };
+    if (last4.length > 0) {
+      const rows = last4.map(ev => {
+        const ago = Math.round((Date.now() - ev.ts) / 60000);
+        const agoStr = ago < 1 ? 'maintenant' : ago < 60 ? ago + ' min' : Math.round(ago/60) + 'h';
+        const icon = evIcons[ev.type] || '📌';
+        return `<div class="recent-event"><span>${icon}</span><span>${ev.type.replace(/_/g,' ')}</span><span style="margin-left:auto">${agoStr}</span></div>`;
+      }).join('');
+      eventsHtml = `<div class="recent-events">${rows}</div>`;
+    }
+  } catch(e) {}
 
   el.innerHTML = `<div class="stats-widget">
+    <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px">Aujourd'hui</div>
     <div class="stats-widget-row">
-      ${s.focusMin ? `<div><div class="stats-num" style="color:var(--accent)">${Math.round(s.focusMin)}</div><div class="stats-lbl">min focus</div></div>` : ''}
-      ${s.tasks    ? `<div><div class="stats-num" style="color:var(--green)">${s.tasks}</div><div class="stats-lbl">tâche${s.tasks > 1 ? 's' : ''}</div></div>` : ''}
-      ${s.sessions ? `<div><div class="stats-num" style="color:var(--text)">${s.sessions}</div><div class="stats-lbl">session${s.sessions > 1 ? 's' : ''}</div></div>` : ''}
+      <div class="stat-chip"><div class="stats-num" style="color:var(--accent)">${Math.round(s.focusMin || 0)}</div><div class="stats-lbl">min</div></div>
+      <div class="stat-chip"><div class="stats-num" style="color:var(--green)">${s.tasks || 0}</div><div class="stats-lbl">tâches</div></div>
+      <div class="stat-chip"><div class="stats-num" style="color:var(--text)">${s.sessions || 0}</div><div class="stats-lbl">sessions</div></div>
     </div>
-    ${msgs ? `<div class="stats-msg">${msgs}</div>` : ''}
+    ${badgesHtml}
+    <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:12px 0 4px">Cette semaine</div>
+    ${weekHtml}
+    ${eventsHtml}
+    <div class="stats-msg" style="margin-top:8px">${motiv}</div>
   </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// GAMIFICATION — BADGES
+// ══════════════════════════════════════════════════
+const BADGES_DEF = [
+  { id: 'first_session',  label: '🌱 Premier pas',      cond: s => s.totalSessions >= 1 },
+  { id: 'focus_30',       label: '⏱ 30 min de focus',   cond: s => s.totalMin >= 30 },
+  { id: 'focus_60',       label: '🔥 1h de focus',      cond: s => s.totalMin >= 60 },
+  { id: 'focus_120',      label: '⚡ 2h de focus',      cond: s => s.totalMin >= 120 },
+  { id: 'tasks_5',        label: '✅ 5 tâches',         cond: s => s.totalTasks >= 5 },
+  { id: 'tasks_10',       label: '🎯 10 tâches',        cond: s => s.totalTasks >= 10 },
+  { id: 'sessions_10',    label: '🏆 10 sessions',      cond: s => s.totalSessions >= 10 },
+  { id: 'sessions_25',    label: '👑 25 sessions',      cond: s => s.totalSessions >= 25 },
+];
+
+function checkAndAwardBadges() {
+  try {
+    const lt = JSON.parse(localStorage.getItem('ft_lifetime_stats') || '{"totalMin":0,"totalTasks":0,"totalSessions":0}');
+    const earned = JSON.parse(localStorage.getItem('ft_badges') || '[]');
+    let changed = false;
+    BADGES_DEF.forEach(def => {
+      if (!earned.includes(def.id) && def.cond(lt)) {
+        earned.push(def.id);
+        changed = true;
+        setTimeout(() => showDopamineToast('🏅 Badge débloqué : ' + def.label, 3500), 500);
+      }
+    });
+    if (changed) localStorage.setItem('ft_badges', JSON.stringify(earned));
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════
+// WORK MODE SHEET (🚀 Démarrer)
+// ══════════════════════════════════════════════════
+function openWorkModeSheet() {
+  const existing = document.getElementById('work-mode-bd');
+  if (existing) existing.remove();
+  const bd = document.createElement('div');
+  bd.id = 'work-mode-bd';
+  bd.className = 'cat-modal-backdrop';
+
+  const methodeCards = METHODES_LIB.map((m, i) =>
+    `<div class="methode-card" style="cursor:default">
+      <span class="methode-card-icon">${m.icon}</span>
+      <div class="methode-card-body">
+        <div class="methode-card-name">${m.name}</div>
+        <div class="methode-card-desc">${m.desc}</div>
+      </div>
+      ${m.action ? `<button class="methode-card-action" data-wm-mi="${i}">Essayer →</button>` : ''}
+    </div>`
+  ).join('');
+
+  bd.innerHTML = `<div class="cat-modal-sheet" style="max-height:85vh;overflow-y:auto">
+    <div class="cat-modal-handle"></div>
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:16px">🚀 Comment tu veux travailler ?</div>
+
+    <div class="wm-section-title">Timers rapides</div>
+    <div class="wm-preset-row">
+      <button class="wm-preset-chip" data-wm-min="5">5 min</button>
+      <button class="wm-preset-chip" data-wm-min="10">10 min</button>
+      <button class="wm-preset-chip" data-wm-min="25">25 min</button>
+      <button class="wm-preset-chip" data-wm-min="45">45 min</button>
+      <button class="wm-free-link" id="wm-free-link">Timer libre →</button>
+    </div>
+
+    <div class="wm-section-title" style="margin-top:8px">Méthodes</div>
+    ${methodeCards}
+  </div>`;
+
+  document.body.appendChild(bd);
+  bd.addEventListener('click', e => { if (e.target === bd) bd.remove(); });
+
+  bd.querySelectorAll('[data-wm-min]').forEach(btn => {
+    btn.onclick = () => {
+      const mins = parseInt(btn.dataset.wmMin);
+      bd.remove();
+      ftSession = 1;
+      ftIsPause = false;
+      ftTaskName = '';
+      startFtTimer(mins * 60);
+    };
+  });
+
+  bd.querySelector('#wm-free-link').onclick = () => {
+    bd.remove();
+    resetFtSetup();
+    show('timer-setup');
+  };
+
+  bd.querySelectorAll('[data-wm-mi]').forEach(btn => {
+    btn.onclick = e => {
+      e.stopPropagation();
+      const m = METHODES_LIB[parseInt(btn.dataset.wmMi)];
+      bd.remove();
+      switch(m.action) {
+        case 'micro':     currentMode = 'micro'; startSession(); break;
+        case 'pomodoro':  currentMode = '2min';  startSession(); tTotal = 1500; tRemain = 1500; renderTimerDisplay(); break;
+        case 'deep':      currentMode = 'one';   startSession(); tTotal = 3000; tRemain = 3000; renderTimerDisplay(); break;
+        case 'reverse':   currentMode = 'reverse'; startSession(); break;
+        case 'brain-dump': show('brain-dump'); break;
+        case 'panique':   showModePanique(); break;
+        case 'reset':     showResetCognitif(); break;
+      }
+    };
+  });
 }
 
 // ══════════════════════════════════════════════════
@@ -4107,6 +4295,90 @@ function _finishApplyFileOptions(proj) {
       setTimeout(function() { msg.style.opacity = '0'; setTimeout(function() { msg.style.display = 'none'; }, 300); }, 2000); }
     show('plan-preview');
   }
+  // Offer fiche creation for any PDF files
+  var pdfFile = foPendingFileObjects.find(function(f) { return f.name.toLowerCase().endsWith('.pdf'); });
+  if (pdfFile) {
+    var targetProj = pendingProject || proj;
+    setTimeout(function() { offerFicheCreation(pdfFile, targetProj); }, 600);
+  }
+}
+
+function offerFicheCreation(file, proj) {
+  var existing = document.getElementById('fiche-offer-bd');
+  if (existing) existing.remove();
+  var bd = document.createElement('div');
+  bd.id = 'fiche-offer-bd';
+  bd.className = 'cat-modal-backdrop';
+  bd.innerHTML = '<div class="cat-modal-sheet">' +
+    '<div class="cat-modal-handle"></div>' +
+    '<div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px">📝 Créer une fiche ?</div>' +
+    '<div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">Créer une fiche de révision depuis <strong style="color:var(--text)">' + file.name + '</strong> ?</div>' +
+    '<button class="btn" id="fiche-yes" style="margin-bottom:8px">Oui, créer une fiche</button>' +
+    '<button style="background:none;border:none;color:var(--muted);font:600 13px \'DM Sans\',sans-serif;width:100%;padding:8px;cursor:pointer" id="fiche-no">Non merci</button>' +
+  '</div>';
+  document.body.appendChild(bd);
+  bd.addEventListener('click', function(e) { if (e.target === bd) bd.remove(); });
+  bd.querySelector('#fiche-no').onclick = function() { bd.remove(); };
+  bd.querySelector('#fiche-yes').onclick = function() {
+    bd.remove();
+    readFileContent(file).then(function(content) {
+      showFicheEditor(content || '', file.name, proj);
+    });
+  };
+}
+
+function showFicheEditor(content, fileName, proj) {
+  var existing = document.getElementById('fiche-editor-bd');
+  if (existing) existing.remove();
+  var title = fileName.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+  // Extract key points: first 800 chars, split by lines, filter 20+ chars, take first 5
+  var keyPoints = '';
+  try {
+    var lines = content.substring(0, 800).split(/\n/).filter(function(l) { return l.trim().length >= 20; }).slice(0, 5);
+    keyPoints = lines.map(function(l) { return '• ' + l.trim(); }).join('\n');
+    if (!keyPoints) {
+      // fallback: first sentences
+      var sentences = content.substring(0, 800).split(/[.!?]+/).filter(function(s) { return s.trim().length >= 20; }).slice(0, 5);
+      keyPoints = sentences.map(function(s) { return '• ' + s.trim(); }).join('\n');
+    }
+  } catch(e) {}
+  var bd = document.createElement('div');
+  bd.id = 'fiche-editor-bd';
+  bd.className = 'cat-modal-backdrop';
+  bd.innerHTML = '<div class="cat-modal-sheet">' +
+    '<div class="cat-modal-handle"></div>' +
+    '<div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:800;margin-bottom:12px">📝 Fiche de révision</div>' +
+    '<input id="fiche-title-inp" type="text" value="' + title.replace(/"/g, '&quot;') + '" placeholder="Titre de la fiche"' +
+      ' style="display:block;width:100%;box-sizing:border-box;padding:10px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--soft);color:var(--text);font:600 14px \'DM Sans\',sans-serif;margin-bottom:10px">' +
+    '<textarea id="fiche-content-inp" placeholder="Points clés…" rows="6"' +
+      ' style="display:block;width:100%;box-sizing:border-box;padding:10px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--soft);color:var(--text);font:400 13px \'DM Sans\',sans-serif;resize:vertical;margin-bottom:14px">' + keyPoints.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</textarea>' +
+    '<button class="btn" id="fiche-save">Enregistrer comme note</button>' +
+    '<button style="background:none;border:none;color:var(--muted);font:600 13px \'DM Sans\',sans-serif;width:100%;padding:8px;cursor:pointer;margin-top:4px" id="fiche-cancel">Annuler</button>' +
+  '</div>';
+  document.body.appendChild(bd);
+  bd.addEventListener('click', function(e) { if (e.target === bd) bd.remove(); });
+  bd.querySelector('#fiche-cancel').onclick = function() { bd.remove(); };
+  bd.querySelector('#fiche-save').onclick = function() {
+    var ficheTitle = bd.querySelector('#fiche-title-inp').value.trim() || title;
+    var ficheContent = bd.querySelector('#fiche-content-inp').value.trim();
+    bd.remove();
+    if (!proj) { showDopamineToast('Fiche enregistrée ✓', 2500); return; }
+    // Add as a special step (or category) to the project
+    if (!proj.steps) proj.steps = [];
+    proj.steps.push({
+      id: 'fiche_' + Date.now(),
+      name: '📝 Fiche — ' + ficheTitle,
+      micros: ficheContent ? ficheContent.split('\n').filter(function(l) { return l.trim(); }) : ['Réviser la fiche'],
+      priority: 'basse',
+      time: 10,
+      done: false
+    });
+    var list = getProjects();
+    var idx = list.findIndex(function(p) { return p.id === proj.id; });
+    if (idx !== -1) { list[idx] = proj; saveProjects(list); if (currentProject && currentProject.id === proj.id) currentProject = proj; }
+    renderPlanPreview(proj);
+    showDopamineToast('Fiche enregistrée dans le projet ✓', 2500);
+  };
 }
 
 function showSubcatPrompt(cat, proj, done) {
@@ -4244,6 +4516,8 @@ document.getElementById('btn-start-project').onclick = () => {
   }
   openCheckin();
 };
+
+document.getElementById('btn-export-plan').onclick = () => window.print();
 
 // ─── FILE HELPERS ───
 async function openStoredFile(projId, fileName) {
@@ -6185,10 +6459,7 @@ let ftDuration = 0, ftRemain = 0, ftTotal = 0;
 let ftRunning = false, ftInterval = null;
 let ftSession = 1, ftIsPause = false, ftTaskName = '';
 
-document.getElementById('btn-timers').onclick = () => {
-  resetFtSetup();
-  show('timer-setup');
-};
+document.getElementById('btn-timers').onclick = () => openWorkModeSheet();
 document.getElementById('back-timer-setup').onclick = () => { renderHome(); show('landing'); };
 document.getElementById('back-timer-free').onclick = () => { clearInterval(ftInterval); ftRunning = false; releaseWakeLock(); resetFtSetup(); show('timer-setup'); };
 
@@ -6505,6 +6776,20 @@ function onSessionTimerEnd() {
   addBehaviorEvent('complete');
   releaseWakeLock();
   playTimerEndSound();
+  // Context-aware session-end message
+  try {
+    const score = calcFocusScore();
+    const hour = new Date().getHours();
+    const todayS = getTodayStats();
+    const isFirstSession = (todayS.sessions || 0) <= 1;
+    const defaultMsgs = ['Bien joué.', 'Continue comme ça.', 'Chaque session compte.', 'Tu avances.'];
+    let endMsg;
+    if (score < 35) endMsg = 'Tu as travaillé malgré la fatigue — respect.';
+    else if (hour >= 20) endMsg = 'Travailler le soir — tu t\'investis vraiment.';
+    else if (isFirstSession) endMsg = 'Le premier pas est fait. C\'est le plus dur.';
+    else endMsg = defaultMsgs[Math.floor(Math.random() * defaultMsgs.length)];
+    showDopamineToast(endMsg, 3500);
+  } catch(e) {}
   setTimeout(() => showFocusCheckIn('session'), 900);
 }
 function onFtTimerEnd() {
@@ -7823,7 +8108,7 @@ function showFrictionStrategies(ft) {
   show('blocked-friction-strategies');
 }
 
-function showDopamineToast(msg) {
+function showDopamineToast(msg, duration) {
   const existing = document.querySelector('.dopamine-toast');
   if (existing) existing.remove();
   const toast = document.createElement('div');
@@ -7833,7 +8118,7 @@ function showDopamineToast(msg) {
   setTimeout(() => {
     toast.classList.add('fading');
     setTimeout(() => toast.remove(), 400);
-  }, 2200);
+  }, duration || 2200);
 }
 
 // ════════════════════════════════════════════════
@@ -9066,19 +9351,33 @@ function showDailyPlanning() {
   const bd = document.createElement('div');
   bd.id = 'plan-bd';
   bd.className = 'cat-modal-backdrop';
+  const score = calcFocusScore();
+  const scoreColor = score < 35 ? '#ef5350' : score < 55 ? '#ffa726' : score < 75 ? '#66bb6a' : '#7c5cfc';
+  const maxTasks = score < 35 ? 1 : score < 55 ? 2 : 3;
+  const planMsg = score < 35
+    ? 'Avec peu d\'énergie, une seule chose. La plus importante.'
+    : score < 55 ? '2 priorités max. Le reste peut attendre.'
+    : score < 75 ? '3 choses — ambitieux mais faisable.'
+    : 'Bonne journée en vue. 3 priorités bien choisies.';
   const placeholders = [
     '🔴 La plus importante du jour',
     '🟠 La deuxième priorité',
     '🟡 Si j\'ai le temps',
   ];
+  const inputsHtml = Array.from({ length: maxTasks }, (_, i) => {
+    const val = plan.items[i] ? plan.items[i].text.replace(/"/g,'&quot;') : '';
+    return `<input class="plan-input" data-i="${i}" type="text" placeholder="${placeholders[i]}"
+      value="${val}"
+      style="display:block;width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--soft);color:var(--text);font:500 14px 'DM Sans',sans-serif;margin-bottom:${i < maxTasks - 1 ? '4px' : '10px'}">
+      ${i < maxTasks - 1 ? '<div style="text-align:center;margin:6px 0;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.06em">⏸ pause 10 min conseillée entre les deux</div>' : ''}`;
+  }).join('');
   bd.innerHTML = `
     <div class="cat-modal-sheet">
       <div class="cat-modal-handle"></div>
-      <div style="font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:4px">📋 3 choses aujourd'hui</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">Ton cerveau TDAH travaille mieux avec 3 priorités max. Pas plus.</div>
-      ${[0,1,2].map(i => `<input class="plan-input" data-i="${i}" type="text" placeholder="${placeholders[i]}"
-        value="${plan.items[i] ? plan.items[i].text.replace(/"/g,'&quot;') : ''}"
-        style="display:block;width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--soft);color:var(--text);font:500 14px 'DM Sans',sans-serif;margin-bottom:10px">`).join('')}
+      <div style="font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:4px">📋 Plan du jour</div>
+      <span class="focus-score-chip" style="background:rgba(124,92,252,.1);color:${scoreColor};border:1px solid ${scoreColor}33">Focus ${score}/100</span>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">${planMsg}</div>
+      ${inputsHtml}
       <button class="btn" id="plan-save" style="margin-top:6px">Enregistrer ✓</button>
       <button style="background:none;border:none;color:var(--muted);font:600 13px 'DM Sans',sans-serif;width:100%;padding:8px;cursor:pointer;margin-top:4px" id="plan-close">Fermer</button>
     </div>`;

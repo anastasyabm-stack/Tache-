@@ -7902,27 +7902,6 @@ function toggleOtherMed(name) {
 }
 function getOtherMedNames() { return getOtherMeds().list; }
 
-// ── Base de données des composés (effets sur focus/énergie/anxiété) ──
-// focus/energie/anxiete : valeur relative −10..+10
-const COMPOUND_DB = {
-  'Café':       { emoji:'☕', cat:'boisson', focus:+2, energie:+3, anxiete:+1, duree:'4-6h',     note:'Bloque l\'adénosine → vigilance. Crash à 4-6h.' },
-  'Matcha':     { emoji:'🍵', cat:'boisson', focus:+3, energie:+2, anxiete:-1, duree:'5-7h',     note:'Caféine + L-théanine naturelle → focus calme et soutenu.' },
-  'Red Bull':   { emoji:'🐂', cat:'boisson', focus:+2, energie:+5, anxiete:+3, duree:'2-3h',     note:'Pic rapide, crash sévère. ⚠️ Contre-indiqué avec Ritalin.' },
-  'Holy Energy':{ emoji:'⚡', cat:'boisson', focus:+2, energie:+4, anxiete:+2, duree:'2-3h',     note:'Similaire Red Bull. ⚠️ Trop stimulant avec Ritalin.' },
-  'Eau froide': { emoji:'💧', cat:'boisson', focus:+1, energie:+1, anxiete: 0, duree:'30 min',   note:'Déshydratation −10% cognition — l\'eau restaure.' },
-  'Oméga-3':    { emoji:'🐟', cat:'suppl',  focus:+2, energie:+1, anxiete:-1, duree:'cumulatif', note:'Soutient la membrane neuronale et la synthèse de dopamine. Effet à long terme.' },
-  'Oméga 3':    { emoji:'🐟', cat:'suppl',  focus:+2, energie:+1, anxiete:-1, duree:'cumulatif', note:'Soutient la membrane neuronale et la synthèse de dopamine. Effet à long terme.' },
-  'Magnésium':  { emoji:'🪨', cat:'suppl',  focus:+1, energie:+1, anxiete:-2, duree:'4-8h',      note:'Réduit hyperactivité et rebound Ritalin. Déficience fréquente en TDAH.' },
-  'Zinc':       { emoji:'⚗️', cat:'suppl',  focus:+2, energie:+1, anxiete:-1, duree:'cumulatif', note:'Cofacteur dopamine. Potentialise légèrement le méthylphénidate.' },
-  'L-Théanine': { emoji:'🍃', cat:'suppl',  focus:+2, energie: 0, anxiete:-3, duree:'3-4h',      note:'Acide aminé du thé. Synergique avec caféine. Réduit l\'anxiété liée au Ritalin.' },
-  'Rhodiola':   { emoji:'🌿', cat:'suppl',  focus:+2, energie:+3, anxiete:-2, duree:'4-6h',      note:'Adaptogène. Réduit fatigue mentale. Léger effet stimulant — surveiller avec Ritalin.' },
-  'Choline':    { emoji:'🥚', cat:'suppl',  focus:+3, energie:+1, anxiete: 0, duree:'cumulatif', note:'Précurseur acétylcholine → mémoire de travail. Souvent faible chez TDAH.' },
-  'Vitamine D': { emoji:'☀️', cat:'suppl',  focus:+1, energie:+1, anxiete:-1, duree:'cumulatif', note:'Déficience très fréquente en TDAH. Modulation dopaminergique.' },
-  'Vitamine B': { emoji:'🅱️', cat:'suppl',  focus:+1, energie:+1, anxiete:-1, duree:'cumulatif', note:'B6/B12/folate : cofacteurs synthèse dopamine et sérotonine.' },
-  'Ritalin IR': { emoji:'💊', cat:'med',    focus:+8, energie:+5, anxiete:+2, duree:'4-5h',      note:'Méthylphénidate IR. Bloque recapture dopamine/norépinéphrine. Pic à 1-2h.' },
-  'Ritalin LP': { emoji:'💊', cat:'med',    focus:+7, energie:+4, anxiete:+1, duree:'8-12h',     note:'Méthylphénidate LP (Concerta). Libération biphasique, profil plus stable.' },
-};
-
 // ── Autres médicaments (influencent la concentration) ──
 const OTHER_MEDS_DEF = [
   { name:'Antihistaminique sédatif',   emoji:'💊', focusBrut:-5, energie:-4, surcharge:+2, note:'1ère génération (Phénergan, etc.). Forte sédation, ⚠️ antagonise partiellement le Ritalin.' },

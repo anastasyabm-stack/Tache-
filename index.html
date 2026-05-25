@@ -1963,6 +1963,11 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 .planning-proj-badge { font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; flex-shrink: 0; margin-top: 3px; letter-spacing: .03em; }
 .planning-task-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; flex: 1; }
 .planning-task-name.done { text-decoration: line-through; color: var(--muted); }
+.plan-settings-row { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+.plan-toggle-wrap { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); white-space:nowrap; cursor:pointer; }
+.plan-toggle-wrap input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; }
+.plan-day-load { font-size:10px; color:var(--muted); margin-top:2px; }
+.plan-day-load.warn { color:#ff9800; }
 .planning-tab-row { display: flex; gap: 8px; margin-bottom: 16px; }
 .planning-tab { flex: 1; padding: 10px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--soft); font: 600 13px 'DM Sans', sans-serif; color: var(--muted); cursor: pointer; text-align: center; transition: all .15s; }
 .planning-tab.active { border-color: var(--accent); background: rgba(124,92,252,.12); color: var(--accent); }
@@ -2898,6 +2903,15 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
 <section class="screen" id="planning-view">
   <button class="back" id="back-planning">← Agenda</button>
   <h1>📆 <em>Planning</em></h1>
+  <div class="plan-settings-row">
+    <div class="planning-tab-row" style="flex:1;margin-bottom:0">
+      <button class="planning-tab active" id="ptab-matiere">Par matière</button>
+      <button class="planning-tab" id="ptab-jour">Par jour</button>
+    </div>
+    <label class="plan-toggle-wrap">
+      <input type="checkbox" id="plan-skip-we"> Sans WE
+    </label>
+  </div>
   <div id="planning-list"></div>
 </section>
 
@@ -11017,8 +11031,19 @@ function checkDeadlineNotifications() {
 
 document.getElementById('btn-agenda').onclick    = () => { renderAgenda(); show('agenda'); };
 document.getElementById('back-agenda').onclick    = () => show('landing');
-document.getElementById('btn-show-planning').onclick = () => { renderPlanningView(); show('planning-view'); };
+document.getElementById('btn-show-planning').onclick = () => {
+  redistributeAll();
+  renderPlanningView();
+  show('planning-view');
+};
 document.getElementById('back-planning').onclick  = () => { renderAgenda(); show('agenda'); };
+document.getElementById('ptab-matiere').onclick   = () => renderPlanningView('matiere');
+document.getElementById('ptab-jour').onclick      = () => renderPlanningView('jour');
+document.getElementById('plan-skip-we').onchange  = function() {
+  setPlanSkipWeekends(this.checked);
+  redistributeAll();
+  renderPlanningView();
+};
 
 
 // ══════════════════════════════════════════════
@@ -11052,23 +11077,27 @@ function _projBadge(name) {
   return w.slice(0,3).map(x => x[0]).join('');
 }
 
-// Auto-distribue les étapes d'une catégorie vers sa deadline
-function autoDistributeCat(projId, steps, deadlineStr) {
-  const undone = steps.filter(s => !stComplete(s));
-  if (!undone.length) return;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const dl    = new Date(deadlineStr); dl.setHours(0,0,0,0);
-  const daysLeft = Math.max(1, Math.round((dl - today) / 86400000));
-  const perDay   = Math.ceil(undone.length / daysLeft);
-  undone.forEach((step, i) => {
-    const dayOffset = Math.min(Math.floor(i / perDay), daysLeft - 1);
-    const d = new Date(today); d.setDate(d.getDate() + dayOffset);
-    setTaskDate(projId, step.name, d.toISOString().slice(0,10));
-  });
-}
-// Fallback pour projets sans catégories
-function autoDistributeProject(proj, deadlineStr) {
-  autoDistributeCat(proj.id, getActiveSteps(proj), deadlineStr);
+// ── Settings weekend ──
+const FT_PLAN_SKIP_WE = 'ft_plan_skip_we';
+function getPlanSkipWeekends() { return localStorage.getItem(FT_PLAN_SKIP_WE) === '1'; }
+function setPlanSkipWeekends(v) { localStorage.setItem(FT_PLAN_SKIP_WE, v ? '1' : '0'); }
+
+// ── Cap journalier ──
+const DAILY_CAP_MIN = 240; // 4h
+
+// Génère la liste des jours ouvrés entre deux dates
+function _workDays(from, to, skipWE) {
+  const days = [];
+  const d = new Date(from);
+  const end = new Date(to);
+  while (d <= end) {
+    const dow = d.getDay();
+    if (!skipWE || (dow !== 0 && dow !== 6)) {
+      days.push(d.toISOString().slice(0, 10));
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return days;
 }
 
 // Construit la liste triée {proj, cat, deadline, color, badge, steps} par matière
@@ -11104,19 +11133,101 @@ function buildCatMap() {
   return result.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
 }
 
-// Construit un map date → tâches (utilise les deadlines par catégorie)
+// ── Algorithme principal de redistribution ──
+// Prend toutes les matières, respecte les deadlines individuelles,
+// le cap journalier (4h), mélange les matières par jour
+function redistributeAll() {
+  const catItems = buildCatMap();
+  if (!catItems.length) return;
+
+  const skipWE = getPlanSkipWeekends();
+  const today  = new Date(); today.setHours(0, 0, 0, 0);
+
+  // Collecte toutes les tâches non faites avec leur deadline
+  const allTasks = [];
+  catItems.forEach(it => {
+    it.steps.filter(s => !stComplete(s)).forEach(step => {
+      allTasks.push({
+        proj    : it.proj,
+        step,
+        deadline: new Date(it.deadline + 'T00:00:00'),
+        color   : it.color,
+        badge   : it.badge,
+        durMin  : step.duration || 25,
+      });
+    });
+  });
+  if (!allTasks.length) return;
+
+  // Trie : deadline la plus proche en premier, puis par badge (interleaving)
+  allTasks.sort((a, b) => a.deadline - b.deadline || a.badge.localeCompare(b.badge));
+
+  // Jours disponibles : aujourd'hui → deadline max
+  const maxDl = allTasks.reduce((m, t) => t.deadline > m ? t.deadline : m, today);
+  const workDays = _workDays(today, maxDl, skipWE);
+  if (!workDays.length) return;
+
+  // Budget par jour (minutes déjà commitées)
+  const budget = {};
+  workDays.forEach(d => { budget[d] = 0; });
+
+  // Assigne chaque tâche au jour le moins chargé avant sa deadline
+  allTasks.forEach(task => {
+    const dlStr = task.deadline.toISOString().slice(0, 10);
+    const avail = workDays.filter(d => d <= dlStr);
+    if (!avail.length) {
+      // Deadline dépassée → assigner aujourd'hui
+      setTaskDate(task.proj.id, task.step.name, workDays[0]);
+      budget[workDays[0]] = (budget[workDays[0]] || 0) + task.durMin;
+      return;
+    }
+
+    // Cherche le jour avec le moins de charge ayant encore de la capacité
+    let best = avail[0];
+    let bestLoad = budget[best] || 0;
+    for (const d of avail) {
+      const load = budget[d] || 0;
+      if (load < bestLoad && load + task.durMin <= DAILY_CAP_MIN) {
+        best = d;
+        bestLoad = load;
+      }
+    }
+    // Si aucun jour n'a de capacité → prendre le moins chargé quand même
+    if ((budget[best] || 0) + task.durMin > DAILY_CAP_MIN) {
+      best = avail.reduce((a, b) => (budget[a] || 0) <= (budget[b] || 0) ? a : b);
+    }
+
+    setTaskDate(task.proj.id, task.step.name, best);
+    budget[best] = (budget[best] || 0) + task.durMin;
+  });
+}
+
+// Fallback pour projets sans catégories
+function autoDistributeProject(proj, deadlineStr) {
+  redistributeAll();
+}
+function autoDistributeCat(projId, steps, deadlineStr) {
+  redistributeAll();
+}
+
+// Construit un map date → tâches (mélangées par matière)
 function buildDayMap() {
   const taskDates = getTaskDates();
   const catItems  = buildCatMap();
-  const map       = {};
+
+  // Vérifie si redistribution nécessaire
+  const anyMapped = catItems.some(it =>
+    it.steps.some(s => taskDates[it.proj.id + '|' + s.name])
+  );
+  if (!anyMapped) redistributeAll();
+
+  const map = {};
   catItems.forEach(({ proj, cat, deadline, color, badge, steps }) => {
-    const hasAny = steps.some(s => taskDates[proj.id + '|' + s.name]);
-    if (!hasAny) autoDistributeCat(proj.id, steps, deadline);
     steps.forEach(step => {
       const dateStr = getTaskDate(proj.id, step.name);
       if (!dateStr) return;
       if (!map[dateStr]) map[dateStr] = [];
-      map[dateStr].push({ proj, step, color, badge, done: stComplete(step), catName: cat ? cat.name : null });
+      map[dateStr].push({ proj, step, color, badge, deadline, done: stComplete(step), catName: cat ? cat.name : null });
     });
   });
   return map;
@@ -11148,7 +11259,19 @@ function _countdownBadge(deadlineStr) {
   return `<span class="planning-countdown">J-${diff}</span>`;
 }
 
-function renderPlanningView() {
+let _planTab = 'matiere'; // 'matiere' | 'jour'
+
+function renderPlanningView(tab) {
+  if (tab) _planTab = tab;
+  // Sync tab buttons
+  const tM = document.getElementById('ptab-matiere');
+  const tJ = document.getElementById('ptab-jour');
+  if (tM) tM.classList.toggle('active', _planTab === 'matiere');
+  if (tJ) tJ.classList.toggle('active', _planTab === 'jour');
+  // Sync weekend checkbox
+  const we = document.getElementById('plan-skip-we');
+  if (we) we.checked = getPlanSkipWeekends();
+
   const list = document.getElementById('planning-list');
   if (!list) return;
   list.innerHTML = '';
@@ -11162,37 +11285,98 @@ function renderPlanningView() {
     return;
   }
 
-  catItems.forEach(({ proj, cat, deadline, color, badge, steps }) => {
-    const done  = steps.filter(s => stComplete(s)).length;
-    const total = steps.length;
-    const catName  = cat ? cat.name : proj.name;
-    const projSub  = cat ? `<div style="font-size:10px;color:var(--muted);margin-bottom:2px">${proj.name}</div>` : '';
-    const safeId   = (proj.id + (cat ? cat.id : 'main')).replace(/[^a-zA-Z0-9]/g, '_');
+  if (_planTab === 'matiere') {
+    // ── Vue par matière ──────────────────────────────────
+    catItems.forEach(({ proj, cat, deadline, color, badge, steps }) => {
+      const done    = steps.filter(s => stComplete(s)).length;
+      const total   = steps.length;
+      const catName = cat ? cat.name : proj.name;
+      const projSub = cat ? `<div style="font-size:10px;color:var(--muted);margin-bottom:2px">${proj.name}</div>` : '';
+      const safeId  = (proj.id + (cat ? cat.id : 'main')).replace(/[^a-zA-Z0-9]/g, '_');
 
-    const card = document.createElement('div');
-    card.className = 'planning-day-card';
-    card.innerHTML = `
-      <div class="planning-day-header">
-        ${_countdownBadge(deadline)}
-        <div class="planning-day-title">
-          ${projSub}
-          <div class="planning-day-name">${catName}</div>
-          <div class="planning-day-meta">${new Date(deadline).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}</div>
+      const card = document.createElement('div');
+      card.className = 'planning-day-card';
+      card.innerHTML = `
+        <div class="planning-day-header">
+          ${_countdownBadge(deadline)}
+          <div class="planning-day-title">
+            ${projSub}
+            <div class="planning-day-name">${catName}</div>
+            <div class="planning-day-meta">${new Date(deadline).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}</div>
+          </div>
+          <div class="planning-day-prog${done===total&&total>0?' done':''}">${done}/${total}</div>
         </div>
-        <div class="planning-day-prog${done===total&&total>0?' done':''}">${done}/${total}</div>
-      </div>
-      <div class="planning-tasks" id="pcat_${safeId}"></div>`;
-    list.appendChild(card);
+        <div class="planning-tasks" id="pcat_${safeId}"></div>`;
+      list.appendChild(card);
 
-    const container = document.getElementById('pcat_' + safeId);
-    if (!steps.length) {
-      container.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px 4px">Aucune tâche dans cette matière.</div>';
-    } else {
-      steps.forEach(step => {
-        _renderPlanningTask(container, proj, step, color, badge, stComplete(step));
-      });
+      const container = document.getElementById('pcat_' + safeId);
+      if (!steps.length) {
+        container.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px 4px">Aucune tâche dans cette matière.</div>';
+      } else {
+        steps.forEach(step => _renderPlanningTask(container, proj, step, color, badge, stComplete(step)));
+      }
+    });
+
+  } else {
+    // ── Vue par jour (matières mélangées) ────────────────
+    const dayMap  = buildDayMap();
+    const today   = new Date(); today.setHours(0,0,0,0);
+    const allDates = Object.keys(dayMap).sort();
+
+    if (!allDates.length) {
+      list.innerHTML = `<div style="color:var(--muted);font-size:14px;text-align:center;padding:32px 0">Aucune tâche planifiée.</div>`;
+      return;
     }
-  });
+
+    allDates.forEach(dateStr => {
+      const tasks = dayMap[dateStr];
+      const { name, badge: dayBadge, cls, diff } = _dayLabel(dateStr);
+      const done  = tasks.filter(t => t.done).length;
+      const total = tasks.length;
+      const totalMin = tasks.reduce((a, t) => a + (t.step.duration || 25), 0);
+      const isOverloaded = totalMin > DAILY_CAP_MIN;
+      const isWeekend = [0, 6].includes(new Date(dateStr + 'T00:00:00').getDay());
+      const loadStr = totalMin >= 60
+        ? Math.floor(totalMin/60) + 'h' + (totalMin%60 ? totalMin%60 + 'min' : '')
+        : totalMin + 'min';
+
+      // Deadlines du jour les plus proches
+      const nearestDl = tasks.reduce((m, t) => {
+        const d = new Date(t.deadline);
+        return d < m ? d : m;
+      }, new Date('2999-01-01'));
+      const dlDiff = Math.round((nearestDl - today) / 86400000);
+      let dlBadgeHtml = '';
+      if (dlDiff >= 0 && dlDiff <= 3) {
+        dlBadgeHtml = `<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(255,152,0,.15);color:#ff9800;margin-left:6px">exam J-${dlDiff}</span>`;
+      }
+
+      const card = document.createElement('div');
+      card.className = 'planning-day-card';
+      if (diff < 0) card.style.opacity = '.55';
+      if (isWeekend) card.style.borderColor = 'rgba(124,92,252,.15)';
+
+      card.innerHTML = `
+        <div class="planning-day-header">
+          <span class="planning-countdown ${cls}">${dayBadge}</span>
+          <div class="planning-day-title">
+            <div class="planning-day-name">${name}${isWeekend ? ' <span style="font-size:11px;opacity:.5">WE</span>' : ''}${dlBadgeHtml}</div>
+            <div class="plan-day-load${isOverloaded?' warn':''}">
+              ${loadStr} · ${[...new Set(tasks.map(t=>t.badge))].join(' · ')}
+              ${isOverloaded ? ' ⚠️ chargé' : ''}
+            </div>
+          </div>
+          <div class="planning-day-prog${done===total&&total>0?' done':''}">${done}/${total}</div>
+        </div>
+        <div class="planning-tasks" id="pday_${dateStr.replace(/-/g,'')}"></div>`;
+      list.appendChild(card);
+
+      const container = document.getElementById('pday_' + dateStr.replace(/-/g,''));
+      tasks.forEach(({ proj, step, color, badge: b, done: isDone }) => {
+        _renderPlanningTask(container, proj, step, color, b, isDone);
+      });
+    });
+  }
 }
 
 function _renderPlanningTask(container, proj, step, color, badge, isDone) {

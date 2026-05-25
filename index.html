@@ -2887,10 +2887,10 @@ h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
   <button class="back" id="back-agenda">← Accueil</button>
   <h1>📅 <em>Agenda</em></h1>
   <p class="sub">Tes projets avec deadlines, triés par urgence.</p>
-  <button id="btn-show-planning" style="width:100%;padding:13px;border-radius:14px;border:1.5px solid var(--accent);background:rgba(124,92,252,.1);color:var(--accent);font:700 14px 'Syne',sans-serif;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px">📆 Voir le planning jour par jour →</button>
+  <button id="btn-show-planning" style="width:100%;padding:13px;border-radius:14px;border:1.5px solid var(--accent);background:rgba(124,92,252,.1);color:var(--accent);font:700 14px 'Syne',sans-serif;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px">📆 Voir le planning →</button>
   <div id="agenda-list"></div>
   <div style="margin-top:20px">
-    <div class="section-label">Ajouter une deadline sur un projet</div>
+    <div class="section-label">Deadlines par matière</div>
     <div id="agenda-no-deadlines" style="color:var(--muted);font-size:13px;padding:12px 0;display:none">Aucun projet actif. Crée un projet depuis l'accueil.</div>
     <div id="agenda-proj-select" style="margin-top:10px"></div>
   </div>
@@ -10930,12 +10930,18 @@ function getDeadlines() {
   try { return JSON.parse(localStorage.getItem('ft_deadlines') || '{}'); } catch(e) { return {}; }
 }
 function saveDeadlines(obj) { localStorage.setItem('ft_deadlines', JSON.stringify(obj)); }
-
 function setProjectDeadline(projId, isoDate) {
-  const d = getDeadlines();
-  d[projId] = isoDate;
-  saveDeadlines(d);
+  const d = getDeadlines(); d[projId] = isoDate; saveDeadlines(d);
 }
+
+// ── Deadlines par catégorie/matière ──
+const FT_CAT_DL_KEY = 'ft_cat_deadlines';
+function getCatDeadlines() { try { return JSON.parse(localStorage.getItem(FT_CAT_DL_KEY)||'{}'); } catch(e) { return {}; } }
+function saveCatDeadlines(obj) { localStorage.setItem(FT_CAT_DL_KEY, JSON.stringify(obj)); }
+function setCatDeadline(projId, catId, dateStr) {
+  const d = getCatDeadlines(); d[projId+'|'+catId] = dateStr; saveCatDeadlines(d);
+}
+function getCatDeadline(projId, catId) { return getCatDeadlines()[projId+'|'+catId] || null; }
 
 function getDeadlineLabel(isoDate) {
   if (!isoDate) return null;
@@ -10952,74 +10958,127 @@ function renderAgenda() {
   const listEl = document.getElementById('agenda-list');
   if (!listEl) return;
   const projects = getProjects ? getProjects() : [];
-  const deadlines = getDeadlines();
-  const hasDl = projects.filter(p => deadlines[p.id]);
+  const catDls   = getCatDeadlines();
+  const projDls  = getDeadlines();
+
+  // Collect all deadline items (cat-level or project-level)
+  const items = [];
+  projects.forEach(proj => {
+    if (proj.categories && proj.categories.length > 0) {
+      proj.categories.forEach(cat => {
+        const dl = getCatDeadline(proj.id, cat.id);
+        if (dl) items.push({ label: cat.name, sub: proj.name, deadline: dl, proj, cat });
+      });
+    } else {
+      const dl = projDls[proj.id];
+      if (dl) items.push({ label: proj.name, sub: null, deadline: dl, proj, cat: null });
+    }
+  });
+
   listEl.innerHTML = '';
-  if (!hasDl.length) {
-    listEl.innerHTML = '<p style="color:var(--muted);font-size:13px">Aucune deadline définie. Ajoute une deadline à tes projets ci-dessous.</p>';
+  if (!items.length) {
+    listEl.innerHTML = '<p style="color:var(--muted);font-size:13px">Aucune deadline définie. Ajoute les dates d\'exam de tes matières ci-dessous.</p>';
   } else {
-    hasDl.sort((a, b) => new Date(deadlines[a.id]) - new Date(deadlines[b.id]));
-    hasDl.forEach(p => {
-      const lbl = getDeadlineLabel(deadlines[p.id]);
+    items.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+    items.forEach(item => {
+      const lbl = getDeadlineLabel(item.deadline);
       const div = document.createElement('div');
       div.className = 'agenda-item ' + (lbl ? lbl.cls : '');
       div.innerHTML = `
         <div style="flex:1">
-          <div class="agenda-item-name">${p.name || 'Sans nom'}</div>
-          <div class="agenda-item-meta">${new Date(deadlines[p.id]).toLocaleDateString('fr-FR', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+          <div class="agenda-item-name">${item.label}</div>
+          ${item.sub ? `<div style="font-size:10px;color:var(--muted);margin-top:1px">${item.sub}</div>` : ''}
+          <div class="agenda-item-meta">${new Date(item.deadline).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})}</div>
         </div>
         ${lbl ? `<span class="deadline-chip" style="background:${lbl.cls==='overdue'?'rgba(239,83,80,.15)':'rgba(255,167,38,.15)'};color:${lbl.cls==='overdue'?'#ef5350':'#ff9800'}">${lbl.text}</span>` : ''}
       `;
-      div.onclick = () => { if (typeof openProject === 'function') openProject(p); };
+      div.onclick = () => { if (typeof openProject === 'function') openProject(item.proj); };
       listEl.appendChild(div);
     });
   }
-  // Project picker for adding deadlines
-  const sel = document.getElementById('agenda-proj-select');
+
+  // Form: deadline par matière/catégorie
+  const sel   = document.getElementById('agenda-proj-select');
   if (!sel) return;
   sel.innerHTML = '';
   const noProj = document.getElementById('agenda-no-deadlines');
   if (!projects.length) { if (noProj) noProj.style.display = 'block'; return; }
   if (noProj) noProj.style.display = 'none';
-  projects.forEach(p => {
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--soft);border:1.5px solid var(--border);border-radius:12px;margin-bottom:8px';
-    const existing = deadlines[p.id];
-    row.innerHTML = `
-      <span style="font-size:13px;font-weight:600">${p.name||'Sans nom'}</span>
-      <input type="datetime-local" data-proj="${p.id}" value="${existing||''}"
-        style="font-size:12px;padding:4px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text)">
-    `;
-    row.querySelector('input').onchange = function() {
-      setProjectDeadline(p.id, this.value);
-      renderAgenda();
-    };
-    sel.appendChild(row);
+
+  projects.forEach(proj => {
+    if (proj.categories && proj.categories.length > 0) {
+      // Project header
+      const hdr = document.createElement('div');
+      hdr.style.cssText = 'font:700 13px Syne,sans-serif;color:var(--text);padding:10px 2px 4px;border-bottom:1px solid var(--border);margin-bottom:6px';
+      hdr.textContent = proj.name;
+      sel.appendChild(hdr);
+      proj.categories.forEach(cat => {
+        const existing = getCatDeadline(proj.id, cat.id);
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--soft);border:1.5px solid var(--border);border-radius:12px;margin-bottom:6px';
+        row.innerHTML = `
+          <span style="font-size:13px;font-weight:600">${cat.name}</span>
+          <input type="date" value="${existing||''}" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text)">
+        `;
+        row.querySelector('input').onchange = function() {
+          setCatDeadline(proj.id, cat.id, this.value);
+          renderAgenda();
+        };
+        sel.appendChild(row);
+      });
+    } else {
+      // Project sans catégories → une date globale
+      const existing = projDls[proj.id];
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--soft);border:1.5px solid var(--border);border-radius:12px;margin-bottom:8px';
+      row.innerHTML = `
+        <span style="font-size:13px;font-weight:600">${proj.name}</span>
+        <input type="date" value="${existing||''}" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text)">
+      `;
+      row.querySelector('input').onchange = function() {
+        setProjectDeadline(proj.id, this.value);
+        renderAgenda();
+      };
+      sel.appendChild(row);
+    }
   });
 }
 
 // Check deadlines on app load and send notifications
 function checkDeadlineNotifications() {
   const projects = typeof getProjects === 'function' ? getProjects() : [];
-  const deadlines = getDeadlines();
+  const projDls = getDeadlines();
+
+  // Collect all deadlines (cat-level + project-level)
+  const allDls = [];
   projects.forEach(p => {
-    const dl = deadlines[p.id];
-    if (!dl) return;
+    if (p.categories && p.categories.length > 0) {
+      p.categories.forEach(cat => {
+        const dl = getCatDeadline(p.id, cat.id);
+        if (dl) allDls.push({ name: cat.name + ' (' + p.name + ')', dl, key: p.id + '_' + cat.id });
+      });
+    } else {
+      const dl = projDls[p.id];
+      if (dl) allDls.push({ name: p.name, dl, key: p.id });
+    }
+  });
+
+  allDls.forEach(({ name, dl, key }) => {
     const diff = new Date(dl) - Date.now();
-    if (diff < 0) return; // already past
+    if (diff < 0) return;
     const hours = diff / 3600000;
-    const notifKey = 'ft_dl_notif_' + p.id + '_' + new Date(dl).toDateString();
+    const notifKey = 'ft_dl_notif_' + key + '_' + new Date(dl).toDateString();
     if (hours <= 24 && !localStorage.getItem(notifKey)) {
       localStorage.setItem(notifKey, '1');
       const label = hours <= 1 ? 'moins d\'1h' : Math.ceil(hours) + 'h';
-      showDopamineToast('⏰ ' + (p.name||'Projet') + ' — deadline dans ' + label, 7000);
+      showDopamineToast('⏰ ' + name + ' — deadline dans ' + label, 7000);
     }
   });
 }
 
 document.getElementById('btn-agenda').onclick    = () => { renderAgenda(); show('agenda'); };
 document.getElementById('back-agenda').onclick    = () => show('landing');
-document.getElementById('btn-show-planning').onclick = () => { renderPlanningView('auto'); show('planning-view'); };
+document.getElementById('btn-show-planning').onclick = () => { renderPlanningView(); show('planning-view'); };
 document.getElementById('back-planning').onclick  = () => { renderAgenda(); show('agenda'); };
 
 
@@ -11054,59 +11113,74 @@ function _projBadge(name) {
   return w.slice(0,3).map(x => x[0]).join('');
 }
 
-// Auto-distribue les étapes non terminées entre aujourd'hui et la deadline
-function autoDistributeProject(proj, deadlineStr) {
-  const steps = getActiveSteps(proj).filter(s => !stComplete(s));
-  if (!steps.length) return;
+// Auto-distribue les étapes d'une catégorie vers sa deadline
+function autoDistributeCat(projId, steps, deadlineStr) {
+  const undone = steps.filter(s => !stComplete(s));
+  if (!undone.length) return;
   const today = new Date(); today.setHours(0,0,0,0);
   const dl    = new Date(deadlineStr); dl.setHours(0,0,0,0);
   const daysLeft = Math.max(1, Math.round((dl - today) / 86400000));
-  const perDay   = Math.ceil(steps.length / daysLeft);
-  steps.forEach((step, i) => {
+  const perDay   = Math.ceil(undone.length / daysLeft);
+  undone.forEach((step, i) => {
     const dayOffset = Math.min(Math.floor(i / perDay), daysLeft - 1);
     const d = new Date(today); d.setDate(d.getDate() + dayOffset);
-    setTaskDate(proj.id, step.name, d.toISOString().slice(0,10));
+    setTaskDate(projId, step.name, d.toISOString().slice(0,10));
   });
 }
+// Fallback pour projets sans catégories
+function autoDistributeProject(proj, deadlineStr) {
+  autoDistributeCat(proj.id, getActiveSteps(proj), deadlineStr);
+}
 
-// Construit un map date → [{proj, step}] pour le planning auto
-function buildDayMap() {
-  const projs     = getProjects();
-  const deadlines = getDeadlines();
-  const taskDates = getTaskDates();
-  const map       = {}; // "YYYY-MM-DD" → [{proj, step, color, badge}]
-
+// Construit la liste triée {proj, cat, deadline, color, badge, steps} par matière
+function buildCatMap() {
+  const projs   = getProjects();
+  const projDls = getDeadlines();
+  const result  = [];
   projs.forEach(proj => {
-    const dl = deadlines[proj.id];
-    if (!dl) return;
-    // Auto-distribue si pas encore planifié
-    const steps = getActiveSteps(proj);
-    const hasAny = steps.some(s => taskDates[proj.id + '|' + s.name]);
-    if (!hasAny) autoDistributeProject(proj, dl);
+    if (proj.categories && proj.categories.length > 0) {
+      proj.categories.forEach(cat => {
+        const dl = getCatDeadline(proj.id, cat.id);
+        if (!dl) return;
+        result.push({
+          proj, cat,
+          deadline : dl,
+          color    : _projColor(cat.name + proj.id),
+          badge    : _projBadge(cat.name),
+          steps    : cat.steps || [],
+        });
+      });
+    } else {
+      const dl = projDls[proj.id];
+      if (!dl) return;
+      result.push({
+        proj, cat: null,
+        deadline : dl,
+        color    : _projColor(proj.name),
+        badge    : _projBadge(proj.name),
+        steps    : getActiveSteps(proj),
+      });
+    }
+  });
+  return result.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+}
 
-    const color = _projColor(proj.name);
-    const badge = _projBadge(proj.name);
+// Construit un map date → tâches (utilise les deadlines par catégorie)
+function buildDayMap() {
+  const taskDates = getTaskDates();
+  const catItems  = buildCatMap();
+  const map       = {};
+  catItems.forEach(({ proj, cat, deadline, color, badge, steps }) => {
+    const hasAny = steps.some(s => taskDates[proj.id + '|' + s.name]);
+    if (!hasAny) autoDistributeCat(proj.id, steps, deadline);
     steps.forEach(step => {
       const dateStr = getTaskDate(proj.id, step.name);
       if (!dateStr) return;
       if (!map[dateStr]) map[dateStr] = [];
-      map[dateStr].push({ proj, step, color, badge, done: stComplete(step) });
+      map[dateStr].push({ proj, step, color, badge, done: stComplete(step), catName: cat ? cat.name : null });
     });
   });
   return map;
-}
-
-// Construit un map projet → jours pour la vue "par projet"
-function buildProjMap() {
-  const projs     = getProjects();
-  const deadlines = getDeadlines();
-  return projs.filter(p => deadlines[p.id]).map(proj => ({
-    proj,
-    deadline: deadlines[proj.id],
-    color: _projColor(proj.name),
-    badge: _projBadge(proj.name),
-    steps: getActiveSteps(proj),
-  }));
 }
 
 function _dayLabel(dateStr) {
@@ -11135,83 +11209,51 @@ function _countdownBadge(deadlineStr) {
   return `<span class="planning-countdown">J-${diff}</span>`;
 }
 
-function renderPlanningView(mode) {
+function renderPlanningView() {
   const list = document.getElementById('planning-list');
   if (!list) return;
   list.innerHTML = '';
 
-  const projs     = getProjects();
-  const deadlines = getDeadlines();
-  if (!projs.some(p => deadlines[p.id])) {
-    list.innerHTML = `<div style="color:var(--muted);font-size:14px;text-align:center;padding:32px 0">
-      Définis d'abord une deadline sur tes projets dans l'Agenda.
+  const catItems = buildCatMap();
+  if (!catItems.length) {
+    list.innerHTML = `<div style="color:var(--muted);font-size:14px;text-align:center;padding:32px 16px;line-height:1.6">
+      Définis les dates d'exam de tes matières dans l'Agenda<br>
+      <span style="font-size:12px;opacity:.6">Chaque matière aura son planning de tâches</span>
     </div>`;
     return;
   }
 
-  if (mode === 'manual') {
-    // Vue par projet
-    const items = buildProjMap();
-    items.forEach(({ proj, deadline, color, badge, steps }) => {
-      const done  = steps.filter(s => stComplete(s)).length;
-      const total = steps.length;
-      const card  = document.createElement('div');
-      card.className = 'planning-day-card';
-      card.innerHTML = `
-        <div class="planning-day-header">
-          ${_countdownBadge(deadline)}
-          <div class="planning-day-title">
-            <div class="planning-day-name">${proj.name}</div>
-            <div class="planning-day-meta">deadline ${new Date(deadline).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</div>
-          </div>
-          <div class="planning-day-prog${done===total&&total>0?' done':''}">${done}/${total}</div>
+  catItems.forEach(({ proj, cat, deadline, color, badge, steps }) => {
+    const done  = steps.filter(s => stComplete(s)).length;
+    const total = steps.length;
+    const catName  = cat ? cat.name : proj.name;
+    const projSub  = cat ? `<div style="font-size:10px;color:var(--muted);margin-bottom:2px">${proj.name}</div>` : '';
+    const safeId   = (proj.id + (cat ? cat.id : 'main')).replace(/[^a-zA-Z0-9]/g, '_');
+
+    const card = document.createElement('div');
+    card.className = 'planning-day-card';
+    card.innerHTML = `
+      <div class="planning-day-header">
+        ${_countdownBadge(deadline)}
+        <div class="planning-day-title">
+          ${projSub}
+          <div class="planning-day-name">${catName}</div>
+          <div class="planning-day-meta">${new Date(deadline).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}</div>
         </div>
-        <div class="planning-tasks" id="ptasks-${proj.id}"></div>`;
-      list.appendChild(card);
-      const taskContainer = card.querySelector('#ptasks-' + proj.id);
+        <div class="planning-day-prog${done===total&&total>0?' done':''}">${done}/${total}</div>
+      </div>
+      <div class="planning-tasks" id="pcat_${safeId}"></div>`;
+    list.appendChild(card);
+
+    const container = document.getElementById('pcat_' + safeId);
+    if (!steps.length) {
+      container.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px 4px">Aucune tâche dans cette matière.</div>';
+    } else {
       steps.forEach(step => {
-        const isDone = stComplete(step);
-        _renderPlanningTask(taskContainer, proj, step, color, badge, isDone);
+        _renderPlanningTask(container, proj, step, color, badge, stComplete(step));
       });
-    });
-
-  } else {
-    // Vue auto-distribuée par jour
-    const dayMap = buildDayMap();
-    const allDates = Object.keys(dayMap).sort();
-    if (!allDates.length) {
-      list.innerHTML = `<div style="color:var(--muted);font-size:14px;text-align:center;padding:32px 0">Aucune tâche planifiée.</div>`;
-      return;
     }
-    allDates.forEach(dateStr => {
-      const tasks = dayMap[dateStr];
-      const { name, badge, cls, diff } = _dayLabel(dateStr);
-      const done  = tasks.filter(t => t.done).length;
-      const total = tasks.length;
-
-      const subjects = [...new Set(tasks.map(t => t.badge))].join(' + ');
-
-      const card = document.createElement('div');
-      card.className = 'planning-day-card';
-      if (diff < 0) card.style.opacity = '.6';
-      card.innerHTML = `
-        <div class="planning-day-header">
-          <span class="planning-countdown ${cls}">${badge}</span>
-          <div class="planning-day-title">
-            <div class="planning-day-name">${name}</div>
-            <div class="planning-day-meta">${subjects}</div>
-          </div>
-          <div class="planning-day-prog${done===total&&total>0?' done':''}">${done}/${total}</div>
-        </div>
-        <div class="planning-tasks" id="pday-${dateStr.replace(/-/g,'')}"></div>`;
-      list.appendChild(card);
-
-      const container = card.querySelector('#pday-' + dateStr.replace(/-/g,''));
-      tasks.forEach(({ proj, step, color, badge: b, done: isDone }) => {
-        _renderPlanningTask(container, proj, step, color, b, isDone);
-      });
-    });
-  }
+  });
 }
 
 function _renderPlanningTask(container, proj, step, color, badge, isDone) {
@@ -11236,9 +11278,7 @@ function _renderPlanningTask(container, proj, step, color, badge, isDone) {
       navTrackTaskDone();
       setTimeout(() => variableReward(), 300);
     }
-    // Re-render la vue active
-    const tab = 'auto';
-    renderPlanningView(tab);
+    renderPlanningView();
   };
   container.appendChild(row);
 }

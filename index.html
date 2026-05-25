@@ -11168,14 +11168,12 @@ function renderPlanningView(mode) {
       const total = steps.length;
       const card  = document.createElement('div');
       card.className = 'planning-day-card';
-      const estMins = steps.reduce((a, s) => a + (s.duration || 30), 0);
-      const estH = estMins >= 60 ? Math.floor(estMins/60) + 'h' + (estMins%60?estMins%60+'min':'') : estMins+'min';
       card.innerHTML = `
         <div class="planning-day-header">
           ${_countdownBadge(deadline)}
           <div class="planning-day-title">
             <div class="planning-day-name">${proj.name}</div>
-            <div class="planning-day-meta">~${estH} · deadline ${new Date(deadline).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</div>
+            <div class="planning-day-meta">deadline ${new Date(deadline).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</div>
           </div>
           <div class="planning-day-prog${done===total&&total>0?' done':''}">${done}/${total}</div>
         </div>
@@ -11202,9 +11200,6 @@ function renderPlanningView(mode) {
       const done  = tasks.filter(t => t.done).length;
       const total = tasks.length;
 
-      // Estimation temps
-      const mins = tasks.reduce((a, t) => a + (t.step.duration || 30), 0);
-      const estH = mins >= 60 ? Math.floor(mins/60) + 'h' + (mins%60?mins%60+'':'') : mins+'min';
       const subjects = [...new Set(tasks.map(t => t.badge))].join(' + ');
 
       const card = document.createElement('div');
@@ -11215,7 +11210,7 @@ function renderPlanningView(mode) {
           <span class="planning-countdown ${cls}">${badge}</span>
           <div class="planning-day-title">
             <div class="planning-day-name">${name}</div>
-            <div class="planning-day-meta">~${estH} · ${subjects}</div>
+            <div class="planning-day-meta">${subjects}</div>
           </div>
           <div class="planning-day-prog${done===total&&total>0?' done':''}">${done}/${total}</div>
         </div>
